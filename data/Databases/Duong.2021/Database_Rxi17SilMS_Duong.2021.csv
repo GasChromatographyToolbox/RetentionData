@@ -1,0 +1,17 @@
+Name,CAS,Cnumber,Hnumber,Onumber,Nnumber,Ringnumber,Molmass,Phase,Tchar,thetachar,DeltaCp,phi0,Annotation
+Naphthalin,91-20-3,10,8,0,0,2,128.17,Rxi17SilMS,157.29603,35.22991,63.72058,1E-03,Masterthesis.Duong.2021
+Acenaphthylene,208-96-8,12,8,0,0,3,152.196,Rxi17SilMS,205.20664,37.55304,10.23897,1E-03,Masterthesis.Duong.2021
+Acenaphthene,83-32-9,12,10,0,0,3,154.212,Rxi17SilMS,208.1996,37.3574,14.94008,1E-03,Masterthesis.Duong.2021
+Fluorene,86-73-7,13,10,0,0,3,166.223,Rxi17SilMS,221.1151,37.67795,23.95037,1E-03,Masterthesis.Duong.2021
+Phenanthrene,85-01-8,14,10,0,0,3,178.234,Rxi17SilMS,251.75796,40.22078,37.47161,1E-03,Masterthesis.Duong.2021
+Anthracene,120-12-7,14,10,0,0,3,178.234,Rxi17SilMS,252.34732,39.89846,32.84119,1E-03,Masterthesis.Duong.2021
+Fluoranthene,206-44-0,16,10,0,0,4,202.256,Rxi17SilMS,286.09356,42.40966,52.12855,1E-03,Masterthesis.Duong.2021
+Pyrene,129-00-0,16,10,0,0,4,202.256,Rxi17SilMS,295.17631,43.34679,44.40744,1E-03,Masterthesis.Duong.2021
+Benz[a]anthracene,56-55-3,18,12,0,0,4,228.294,Rxi17SilMS,326.59607,43.86836,52.7625,1E-03,Masterthesis.Duong.2021
+Chrysene,218-01-9,18,12,0,0,4,228.294,Rxi17SilMS,329.1606,44.14434,53.04737,1E-03,Masterthesis.Duong.2021
+Benzo[b]fluoranthene,205-99-2,20,12,0,0,5,252.316,Rxi17SilMS,356.75196,46.26569,72.88226,1E-03,Masterthesis.Duong.2021
+Benzo[k]fluoranthene,207-08-9,20,12,0,0,5,252.316,Rxi17SilMS,356.97896,45.9474,69.95633,1E-03,Masterthesis.Duong.2021
+Benzo[a]pyrene,50-32-8,20,12,0,0,5,252.316,Rxi17SilMS,368.40389,47.64951,74.03631,1E-03,Masterthesis.Duong.2021
+"Dibenzo[a,h]anthracene",53-70-3,22,14,0,0,5,278.3466,Rxi17SilMS,391.68633,48.82286,100.8365,1E-03,Masterthesis.Duong.2021
+"Indeno[1,2,3-cd]pyrene",193-39-5,22,12,0,0,6,276.33,Rxi17SilMS,393.38396,49.56478,89.15503,1E-03,Masterthesis.Duong.2021
+Benzo[ghi]perylene,191-24-2,22,12,0,0,6,276.3307,Rxi17SilMS,402.86917,51.99827,102.53956,1E-03,Masterthesis.Duong.2021
