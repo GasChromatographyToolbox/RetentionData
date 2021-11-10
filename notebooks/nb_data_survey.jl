@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.17.1
+# v0.17.0
 
 using Markdown
 using InteractiveUtils
@@ -99,19 +99,19 @@ begin
 end
 
 # ╔═╡ 1993f2bf-a421-45ea-b4a1-532cd7c44f50
-md"""
-## Fit function ``\theta_{char} = p_1 \left(\frac{T_{char}}{T_{st}}\right)^{p_2}``. 
-"""
-
-# ╔═╡ 5c9fe062-e4bf-48be-b9ea-4a34233b5fd1
-function fit_θchar_over_Tchar(Tchar, θchar)
-	# fit a model to the plot (derived from Blumberg.2010)
-	model(x, p) = p[1].*(x./273.15).^p[2]
-	p0 = [22, 0.7]
-	fit = curve_fit(model, Tchar, θchar, p0)
-	p1 = measurement(fit.param[1], standard_errors(fit)[1])
-	p2 = measurement(fit.param[2], standard_errors(fit)[2])
-	return p1, p2, fit
+begin
+	function fit_θchar_over_Tchar(Tchar, θchar)
+		# fit a model to the plot (derived from Blumberg.2010)
+		model(x, p) = p[1].*(x./273.15).^p[2]
+		p0 = [22, 0.7]
+		fit = curve_fit(model, Tchar, θchar, p0)
+		p1 = measurement(fit.param[1], standard_errors(fit)[1])
+		p2 = measurement(fit.param[2], standard_errors(fit)[2])
+		return p1, p2, fit
+	end
+	md"""
+	## Fit function ``\theta_{char} = p_1 \left(\frac{T_{char}}{T_{st}}\right)^{p_2}``. 
+	"""
 end
 
 # ╔═╡ e5023fea-8e1a-44ec-b314-26b5bf3dc990
@@ -127,10 +127,18 @@ begin
 			push!(ΔCp_all, df_sp[i].DeltaCp[j])
 		end
 	end
+	# thermodynamic parameters of n-alkanes 
+	Tchar_alkanes = Float64[]
+	θchar_alkanes = Float64[]
+	ΔCp_alkanes = Float64[]
+	for i=1:length(df_sp_alkanes)
+		for j=1:size(df_sp_alkanes[i])[1]
+			push!(Tchar_alkanes, df_sp_alkanes[i].Tchar[j])
+			push!(θchar_alkanes, df_sp_alkanes[i].thetachar[j])
+			push!(ΔCp_alkanes, df_sp_alkanes[i].DeltaCp[j])
+		end
+	end
 end
-
-# ╔═╡ b2f87308-b888-42dc-8555-d16326315704
-fit_θchar_over_Tchar(Tchar_all, θchar_all)
 
 # ╔═╡ 2b1d497d-f681-4c9d-b5a7-36f1273d31e9
 begin
@@ -148,9 +156,12 @@ begin
 		scatter!(p_θchar_Tchar_PAH, df_sp_PAH[i].Tchar, df_sp_PAH[i].thetachar, label=sp[i])
 	end
 
-	model(x, p) = p[1].*(x./273.15).^p[2]
+	model_θchar(x, p) = p[1].*(x./273.15).^p[2]
 	p1_all, p2_all, fit_all = fit_θchar_over_Tchar(Tchar_all.+273.15, θchar_all)
-	plot!(p_θchar_Tchar, sort(Tchar_all), sort(model(Tchar_all.+273.15, [Measurements.value(p1_all), Measurements.value(p2_all)])), label="fit all")
+	plot!(p_θchar_Tchar, sort(Tchar_all), sort(model_θchar(Tchar_all.+273.15, [Measurements.value(p1_all), Measurements.value(p2_all)])), label="fit all")
+
+	p1_alkanes, p2_alkanes, fit_alkanes = fit_θchar_over_Tchar(Tchar_alkanes.+273.15, θchar_alkanes)
+	plot!(p_θchar_Tchar_alkanes, sort(Tchar_alkanes), sort(model_θchar(Tchar_alkanes.+273.15, [Measurements.value(p1_alkanes), Measurements.value(p2_alkanes)])), label="fit all alkanes")
 	
 	md"""
 	## Plot of ``\theta_{char}`` over ``T_{char}``
@@ -165,6 +176,25 @@ end
 
 # ╔═╡ 71de179c-efb1-47b1-b1ef-29ceb1485908
 p1_all, p2_all
+
+# ╔═╡ 89828e12-0753-4663-aaab-bb8f57441f34
+p1_alkanes, p2_alkanes
+
+# ╔═╡ 07512858-8443-4d0f-b86c-7f15772bba36
+begin
+	function fit_ΔCp_over_Tchar(Tchar, ΔCp)
+		# fit a model to the plot
+		model(x, p) = p[1] .+ p[2] .* x
+		p0 = [22, 0.7]
+		fit = curve_fit(model, Tchar, ΔCp, p0)
+		p1 = measurement(fit.param[1], standard_errors(fit)[1])
+		p2 = measurement(fit.param[2], standard_errors(fit)[2])
+		return p1, p2, fit
+	end
+	md"""
+	## Fit function ``\Delta C_p = p_1 + p_2 T_{char}``. 
+	"""
+end
 
 # ╔═╡ 445f7e73-dd48-4e19-a1ea-f3edc42ec85a
 begin
@@ -181,6 +211,13 @@ begin
 	
 		scatter!(p_ΔCp_Tchar_PAH, df_sp_PAH[i].Tchar, df_sp_PAH[i].DeltaCp, label=sp[i])
 	end
+
+	model_ΔCp(x, p) = p[1] .+ p[2] .* x
+	q1_all, q2_all, fit_ΔCp_all = fit_ΔCp_over_Tchar(Tchar_all.+273.15, ΔCp_all)
+	plot!(p_ΔCp_Tchar, sort(Tchar_all), sort(model_ΔCp(Tchar_all.+273.15, [Measurements.value(q1_all), Measurements.value(q2_all)])), label="fit all")
+
+	q1_alkanes, q2_alkanes, fit_ΔCp_alkanes = fit_ΔCp_over_Tchar(Tchar_alkanes.+273.15, ΔCp_alkanes)
+	plot!(p_ΔCp_Tchar_alkanes, sort(Tchar_alkanes), sort(model_ΔCp(Tchar_alkanes.+273.15, [Measurements.value(q1_alkanes), Measurements.value(q2_alkanes)])), label="fit all alkanes")
 	
 	md"""
 	## Plot of ``\Delta C_p`` over ``T_{char}``
@@ -194,10 +231,10 @@ begin
 end
 
 # ╔═╡ e0f079c3-5348-4ec4-a3ce-25b8a8e2a007
-fit_all
+q1_all, q2_all
 
-# ╔═╡ 3ef6fdfb-4e4c-4410-bcd8-f4986e55579e
-model(Tchar_all, [p1_all, p2_all])
+# ╔═╡ 80582b3e-0580-42ca-a805-42320b952434
+q1_alkanes, q2_alkanes
 
 # ╔═╡ Cell order:
 # ╠═8c8f61ce-4134-11ec-166f-f122d3fd3e27
@@ -205,17 +242,17 @@ model(Tchar_all, [p1_all, p2_all])
 # ╠═95fd0d58-8a21-4117-9844-f25f9e615ae9
 # ╠═c6ca82a6-fdda-47ad-93a3-a22926c94b10
 # ╠═cbc4058b-8da4-4d84-9dcc-c9cacd4c4737
-# ╠═c34ffee2-b6e0-4e35-8278-cf906d3be293
-# ╠═50cf085a-a6b4-484b-9d68-4e9763e51969
+# ╟─c34ffee2-b6e0-4e35-8278-cf906d3be293
+# ╟─50cf085a-a6b4-484b-9d68-4e9763e51969
 # ╠═f72fa197-ea0d-4bcc-99b2-6292ff4fd034
 # ╠═9fc410e8-a9e7-4382-992c-23ed65542ab1
 # ╠═7594a514-57f8-40fe-bb92-fa8e6853f880
-# ╠═1993f2bf-a421-45ea-b4a1-532cd7c44f50
-# ╠═5c9fe062-e4bf-48be-b9ea-4a34233b5fd1
+# ╟─1993f2bf-a421-45ea-b4a1-532cd7c44f50
 # ╠═e5023fea-8e1a-44ec-b314-26b5bf3dc990
-# ╠═b2f87308-b888-42dc-8555-d16326315704
 # ╠═2b1d497d-f681-4c9d-b5a7-36f1273d31e9
 # ╠═71de179c-efb1-47b1-b1ef-29ceb1485908
-# ╠═445f7e73-dd48-4e19-a1ea-f3edc42ec85a
+# ╠═89828e12-0753-4663-aaab-bb8f57441f34
+# ╟─07512858-8443-4d0f-b86c-7f15772bba36
+# ╟─445f7e73-dd48-4e19-a1ea-f3edc42ec85a
 # ╠═e0f079c3-5348-4ec4-a3ce-25b8a8e2a007
-# ╠═3ef6fdfb-4e4c-4410-bcd8-f4986e55579e
+# ╠═80582b3e-0580-42ca-a805-42320b952434
