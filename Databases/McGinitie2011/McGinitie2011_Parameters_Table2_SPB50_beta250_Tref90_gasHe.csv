@@ -1,6 +1,6 @@
-Compound,DeltaHref,DeltaSref,DeltaCp,,,
-,(kJ/mol),(J/mol∙K),(J/mol∙K),,,
-2-Methylhexane,-26.472,-45.420,30.319,,,
-"2,6-Dimethyloctane",-36.341,-57.669,55.746,,,
-4-Nonanol,-46.228,-71.356,85.395,,,
-3-Hexanol,-34.939,-56.316,71.925,,,
+Compound,DeltaHref,DeltaSref,DeltaCp
+,(kJ/mol),(J/mol∙K),(J/mol∙K)
+2-Methylhexane,-26.472,-45.420,30.319
+"2,6-Dimethyloctane",-36.341,-57.669,55.746
+4-Nonanol,-46.228,-71.356,85.395
+3-Hexanol,-34.939,-56.316,71.925
