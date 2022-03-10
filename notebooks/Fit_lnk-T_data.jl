@@ -31,27 +31,130 @@ Fit the ABC-model and the K-centric model to the lnk(T) data loaded from the fol
 # ╔═╡ c8f6712d-84d7-45eb-bdcc-d6a3a7504df3
 db_path = "/Users/janleppert/Documents/GitHub/ThermodynamicData/Databases"
 
-# ╔═╡ 33476dc7-dbb9-4f69-af87-5118f687708d
-data = ThermodynamicData.load_lnkT_data(db_path)
+# ╔═╡ 4cf9351d-b5d0-4469-a543-8d428094884e
+md"""
+## Settings
 
-# ╔═╡ 9301e93f-3625-476f-9473-e760340f2a2c
-ThermodynamicData.fit_models!(data)
+- weighted: $(@bind weight CheckBox())
+
+- threshold: $(@bind bool_th CheckBox()) $(@bind threshold NumberField(0.0:0.01:10.0; default=0.1))
+
+lower bounds ABC-model:
+- `A-ln(β₀)`: $(@bind bool_lb_ABC1 CheckBox(default=false)) $(@bind lb_ABC1 NumberField(-1000:1:1000; default=-1000))
+- `B`: $(@bind bool_lb_ABC2 CheckBox(default=true)) $(@bind lb_ABC2 NumberField(-100000:1:100000; default=0))
+- `C`: $(@bind bool_lb_ABC3 CheckBox(default=true)) $(@bind lb_ABC3 NumberField(-1000:1:1000; default=0))
+
+upper bounds ABC-model:
+- `A-ln(β₀)`: $(@bind bool_ub_ABC1 CheckBox(default=true)) $(@bind ub_ABC1 NumberField(-1000:1:1000; default=0))
+- `B`: $(@bind bool_ub_ABC2 CheckBox(default=false)) $(@bind ub_ABC2 NumberField(-100000:1:100000; default=100000))
+- `C`: $(@bind bool_ub_ABC3 CheckBox(default=false)) $(@bind ub_ABC3 NumberField(-1000:1:1000; default=1000))
+
+lower bounds Kcentric-model:
+- `Tchar + Tst`: $(@bind bool_lb_Kc1 CheckBox(default=true)) $(@bind lb_Kc1 NumberField(0:1:10000; default=0))
+- `θchar`: $(@bind bool_lb_Kc2 CheckBox(default=true)) $(@bind lb_Kc2 NumberField(-1000:1:1000; default=0))
+- `C=ΔCp/R`: $(@bind bool_lb_Kc3 CheckBox(default=true)) $(@bind lb_Kc3 NumberField(-1000:1:1000; default=0))
+
+upper bounds ABC-model:
+- `Tchar + Tst`: $(@bind bool_ub_Kc1 CheckBox(default=false)) $(@bind ub_Kc1 NumberField(0:1:10000; default=10000))
+- `θchar`: $(@bind bool_ub_Kc2 CheckBox(default=false)) $(@bind ub_Kc2 NumberField(-1000:1:1000; default=1000))
+- `C=ΔCp/R`: $(@bind bool_ub_Kc3 CheckBox(default=true)) $(@bind ub_Kc3 NumberField(-1000:1:1000; default=500))
+"""
+
+# ╔═╡ 363ee826-14d1-4e1c-a4b9-a2d00e8d48cc
+begin
+	lb_ABC = [-Inf, -Inf, -Inf]
+	ub_ABC = [Inf, Inf, Inf]
+	lb_Kcentric = [-Inf, -Inf, -Inf]
+	ub_Kcentric = [Inf, Inf, Inf]
+	if bool_th == true
+		th = threshold
+	else
+		th = NaN
+	end
+	if bool_lb_ABC1 == false
+		lb_ABC[1] = -Inf
+	else
+		lb_ABC[1] = lb_ABC1
+	end
+	if bool_lb_ABC2 == false
+		lb_ABC[2] = -Inf
+	else
+		lb_ABC[2] = lb_ABC2
+	end
+	if bool_lb_ABC3 == false
+		lb_ABC[3] = -Inf
+	else
+		lb_ABC[3] = lb_ABC3
+	end
+	if bool_ub_ABC1 == false
+		ub_ABC[1] = Inf
+	else
+		ub_ABC[1] = ub_ABC1
+	end
+	if bool_ub_ABC2 == false
+		ub_ABC[2] = Inf
+	else
+		ub_ABC[2] = ub_ABC2
+	end
+	if bool_ub_ABC3 == false
+		ub_ABC[3] = Inf
+	else
+		ub_ABC[3] = ub_ABC3
+	end
+	if bool_lb_Kc1 == false
+		lb_Kcentric[1] = -Inf
+	else
+		lb_Kcentric[1] = lb_Kc1
+	end
+	if bool_lb_Kc2 == false
+		lb_Kcentric[2] = -Inf
+	else
+		lb_Kcentric[2] = lb_Kc2
+	end
+	if bool_lb_Kc3 == false
+		lb_Kcentric[3] = -Inf
+	else
+		lb_Kcentric[3] = lb_Kc3
+	end
+	if bool_ub_Kc1 == false
+		ub_Kcentric[1] = Inf
+	else
+		ub_Kcentric[1] = ub_Kc1
+	end
+	if bool_ub_Kc2 == false
+		ub_Kcentric[2] = Inf
+	else
+		ub_Kcentric[2] = ub_Kc2
+	end
+	if bool_ub_Kc3 == false
+		ub_Kcentric[3] = Inf
+	else
+		ub_Kcentric[3] = ub_Kc3
+	end
+	weight, th, lb_ABC, ub_ABC, lb_Kcentric, ub_Kcentric
+end
+
+# ╔═╡ c037a761-f192-4a3b-a617-b6024ac6cd61
+begin
+	data = ThermodynamicData.load_lnkT_data(db_path)
+	ThermodynamicData.fit_models!(data; weighted=weight, threshold=th, lb_ABC=lb_ABC, ub_ABC=ub_ABC, lb_Kcentric=lb_Kcentric, ub_Kcentric=ub_Kcentric)
+end;
 
 # ╔═╡ ae6986cd-33f3-48b1-9f8b-71535670bf27
 md"""
 ## Plot lnk(T) and fit
-Select data set: $(@bind select_dataset Slider(1:length(data.fit); show_value=true))
+Select data set: $(@bind select_dataset Slider(1:length(data.fitting); show_value=true))
 """
 
 # ╔═╡ 3bac9f60-8749-425b-8e87-ba1d7442ca93
 md"""
-Select substance: $(@bind select_substance Slider(1:length(data.fit[select_dataset].Name); show_value=true))
+Select substance: $(@bind select_substance Slider(1:length(data.fitting[select_dataset].Name); show_value=true))
 """
 
 # ╔═╡ cd5d0b6c-6e76-4293-80a0-b07ea94a05d8
 begin
-	plnk = ThermodynamicData.plot_lnk_fit(data.fit, select_dataset, select_substance)
-	preslnk = ThermodynamicData.plot_res_lnk_fit(data.fit, select_dataset, select_substance)
+	plnk = ThermodynamicData.plot_lnk_fit(data.fitting, select_dataset, select_substance)
+	preslnk = ThermodynamicData.plot_res_lnk_fit(data.fitting, select_dataset, select_substance)
 	pl = plot(plnk, preslnk)
 	md"""
 	$(embed_display(pl))
@@ -60,112 +163,13 @@ begin
 	"""
 end
 
-# ╔═╡ ed153955-881f-451d-9edc-277cdd583ead
-begin
-	data_th = ThermodynamicData.load_lnkT_data(db_path)
-	ThermodynamicData.fit_models_th!(data_th, 0.01)
-end
-
-# ╔═╡ 4c60d763-388f-4122-9a19-dd90cc280ff6
-data.fit[2].R²_ABC[7]
-
-# ╔═╡ 4d8c3c53-b44c-4d42-b4ab-ecb650faf45d
-data_th.fit[2].R²_ABC[7]
-
-# ╔═╡ 572996fb-1d67-480e-b4f8-cd1fc379b996
-ThermodynamicData.chi_square(data.fit[2].fitABC[7])
-
-# ╔═╡ 0cd52b0f-8031-46a8-ad23-129ec8473258
-ThermodynamicData.chi_square(data_th.fit[2].fitABC[7])
-
-# ╔═╡ 95b7249b-329e-4f0c-9551-78fe6d26790d
-data.fit[2].fitABC[7].param
-
-# ╔═╡ f9dbcc6a-aca1-4c9d-8237-4604ae25bb0b
-data_th.fit[2].fitABC[7].param
-
-# ╔═╡ 63fc43ba-b826-44c6-a1dd-e5befe736662
-data.fit[2].fitKcentric[7].param
-
-# ╔═╡ 8f93d440-7109-497b-bcb1-b9169b17776b
-data_th.fit[2].fitKcentric[7].param
-
-# ╔═╡ 64380cfb-051b-480b-9425-16b0efd1c0f8
-md"""
-## Plot lnk(T) and fit with res-threshold
-Select data set: $(@bind select_dataset_th Slider(1:length(data.fit); show_value=true))
-"""
-
-# ╔═╡ 5ed4f069-a63b-4b03-9058-137df0c9c0c8
-md"""
-Select substance: $(@bind select_substance_th Slider(1:length(data_th.fit[select_dataset_th].Name); show_value=true))
-"""
-
-# ╔═╡ 158ea4e8-9f24-4f95-a535-09656618d471
-begin
-	plnk_th = ThermodynamicData.plot_lnk_fit(data_th.fit, select_dataset_th, select_substance_th)
-	preslnk_th = ThermodynamicData.plot_res_lnk_fit(data_th.fit, select_dataset_th, select_substance_th)
-	pl_th = plot(plnk_th, preslnk_th)
-	md"""
-	$(embed_display(pl_th))
-	"""
-end
-
-# ╔═╡ fc684ff0-18ed-4923-8c98-47b48a454d7d
-begin
-	data_w = ThermodynamicData.load_lnkT_data(db_path)
-	ThermodynamicData.fit_models_w!(data_w)
-end
-
-# ╔═╡ c48731dc-c87b-473b-ac7d-1b3088339c03
-data_w.fit[2].R²_ABC[7]
-
-# ╔═╡ 3e6c8729-ae6b-4011-8890-78cefe7ea550
-ThermodynamicData.chi_square(data_w.fit[2].fitABC[7])
-
-# ╔═╡ 6ecb42a8-4277-4a7a-85d2-580aac266306
-data_w.fit[2].fitABC[7].param
-
-# ╔═╡ 7d4e9a8b-0e3b-4e40-9354-e3d5843db55e
-data_w.fit[2].fitKcentric[7].param
-
-# ╔═╡ 4f7a269e-72d1-453e-b6f0-d5b61eea755c
-md"""
-## Plot lnk(T) and fit weighted
-Select data set: $(@bind select_dataset_w Slider(1:length(data.fit); show_value=true))
-"""
-
-# ╔═╡ 8c3b3c8e-28fd-4eda-8700-7a5dd708851f
-md"""
-Select substance: $(@bind select_substance_w Slider(1:length(data_w.fit[select_dataset_w].Name); show_value=true))
-"""
-
-# ╔═╡ ea8e2cd2-776c-46b0-aa47-53a2935ca1e2
-begin
-	plnk_w = ThermodynamicData.plot_lnk_fit(data_w.fit, select_dataset_w, select_substance_w)
-	preslnk_w = ThermodynamicData.plot_res_lnk_fit(data_w.fit, select_dataset_w, select_substance_w)
-	pl_w = plot(plnk_w, preslnk_w)
-	md"""
-	$(embed_display(pl_w))
-	"""
-end
-
-# ╔═╡ 9de350b6-dbed-45d7-ab80-94ea9bb72f7a
-data_w.fit[2].fitABC[7].wt
-
 # ╔═╡ 2fd4d728-9068-415c-b006-26f93dddce28
 md"""
 ## Compare parameters
 """
 
 # ╔═╡ f57fc4ec-9522-401f-91de-9495ca50bbb9
-par = ThermodynamicData.extract_parameters_from_fit(data.fit, data.beta0)
-
-# ╔═╡ 1c273a9d-eacb-4d0b-bce2-9be16def68f0
-par_th = ThermodynamicData.extract_parameters_from_fit(data_th.fit, data_th.beta0)
-
-# ╔═╡ 142242df-9055-4989-9e80-0420cb3fa102
-par_w = ThermodynamicData.extract_parameters_from_fit(data_w.fit, data_w.beta0)
+par = ThermodynamicData.extract_parameters_from_fit(data.fitting, data.beta0)
 
 # ╔═╡ 8a0d3816-b114-42e3-8bef-cda7b63af509
 begin
@@ -174,31 +178,175 @@ begin
 	for i=2:length(par)
 		scatter!(pABC, Measurements.value.(par[i].A), Measurements.value.(par[i].B), Measurements.value.(par[i].C), label=i)
 	end
-	#scatter!(pABC, flagged.A, flagged.B, flagged.C, label="", m=:cross, c=:black, msize=5)
-	#scatter!(pABC, flagged_ABC.A, flagged_ABC.B, flagged_ABC.C, label="", m=:cross, c=:darkred, msize=4)
 	pABC
 end
 
 # ╔═╡ baba96bf-b0fb-43a3-8f58-954343b918fd
 begin
 	plotly()
-	pKcentric_w = scatter(Measurements.value.(par_w[1].Tchar), Measurements.value.(par_w[1].thetachar), Measurements.value.(par_w[1].DeltaCp), label=1, xlabel="Tchar in °C", ylabel="θchar in °C", zlabel="ΔCp in J mol⁻¹ K⁻¹")
-	for i=2:length(par_w)
-		scatter!(pKcentric_w, Measurements.value.(par_w[i].Tchar), Measurements.value.(par_w[i].thetachar), Measurements.value.(par_w[i].DeltaCp), label=i)
+	pKcentric = scatter(Measurements.value.(par[1].Tchar), Measurements.value.(par[1].thetachar), Measurements.value.(par[1].DeltaCp), label=1, xlabel="Tchar in °C", ylabel="θchar in °C", zlabel="ΔCp in J mol⁻¹ K⁻¹")
+	for i=2:length(par)
+		scatter!(pKcentric, Measurements.value.(par[i].Tchar), Measurements.value.(par[i].thetachar), Measurements.value.(par[i].DeltaCp), label=i)
 	end
-	#scatter!(pABC, flagged.A, flagged.B, flagged.C, label="", m=:cross, c=:black, msize=5)
-	#scatter!(pABC, flagged_ABC.A, flagged_ABC.B, flagged_ABC.C, label="", m=:cross, c=:darkred, msize=4)
-	pKcentric_w
+	pKcentric
 end
 
 # ╔═╡ 8eb557fa-8e94-49fd-8fc5-17f8d42943c6
 begin
-	p_R2 = scatter(par[1].R²_ABC)
+	p_R2_ABC = scatter(par[1].R²_ABC, title="R², ABC-model", ylabel="R²", label=1)
 	for i=2:length(par)
-		scatter!(p_R2, par[i].R²_ABC)
+		scatter!(p_R2_ABC, par[i].R²_ABC, label=i)
 	end
-	p_R2
+
+	p_R2_Kcentric = scatter(par[1].R²_Kcentric, title="R², Kcentric-model", ylabel="R²", label=1)
+	for i=2:length(par)
+		scatter!(p_R2_Kcentric, par[i].R²_Kcentric, label=i)
+	end
+	
+	p_χ2_ABC = scatter(par[1].χ²_ABC, title="χ², ABC-model", ylabel="χ²", label=1)
+	for i=2:length(par)
+		scatter!(p_χ2_ABC, par[i].χ²_ABC, label=i)
+	end
+	
+	p_χ2_Kcentric = scatter(par[1].χ²_Kcentric, title="χ², Kcentric-model", ylabel="χ²", label=1)
+	for i=2:length(par)
+		scatter!(p_χ2_Kcentric, par[i].χ²_Kcentric, label=i)
+	end
+	plot(p_R2_ABC, p_R2_Kcentric, p_χ2_ABC, p_χ2_Kcentric)
 end
+
+# ╔═╡ d6f76ae4-4a89-42b9-8080-a37deec3ad3f
+md"""
+## Compare Fits for Boswell data with previous fits
+"""
+
+# ╔═╡ a41e3262-a973-435d-9752-664bd0a77f86
+old_db = DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/ThermodynamicData/Databases/Database_append.csv"))
+
+# ╔═╡ f8b971a6-b859-4979-9a4a-b156520a1df2
+old_boswell = filter([:Annotation] => x -> x == "Boswell.2012", old_db)
+
+# ╔═╡ ab17278f-5fcc-4872-99d4-d4c27ca1b5c2
+new_boswell = par[1]
+
+# ╔═╡ 06237216-8009-4432-a9c3-73b8f017ae81
+begin
+	s_new = sort(new_boswell, :Name)
+	s_old = sort(old_boswell, :Name)
+	p_Tchar = scatter(s_new.Tchar, s_old.Tchar, title="Tchar", xlabel="new", ylabel="old", label="")
+	p_thetachar = scatter(s_new.thetachar, s_old.thetachar, title="θchar", xlabel="new", ylabel="old", label="")
+	p_DeltaCp = scatter(s_new.DeltaCp, s_old.DeltaCp, title="ΔCp", xlabel="new", ylabel="old", label="")
+end;
+
+# ╔═╡ 02657f8c-7a0d-4682-b1d1-ec650a5312bf
+begin
+	p_diff_Tchar = scatter(s_new.Tchar.-s_old.Tchar, title="Tchar", xlabel="i", ylabel="ΔTchar", label="")
+	p_diff_thetachar = scatter(s_new.thetachar.-s_old.thetachar, title="θchar", xlabel="i", ylabel="Δθchar", label="")
+	p_diff_DeltaCp = scatter(s_new.DeltaCp.-s_old.DeltaCp, title="ΔCp", xlabel="i", ylabel="ΔΔCp", label="")
+	p_diff_thetachar_diff_DeltaCp = scatter(s_new.thetachar.-s_old.thetachar, s_new.DeltaCp.-s_old.DeltaCp, title="", xlabel="Δθchar", ylabel="ΔΔCp", label="")
+end;
+
+# ╔═╡ 10fb7079-9b27-4f06-ac91-478b082039ac
+md"""
+### Observation
+
+$(embed_display(plot(p_Tchar, p_thetachar, p_DeltaCp)))
+
+$(embed_display(plot(p_diff_Tchar, p_diff_thetachar, p_diff_DeltaCp, p_diff_thetachar_diff_DeltaCp)))
+
+The parameters for the two `Boswell`-datasets correlate, but they are only equal for `Tchar`.
+
+For the parameters θchar the value is higher in the new parameter set and for ΔCp the value is lower in the new parameter set.
+"""
+
+# ╔═╡ 570ffc0c-c873-477d-afd4-2ecad09c9020
+md"""
+### Compare lnk
+"""
+
+# ╔═╡ 3207a44d-158d-4107-9ca7-e647fe269d91
+@bind ii Slider(1:length(s_new.Name); show_value=true)
+
+# ╔═╡ 4a672bc4-14a3-42ce-a162-83f3ff04894e
+begin
+	T = 40.0:1.0:400.0
+	new_lnk = Measurements.value.(ThermodynamicData.Kcentric(T.+273.15, [s_new.Tchar[ii]+273.15, s_new.thetachar[ii], s_new.DeltaCp[ii]]))
+	old_lnk = ThermodynamicData.Kcentric(T.+273.15, [s_old.Tchar[ii]+273.15, s_old.thetachar[ii], s_old.DeltaCp[ii]])
+	p_lnk_b = plot(T, new_lnk, xlabel="T in °C", ylabel="lnk", label="new")
+	plot!(p_lnk_b, T, old_lnk, label="old")
+	md"""
+
+	$(embed_display(p_lnk_b))
+
+	$(embed_display(plot(T, old_lnk./new_lnk)))
+	#### Observation
+
+	The ratio between new and old lnk-plots seems to be the same for all substances with a value of `new/old ≈ 0.4343` resp. `old/new ≈ 2.30`.
+
+	The reason could be:
+	
+	a) a wrong value for the phase ratio β₀
+	
+	b) log₁₀_k_ instead of ln_k_ values
+
+	-> log₁₀_k_/ln_k_ = $(round(log10(10)/log(10); digits=4)) resp. ln_k_/log₁₀_k_ = $(round(log(10)/log10(10); digits=3))
+	"""
+end
+
+# ╔═╡ 98b2e6ec-033e-4412-9dec-db39ea54ec44
+log10(100)/log(100)
+
+# ╔═╡ 033da5c1-b298-407a-8c16-ef2434da84fb
+md"""
+## Compare Fits for Marquart data with previous fits
+"""
+
+# ╔═╡ 97430fc3-f23c-4e1f-8cc0-ef80b6428d56
+old_marquart = filter([:Annotation] => x -> x == "Masterthesis.Marquart.2020", old_db)
+
+# ╔═╡ 9507ab97-bb73-4be0-90fa-0f312a0d78ff
+begin
+	i_Marquart = findall(data.source.=="Marquart2020")
+	new_marquart = DataFrame()
+	for i=1:length(i_Marquart)
+		append!(new_marquart, par[i_Marquart[i]])
+	end
+	new_marquart
+end
+
+# ╔═╡ 06fe6a15-9f9a-47d4-8f29-e4560fb6a8af
+begin
+	# use only common names in both
+	s_new_m = sort(filter([:Name] => x -> x in old_marquart.Name, new_marquart), :Name)
+	s_old_m = sort(filter([:Name] => x -> x in s_new_m.Name, old_marquart), :Name)
+	p_Tchar_m = scatter(s_new_m.Tchar, s_old_m.Tchar, title="Tchar", xlabel="new", ylabel="old", label="")
+	p_thetachar_m = scatter(s_new_m.thetachar, s_old_m.thetachar, title="θchar", xlabel="new", ylabel="old", label="")
+	p_DeltaCp_m = scatter(s_new_m.DeltaCp, s_old_m.DeltaCp, title="ΔCp", xlabel="new", ylabel="old", label="")
+end;
+
+# ╔═╡ bab7b4d7-f719-429b-ab90-dd9c60e20a48
+begin
+	p_diff_Tchar_m = scatter(s_new_m.Tchar.-s_old_m.Tchar, title="Tchar", xlabel="i", ylabel="ΔTchar", label="")
+	p_diff_thetachar_m = scatter(s_new_m.thetachar.-s_old_m.thetachar, title="θchar", xlabel="i", ylabel="Δθchar", label="")
+	p_diff_DeltaCp_m = scatter(s_new_m.DeltaCp.-s_old_m.DeltaCp, title="ΔCp", xlabel="i", ylabel="ΔΔCp", label="")
+end;
+
+# ╔═╡ 0490b8b6-b21b-4280-b129-16586eaa6b27
+md"""
+### Observation 
+
+$(embed_display(plot(p_Tchar_m, p_thetachar_m, p_DeltaCp_m)))
+
+$(embed_display(plot(p_diff_Tchar_m, p_diff_thetachar_m, p_diff_DeltaCp_m)))
+
+For the `Marquart`-data all three parameters are equal for the old and the new set, except for one substance:
+
+i = 18
+
+$(s_new_m.Name[18])
+
+The difference is small. Biggest difference for the parameters ΔCp.
+"""
 
 # ╔═╡ 91c46525-43f9-4ef2-98f4-35fb3974d64f
 md"""
@@ -1443,39 +1591,34 @@ version = "0.9.1+5"
 # ╠═6f0ac0bc-9a3f-11ec-0866-9f56a0d489dd
 # ╠═0b608842-5672-44cc-bd70-c168c537667e
 # ╠═c8f6712d-84d7-45eb-bdcc-d6a3a7504df3
-# ╠═33476dc7-dbb9-4f69-af87-5118f687708d
-# ╠═9301e93f-3625-476f-9473-e760340f2a2c
+# ╟─4cf9351d-b5d0-4469-a543-8d428094884e
+# ╟─363ee826-14d1-4e1c-a4b9-a2d00e8d48cc
 # ╟─ae6986cd-33f3-48b1-9f8b-71535670bf27
 # ╟─3bac9f60-8749-425b-8e87-ba1d7442ca93
-# ╠═cd5d0b6c-6e76-4293-80a0-b07ea94a05d8
-# ╠═ed153955-881f-451d-9edc-277cdd583ead
-# ╠═4c60d763-388f-4122-9a19-dd90cc280ff6
-# ╠═4d8c3c53-b44c-4d42-b4ab-ecb650faf45d
-# ╠═c48731dc-c87b-473b-ac7d-1b3088339c03
-# ╠═572996fb-1d67-480e-b4f8-cd1fc379b996
-# ╠═0cd52b0f-8031-46a8-ad23-129ec8473258
-# ╠═3e6c8729-ae6b-4011-8890-78cefe7ea550
-# ╠═95b7249b-329e-4f0c-9551-78fe6d26790d
-# ╠═f9dbcc6a-aca1-4c9d-8237-4604ae25bb0b
-# ╠═6ecb42a8-4277-4a7a-85d2-580aac266306
-# ╠═63fc43ba-b826-44c6-a1dd-e5befe736662
-# ╠═8f93d440-7109-497b-bcb1-b9169b17776b
-# ╠═7d4e9a8b-0e3b-4e40-9354-e3d5843db55e
-# ╟─64380cfb-051b-480b-9425-16b0efd1c0f8
-# ╟─5ed4f069-a63b-4b03-9058-137df0c9c0c8
-# ╠═158ea4e8-9f24-4f95-a535-09656618d471
-# ╠═fc684ff0-18ed-4923-8c98-47b48a454d7d
-# ╟─4f7a269e-72d1-453e-b6f0-d5b61eea755c
-# ╟─8c3b3c8e-28fd-4eda-8700-7a5dd708851f
-# ╠═ea8e2cd2-776c-46b0-aa47-53a2935ca1e2
-# ╠═9de350b6-dbed-45d7-ab80-94ea9bb72f7a
-# ╠═2fd4d728-9068-415c-b006-26f93dddce28
+# ╟─cd5d0b6c-6e76-4293-80a0-b07ea94a05d8
+# ╟─c037a761-f192-4a3b-a617-b6024ac6cd61
+# ╟─2fd4d728-9068-415c-b006-26f93dddce28
 # ╠═f57fc4ec-9522-401f-91de-9495ca50bbb9
-# ╠═1c273a9d-eacb-4d0b-bce2-9be16def68f0
-# ╠═142242df-9055-4989-9e80-0420cb3fa102
 # ╠═8a0d3816-b114-42e3-8bef-cda7b63af509
 # ╠═baba96bf-b0fb-43a3-8f58-954343b918fd
-# ╠═8eb557fa-8e94-49fd-8fc5-17f8d42943c6
+# ╟─8eb557fa-8e94-49fd-8fc5-17f8d42943c6
+# ╠═d6f76ae4-4a89-42b9-8080-a37deec3ad3f
+# ╠═a41e3262-a973-435d-9752-664bd0a77f86
+# ╠═f8b971a6-b859-4979-9a4a-b156520a1df2
+# ╠═ab17278f-5fcc-4872-99d4-d4c27ca1b5c2
+# ╟─06237216-8009-4432-a9c3-73b8f017ae81
+# ╠═02657f8c-7a0d-4682-b1d1-ec650a5312bf
+# ╟─10fb7079-9b27-4f06-ac91-478b082039ac
+# ╟─570ffc0c-c873-477d-afd4-2ecad09c9020
+# ╟─3207a44d-158d-4107-9ca7-e647fe269d91
+# ╟─4a672bc4-14a3-42ce-a162-83f3ff04894e
+# ╠═98b2e6ec-033e-4412-9dec-db39ea54ec44
+# ╠═033da5c1-b298-407a-8c16-ef2434da84fb
+# ╠═97430fc3-f23c-4e1f-8cc0-ef80b6428d56
+# ╠═9507ab97-bb73-4be0-90fa-0f312a0d78ff
+# ╟─06fe6a15-9f9a-47d4-8f29-e4560fb6a8af
+# ╟─bab7b4d7-f719-429b-ab90-dd9c60e20a48
+# ╟─0490b8b6-b21b-4280-b129-16586eaa6b27
 # ╠═91c46525-43f9-4ef2-98f4-35fb3974d64f
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
