@@ -660,8 +660,8 @@ The K-centric model for the relationship lnk(T).
 
 Calculate the coefficient of determination R² for LsqFit.jl result `fit` and measured data `y`.
 """
-function coeff_of_determination(fit, y)
-	SSres = sum(fit.resid.^2)
+function coeff_of_determination(model, fit, x, y)
+	SSres = sum((y .- model(x, fit.param)).^2)
 	SStot = sum((y .- mean(y)).^2)
 	R² = 1 - SSres/SStot
 	return R²
@@ -673,12 +673,37 @@ end
 Calculate chi-square χ² and the adjusted chi-square χ̄² for LsqFit.jl result `fit`.
 """
 function chi_square(fit)
-	χ² = sum(fit.resid.^2)
-	χ̄² = sum(fit.resid.^2)/dof(fit)
+	χ² = sum(fit.resid.^2) #-> rss(fit) from LSqFit.jl
+	χ̄² = sum(fit.resid.^2)/dof(fit) #-> mse(fit) from LSqFit.jl
 	return χ², χ̄²
 end
 
 """
+	T_column_names_to_Float(data::DataFrame)
+
+Translates the column names of the dataframe `data` containing the values of isothermal temperature to Float64. For the case of identical temperatures, a number is appended, separated by an underscore `_`. If this is the case the string is splited at the `_` and only the first part is used.
+"""
+function T_column_names_to_Float(data::DataFrame)
+	Ts = names(data)[2:end]
+	T = Array{Float64}(undef, length(Ts))
+	for i=1:length(Ts)
+		if occursin("_", Ts[i])
+			T[i] = parse(Float64,split(Ts[i], "_")[1])
+		else
+			T[i] = parse(Float64, Ts[i])
+		end
+	end
+	return T
+end
+
+#const lb_ABC = [-Inf, 0.0, 0.0]
+#const ub_ABC = [-log(β0[i]), Inf, Inf] # ub[1] = 0.0 or Inf, ub[3] 500.0/R ≈ 50.0
+#const lb_Kcentric = [0.0, 0.0, 0.0]
+#const ub_Kcentric = [Inf, Inf, 500.0]
+
+
+
+#="""
 	fit_models(data::Array{DataFrame}, β0::Array{Float64})
 
 Fit the ABC-model and the K-centric-model at the lnk(T) data of the `data`-array of dataframes, using LsqFit.jl 
@@ -696,16 +721,18 @@ function fit_models(data::Array{DataFrame}, β0::Array{Float64})
 		R²_ABC = Array{Float64}(undef, length(data[i][!,1]))
 		R²_Kcentric = Array{Float64}(undef, length(data[i][!,1]))
 		for j=1:length(data[i][!,1])
-			T[j] = parse.(Float64,names(data[i])[2:end])
+			T[j] = T_column_names_to_Float(data[i])
 			lnk[j] = collect(Union{Missing,Float64}, data[i][j,2:end])
-			ii = findall(isa.(lnk[j], Float64))
+			ii = findall(isa.(lnk[j], Float64)) # indices of `lnk` which are NOT missing
 			name[j] = data[i][!, 1][j]
+
+			fit_ABC(T, lnk, β0, res_threshold)
 			ABC0 = [-100.0, 10000.0, 10.0] # for p[1] = -100.0 - log(beta0) ?
-			lb_ABC = [-Inf, 0.0, 0.0]
-			ub_ABC = [-log(β0[i]), Inf, Inf]
+			#lb_ABC = [-Inf, 0.0, 0.0]
+			#ub_ABC = [-log(β0[i]), Inf, Inf]
 			Kcentric0 = [200.0+Tst, 30.0, 10.0]
-			lb_Kcentric = [0.0, 0.0, 0.0]
-			ub_Kcentric = [Inf, Inf, 500.0]
+			#lb_Kcentric = [0.0, 0.0, 0.0]
+			#ub_Kcentric = [Inf, Inf, 500.0]
 			fitABC[j] = curve_fit(ABC, T[j][ii].+Tst, lnk[j][ii], ABC0, lower=lb_ABC, upper=ub_ABC)
 			fitKcentric[j] = curve_fit(Kcentric, T[j][ii].+Tst, lnk[j][ii], Kcentric0, lower=lb_Kcentric, upper=ub_Kcentric)
 			ok_i[j] = ii
@@ -715,9 +742,9 @@ function fit_models(data::Array{DataFrame}, β0::Array{Float64})
 		fit[i] = DataFrame(Name=name, T=T, lnk=lnk, fitABC=fitABC, fitKcentric=fitKcentric, ok_i=ok_i, R²_ABC=R²_ABC, R²_Kcentric=R²_Kcentric)
 	end
 	return fit
-end
+end=#
 
-"""
+#="""
 	fit_models!(meta_data::DataFrame)
 
 Fit the ABC-model and the K-centric-model at the lnk(T) data of the `data`-array of dataframes, using LsqFit.jl and add the result in a new column (`fit`) of `meta_data 
@@ -726,7 +753,7 @@ function fit_models!(meta_data::DataFrame)
 	fit = fit_models(meta_data.data, meta_data.beta0)
 	meta_data[!, "fit"] = fit
 	return meta_data
-end
+end=#
 
 """
 	plot_lnk_fit(fit, i, j)
@@ -778,34 +805,160 @@ function plot_res_lnk_fit(fit, i, j)
 end
 
 """
+	fit(model, T, lnk, lb, ub; weighted=false, threshold=NaN)
+
+Fit the `model`-function to `lnk` over `T` data, with parameter lower boundaries `lb` and upper boundaries `ub`. 
+Data points with a residuum above `threshold` are excluded and the fit is recalculated, until all residua are below the threshold or only three data points are left (unless `threshold = NaN`, which is default). 
+If `weighted = true` the residuals of an unwheighted fit (OLS) are used as weights for a second fit (``w_i = 1/res_i^2``)
+"""
+function fit(model, T, lnk, lb, ub; weighted=false, threshold=NaN)
+
+	flagged_index = Int[]
+	ok_index = findall(ismissing.(lnk).==false) # indices of `lnk` which are NOT missing
+	
+	if model == ABC
+		p0 = [-100.0, 10000.0, 10.0] # for p[1] = -100.0 - log(beta0) ?
+	elseif model == Kcentric
+		p0 = [200.0+Tst, 30.0, 10.0]
+	end
+
+	if weighted == false
+		fit = curve_fit(model, T[ok_index].+Tst, lnk[ok_index], p0, lower=lb, upper=ub)
+
+	elseif weighted == true
+		fit_OLS = curve_fit(model, T[ok_index].+Tst, lnk[ok_index], p0, lower=lb, upper=ub)
+		# estimate weights from the residuals of the ordinary least squared
+		w = 1.0./fit_OLS.resid.^2
+		fit = curve_fit(model, T[ok_index].+Tst, lnk[ok_index], w, p0, lower=lb, upper=ub)
+	end
+
+	if isnan(threshold) == false
+		# check the residuen
+		while maximum(abs.(fit.resid)) > threshold
+			if length(ok_index) <= 3
+				break
+			end
+			imax = findfirst(abs.(fit.resid).==maximum(abs.(fit.resid))) # exclude this data point
+			push!(flagged_index, ok_index[imax])
+			ok_index = ok_index[findall(ok_index.!=ok_index[imax])]
+			if weighted == false
+				fit = curve_fit(model, T[ok_index].+Tst, lnk[ok_index], p0, lower=lb, upper=ub)
+			elseif weighted == true
+				fit_OLS = curve_fit(model, T[ok_index].+Tst, lnk[ok_index], p0, lower=lb, upper=ub)
+				# estimate weights from the residuals of the ordinary least squared
+				w = 1.0./fit_OLS.resid.^2
+				fit = curve_fit(model, T[ok_index].+Tst, lnk[ok_index], w, p0, lower=lb, upper=ub)
+			end
+		end
+	end
+	return fit, ok_index, flagged_index
+end
+
+"""
+	fit_models(data::Array{DataFrame}, β0::Array{Float64})
+
+Fit the ABC-model and the K-centric-model at the lnk(T) data of the `data`-array of dataframes, using LsqFit.jl 
+"""
+function fit_models(data::Array{DataFrame}; weighted=false, threshold=NaN, lb_ABC=[-Inf, 0.0, 0.0], ub_ABC=[0.0, Inf, 50.0], lb_Kcentric=[0.0, 0.0, 0.0], ub_Kcentric=[Inf, Inf, 500.0])
+
+	fits = Array{DataFrame}(undef, length(data))
+	for i=1:length(data)
+		fitABC = Array{Any}(undef, length(data[i][!,1]))
+		fitKcentric = Array{Any}(undef, length(data[i][!,1]))
+		T = Array{Array{Float64}}(undef, length(data[i][!,1]))
+		lnk = Array{Any}(undef, length(data[i][!,1]))
+		name = Array{String}(undef, length(data[i][!,1]))
+		excludedABC_i = Array{Array{Int,1}}(undef, length(data[i][!,1]))
+		okABC_i = Array{Array{Int,1}}(undef, length(data[i][!,1]))
+		excludedKcentric_i = Array{Array{Int,1}}(undef, length(data[i][!,1]))
+		okKcentric_i = Array{Array{Int,1}}(undef, length(data[i][!,1]))
+		R²_ABC = Array{Float64}(undef, length(data[i][!,1]))
+		R²_Kcentric = Array{Float64}(undef, length(data[i][!,1]))
+		χ²_ABC = Array{Float64}(undef, length(data[i][!,1]))
+		χ²_Kcentric = Array{Float64}(undef, length(data[i][!,1]))
+		χ̄²_ABC = Array{Float64}(undef, length(data[i][!,1]))
+		χ̄²_Kcentric = Array{Float64}(undef, length(data[i][!,1]))
+		for j=1:length(data[i][!,1])
+			T[j] = T_column_names_to_Float(data[i])
+			lnk[j] = collect(Union{Missing,Float64}, data[i][j,2:end])
+			#ii = findall(isa.(lnk[j], Float64)) # indices of `lnk` which are NOT missing
+			name[j] = data[i][!, 1][j]
+
+			fitABC[j], okABC_i[j], excludedABC_i[j] = fit(ABC, T[j], lnk[j], lb_ABC, ub_ABC; weighted=weighted, threshold=threshold)
+
+			fitKcentric[j], okKcentric_i[j], excludedKcentric_i[j] = fit(Kcentric, T[j], lnk[j], lb_Kcentric, ub_Kcentric; weighted=weighted, threshold=threshold)
+
+			R²_ABC[j] = coeff_of_determination(ABC, fitABC[j], T[j][okABC_i[j]].+Tst, lnk[j][okABC_i[j]])
+			R²_Kcentric[j] = coeff_of_determination(Kcentric, fitKcentric[j], T[j][okKcentric_i[j]].+Tst, lnk[j][okKcentric_i[j]])
+			χ²_ABC[j] = rss(fitABC[j])
+			χ̄²_ABC[j] = mse(fitABC[j])
+			χ²_Kcentric[j] = rss(fitKcentric[j])
+			χ̄²_Kcentric[j] = mse(fitKcentric[j])
+		end
+		fits[i] = DataFrame(Name=name, T=T, lnk=lnk, fitABC=fitABC, fitKcentric=fitKcentric, 
+							i_ABC=okABC_i, i_Kcentric=okKcentric_i, ex_i_ABC=excludedABC_i, ex_i_Kcentric=excludedKcentric_i, 
+							R²_ABC=R²_ABC, R²_Kcentric=R²_Kcentric,
+							χ²_ABC=χ²_ABC, χ²_Kcentric=χ²_Kcentric,
+							χ̄²_ABC=χ̄²_ABC, χ̄²_Kcentric=χ̄²_Kcentric)
+	end
+	return fits
+end
+
+"""
+	fit_models!(meta_data::DataFrame; weighted=false, threshold=NaN, lb_ABC=[-Inf, 0.0, 0.0], ub_ABC=[0.0, Inf, 50.0], lb_Kcentric=[0.0, 0.0, 0.0], ub_Kcentric=[Inf, Inf, 500.0])
+
+Fit the ABC-model and the K-centric-model at the lnk(T) data of the `data`-array of dataframes, using LsqFit.jl and add the result in a new column (`fit`) of `meta_data 
+"""
+function fit_models!(meta_data::DataFrame; weighted=false, threshold=NaN, lb_ABC=[-Inf, 0.0, 0.0], ub_ABC=[0.0, Inf, 50.0], lb_Kcentric=[0.0, 0.0, 0.0], ub_Kcentric=[Inf, Inf, 500.0])
+	fitting = fit_models(meta_data.data; weighted=weighted, threshold=threshold, lb_ABC=lb_ABC, ub_ABC=ub_ABC, lb_Kcentric=lb_Kcentric, ub_Kcentric=ub_Kcentric)
+	meta_data[!, "fitting"] = fitting
+	return meta_data
+end
+
+#="""
 	fit_ABC(T, lnk, β0, res_threshold)
 
 Fit the ABC-model for `lnk` over `T` data. Data points with a residuum above `res_threshold` are excluded and the fit is recalculated, until all residua are below the threshold or only three data points are left.
 """
-function fit_ABC(T, lnk, β0, res_threshold)
+function fit_ABC(T, lnk; weighted=false, threshold=NaN, lb_ABC=[-Inf, 0.0, 0.0], ub_ABC=[0.0, Inf, 50.0])
 
 	flagged_index = Int[]
 	ok_index = findall(ismissing.(lnk).==false)
 	
 	ABC0 = [-100.0, 10000.0, 10.0] # for p[1] = -100.0 - log(beta0) ?
-	lb_ABC = [-Inf, 0.0, 0.0]
-	ub_ABC = [-log(β0), Inf, Inf]
-	fit = curve_fit(ABC, T[ok_index].+Tst, lnk[ok_index], ABC0, lower=lb_ABC, upper=ub_ABC)
 	
-	# check the residuen
-	while maximum(abs.(fit.resid)) > res_threshold
-		if length(ok_index) <= 3
-			break
-		end
-		imax = findfirst(abs.(fit.resid).==maximum(abs.(fit.resid))) # exclude this data point
-		push!(flagged_index, ok_index[imax])
-		ok_index = ok_index[findall(ok_index.!=ok_index[imax])]
+	if weighted == false
 		fit = curve_fit(ABC, T[ok_index].+Tst, lnk[ok_index], ABC0, lower=lb_ABC, upper=ub_ABC)
+	elseif weighted == true
+		fit_OLS = curve_fit(ABC, T[ok_index].+Tst, lnk[ok_index], ABC0, lower=lb_ABC, upper=ub_ABC)
+		# estimate weights from the residuals of the ordinary least squared
+		w_ABC = 1.0./fit_OLS.resid.^2
+		fit = curve_fit(ABC, T[ok_index].+Tst, lnk[ok_index], w_ABC, ABC0, lower=lb_ABC, upper=ub_ABC)
 	end
-	return fit, flagged_index, ok_index
-end
 
-"""
+	if isnan(threshold) == false
+		# check the residuen
+		while maximum(abs.(fit.resid)) > res_threshold
+			if length(ok_index) <= 3
+				break
+			end
+			imax = findfirst(abs.(fit.resid).==maximum(abs.(fit.resid))) # exclude this data point
+			push!(flagged_index, ok_index[imax])
+			ok_index = ok_index[findall(ok_index.!=ok_index[imax])]
+			if weighted == false
+				fit = curve_fit(ABC, T[ok_index].+Tst, lnk[ok_index], ABC0, lower=lb_ABC, upper=ub_ABC)
+			elseif weighted == true
+				fit_OLS = curve_fit(ABC, T[ok_index].+Tst, lnk[ok_index], ABC0, lower=lb_ABC, upper=ub_ABC)
+				# estimate weights from the residuals of the ordinary least squared
+				w_ABC = 1.0./fit_OLS.resid.^2
+				fit = curve_fit(ABC, T[ok_index].+Tst, lnk[ok_index], w_ABC, ABC0, lower=lb_ABC, upper=ub_ABC)
+			end
+		end
+	end
+	return fit, ok_index, flagged_index
+end=#
+
+#="""
 	fit_Kcentric(T, lnk, res_threshold)
 
 Fit the Kcentric-model for `lnk` over `T` data. Data points with a residuum above `res_threshold` are excluded and the fit is recalculated, until all residua are below the threshold or only three data points are left.
@@ -816,8 +969,8 @@ function fit_Kcentric(T, lnk, res_threshold)
 	ok_index = findall(ismissing.(lnk).==false)
 	
 	Kcentric0 = [200.0+Tst, 30.0, 10.0]
-	lb_Kcentric = [0.0, 0.0, 0.0]
-	ub_Kcentric = [Inf, Inf, 500.0]
+	#lb_Kcentric = [0.0, 0.0, 0.0]
+	#ub_Kcentric = [Inf, Inf, 500.0]
 	fit = curve_fit(Kcentric, T[ok_index].+Tst, lnk[ok_index], Kcentric0, lower=lb_Kcentric, upper=ub_Kcentric)
 	
 	# check the residuen
@@ -831,9 +984,9 @@ function fit_Kcentric(T, lnk, res_threshold)
 		fit = curve_fit(Kcentric, T[ok_index].+Tst, lnk[ok_index], Kcentric0, lower=lb_Kcentric, upper=ub_Kcentric)
 	end
 	return fit, flagged_index, ok_index
-end
+end=#
 
-"""
+#="""
 	fit_models_th(data::Array{DataFrame}, res_threshold)
 
 Fit the ABC-model and the K-centric-model at the lnk(T) data of the `data`-array of dataframes, using LsqFit.jl 
@@ -853,7 +1006,7 @@ function fit_models_th(data::Array{DataFrame}, β0::Array{Float64}, res_threshol
 		R²_ABC = Array{Float64}(undef, length(data[i][!,1]))
 		R²_Kcentric = Array{Float64}(undef, length(data[i][!,1]))
 		for j=1:length(data[i][!,1])
-			T[j] = parse.(Float64,names(data[i])[2:end])
+			T[j] = T_column_names_to_Float(data[i])
 			lnk[j] = collect(Union{Missing,Float64}, data[i][j,2:end])
 			
 			name[j] = data[i][!, 1][j]
@@ -867,9 +1020,9 @@ function fit_models_th(data::Array{DataFrame}, β0::Array{Float64}, res_threshol
 		fit[i] = DataFrame(Name=name, T=T, lnk=lnk, fitABC=fitABC, fitKcentric=fitKcentric, i_ABC=okABC_i, i_Kcentric=okKcentric_i, ex_i_ABC=excludedABC_i, ex_i_Kcentric=excludedKcentric_i, R²_ABC=R²_ABC, R²_Kcentric=R²_Kcentric)
 	end
 	return fit
-end
+end=#
 
-"""
+#="""
 	fit_models_th!(meta_data::DataFrame, β0::Array{Float64}, res_threshold)
 
 Fit the ABC-model and the K-centric-model at the lnk(T) data of the `data`-array of dataframes, using LsqFit.jl and add the result in a new column (`fit`) of `meta_data 
@@ -878,9 +1031,9 @@ function fit_models_th!(meta_data::DataFrame, res_threshold)
 	fit = fit_models_th(meta_data.data, meta_data.beta0, res_threshold)
 	meta_data[!, "fit"] = fit
 	return meta_data
-end
+end=#
 
-"""
+#="""
 	fit_models_w(data::Array{DataFrame}, β0::Array{Float64})
 
 Fit the ABC-model and the K-centric-model at the lnk(T) data of the `data`-array of dataframes, using LsqFit.jl 
@@ -897,16 +1050,16 @@ function fit_models_w(data::Array{DataFrame}, β0::Array{Float64})
 		R²_ABC = Array{Float64}(undef, length(data[i][!,1]))
 		R²_Kcentric = Array{Float64}(undef, length(data[i][!,1]))
 		for j=1:length(data[i][!,1])
-			T[j] = parse.(Float64,names(data[i])[2:end])
+			T[j] = T_column_names_to_Float(data[i])
 			lnk[j] = collect(Union{Missing,Float64}, data[i][j,2:end])
 			ii = findall(isa.(lnk[j], Float64))
 			name[j] = data[i][!, 1][j]
 			ABC0 = [-100.0, 10000.0, 10.0] # for p[1] = -100.0 - log(beta0) ?
-			lb_ABC = [-Inf, 0.0, 0.0]
-			ub_ABC = [-log(β0[i]), Inf, Inf]
+			#lb_ABC = [-Inf, 0.0, 0.0]
+			#ub_ABC = [-log(β0[i]), Inf, Inf]
 			Kcentric0 = [200.0+Tst, 30.0, 10.0]
-			lb_Kcentric = [0.0, 0.0, 0.0]
-			ub_Kcentric = [Inf, Inf, 500.0]
+			#lb_Kcentric = [0.0, 0.0, 0.0]
+			#ub_Kcentric = [Inf, Inf, 500.0]
 			fitABC0 = curve_fit(ABC, T[j][ii].+Tst, lnk[j][ii], ABC0, lower=lb_ABC, upper=ub_ABC)
 			# estimate weights from the residuals of the ordinary least squared
 			w_ABC = 1.0./fitABC0.resid.^2
@@ -922,9 +1075,9 @@ function fit_models_w(data::Array{DataFrame}, β0::Array{Float64})
 		fit[i] = DataFrame(Name=name, T=T, lnk=lnk, fitABC=fitABC, fitKcentric=fitKcentric, ok_i=ok_i, R²_ABC=R²_ABC, R²_Kcentric=R²_Kcentric)
 	end
 	return fit
-end
+end=#
 
-"""
+#="""
 	fit_models_w!(meta_data::DataFrame)
 
 Fit the ABC-model and the K-centric-model at the lnk(T) data of the `data`-array of dataframes, using LsqFit.jl and add the result in a new column (`fit`) of `meta_data 
@@ -933,7 +1086,7 @@ function fit_models_w!(meta_data::DataFrame)
 	fit = fit_models_w(meta_data.data, meta_data.beta0)
 	meta_data[!, "fit"] = fit
 	return meta_data
-end
+end=#
 
 """
 	extract_paramaters_from_fit(fit, β0)
@@ -951,6 +1104,8 @@ function extract_parameters_from_fit(fit, β0)
 		ΔCp = Array{Measurement{Float64}}(undef, length(fit[i].Name))
 		ΔHref = Array{Measurement{Float64}}(undef, length(fit[i].Name))
 		ΔSref = Array{Measurement{Float64}}(undef, length(fit[i].Name))
+		n_ABC = Array{Int}(undef, length(fit[i].Name))
+		n_Kcentric = Array{Int}(undef, length(fit[i].Name))
 		for j=1:length(fit[i].Name)
 			A[j] = (fit[i].fitABC[j].param[1] ± stderror(fit[i].fitABC[j])[1]) + log(β0[i])
 			B[j] = fit[i].fitABC[j].param[2] ± stderror(fit[i].fitABC[j])[2]
@@ -962,8 +1117,15 @@ function extract_parameters_from_fit(fit, β0)
 			TD = ThermodynamicData.ABC_to_TD(A[j], B[j], C[j], T0)
 			ΔHref[j] = TD[1]
 			ΔSref[j] = TD[2]
+
+			n_ABC[j] = length(fit[i].i_ABC)
+			n_Kcentric[j] = length(fit[i].i_Kcentric)
 		end
-		Par[i] = DataFrame(Name=fit[i].Name, A=A, B=B, C=C, Tchar=Tchar, thetachar=θchar, DeltaCp=ΔCp, DeltaHref=ΔHref, DeltaSref=ΔSref, R²_ABC=fit[i].R²_ABC, R²_Kcentric=fit[i].R²_Kcentric)
+		Par[i] = DataFrame(Name=fit[i].Name, A=A, B=B, C=C, Tchar=Tchar, thetachar=θchar, DeltaCp=ΔCp, DeltaHref=ΔHref, DeltaSref=ΔSref, 
+							R²_ABC=fit[i].R²_ABC, R²_Kcentric=fit[i].R²_Kcentric,
+							χ²_ABC=fit[i].χ²_ABC, χ²_Kcentric=fit[i].χ²_Kcentric,
+							χ̄²_ABC=fit[i].χ̄²_ABC, χ̄²_Kcentric=fit[i].χ̄²_Kcentric,
+							n_ABC=n_ABC, n_Kcentric=n_Kcentric)
 	end
 	return Par
 end		
