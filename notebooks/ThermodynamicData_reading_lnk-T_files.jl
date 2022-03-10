@@ -59,6 +59,43 @@ meta_data = ThermodynamicData.extract_meta_data(lnkT_csv)
 # ╔═╡ baf00ccd-0a30-4cb4-9704-d5d9b23cfe69
 ThermodynamicData.load_csv_data!(meta_data)
 
+# ╔═╡ 9ea6d953-8556-4ddc-806b-02a74a3b94d8
+Ts = names(meta_data.data[11])[2:end]
+
+# ╔═╡ fbd168b6-8d91-4e60-b2ac-342e787ccb14
+TT = Array{Float64}(undef, length(Ts))
+
+# ╔═╡ a356e7c7-c1da-4907-b8b4-e7cf7c6f5c57
+occursin(Ts[12], "_")
+
+# ╔═╡ 035a63b2-1d9b-417b-ae3a-f27604a50898
+occursin("_", Ts[12])
+
+# ╔═╡ b946b6a7-4453-44a6-9419-1ecd235d2956
+parse(Float64,split(Ts[13], "_")[1])
+
+# ╔═╡ 5655ccd8-09db-40b9-9b6d-f88b5d328d43
+"""
+	T_column_names_to_Float(data::DataFrame)
+
+Translates the column names of the dataframe `data` containing the values of isothermal temperature to Float64. For the case of identical temperatures, a number is appended, separated by an underscore `_`. If this is the case the string is splited at the `_` and only the first part is used.
+"""
+function T_column_names_to_Float(data::DataFrame)
+	Ts = names(data)[2:end]
+	T = Array{Float64}(undef, length(Ts))
+	for i=1:length(Ts)
+		if occursin("_", Ts[i])
+			T[i] = parse(Float64,split(Ts[i], "_")[1])
+		else
+			T[i] = parse(Float64, Ts[i])
+		end
+	end
+	return T
+end
+
+# ╔═╡ 77b226e1-4c36-47e7-b181-511667de9968
+TT
+
 # ╔═╡ f754b0d2-2f63-40fa-92c8-a692f52975c3
 """
 	ABC(x, p)
@@ -196,7 +233,7 @@ function fit_models(data::Array{DataFrame}, β0::Array{Float64})
 		R²_ABC = Array{Float64}(undef, length(data[i][!,1]))
 		R²_Kcentric = Array{Float64}(undef, length(data[i][!,1]))
 		for j=1:length(data[i][!,1])
-			T[j] = parse.(Float64,names(data[i])[2:end])
+			T[j] = T_column_names_to_Float(data[i])
 			lnk[j] = collect(Union{Missing,Float64}, data[i][j,2:end])
 			ii = findall(isa.(lnk[j], Float64))
 			name[j] = data[i][!, 1][j]
@@ -484,7 +521,7 @@ function fit_models_th(data::Array{DataFrame}, β0::Array{Float64}, res_threshol
 		R²_ABC = Array{Float64}(undef, length(data[i][!,1]))
 		R²_Kcentric = Array{Float64}(undef, length(data[i][!,1]))
 		for j=1:length(data[i][!,1])
-			T[j] = parse.(Float64,names(data[i])[2:end])
+			T[j] = T_column_names_to_Float(data[i])
 			lnk[j] = collect(Union{Missing,Float64}, data[i][j,2:end])
 			
 			name[j] = data[i][!, 1][j]
@@ -596,7 +633,7 @@ function fit_models_w(data::Array{DataFrame}, β0::Array{Float64})
 		R²_ABC = Array{Float64}(undef, length(data[i][!,1]))
 		R²_Kcentric = Array{Float64}(undef, length(data[i][!,1]))
 		for j=1:length(data[i][!,1])
-			T[j] = parse.(Float64,names(data[i])[2:end])
+			T[j] = T_column_names_to_Float(data[i])
 			lnk[j] = collect(Union{Missing,Float64}, data[i][j,2:end])
 			ii = findall(isa.(lnk[j], Float64))
 			name[j] = data[i][!, 1][j]
@@ -1945,6 +1982,13 @@ version = "0.9.1+5"
 # ╠═ffa74790-bb57-4dc9-9bfc-8309d6d58f49
 # ╠═15047914-7463-4d22-934a-00f7c81ee44a
 # ╠═baf00ccd-0a30-4cb4-9704-d5d9b23cfe69
+# ╠═9ea6d953-8556-4ddc-806b-02a74a3b94d8
+# ╠═fbd168b6-8d91-4e60-b2ac-342e787ccb14
+# ╠═a356e7c7-c1da-4907-b8b4-e7cf7c6f5c57
+# ╠═035a63b2-1d9b-417b-ae3a-f27604a50898
+# ╠═b946b6a7-4453-44a6-9419-1ecd235d2956
+# ╠═5655ccd8-09db-40b9-9b6d-f88b5d328d43
+# ╠═77b226e1-4c36-47e7-b181-511667de9968
 # ╠═e011d3c1-7070-4e4c-b804-d63424aa6f20
 # ╠═9025d205-965a-4843-a0b9-eeaa8d98d997
 # ╠═1c38490d-c6b6-443f-b856-2b33e8417277
