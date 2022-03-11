@@ -37,9 +37,11 @@ Load the data files (.csv format) with `lnk-T` data from the folder `db_path` in
 """
 function load_lnkT_data(db_path)
 	all_csv = ThermodynamicData.collect_csv_paths(db_path)
-	keyword = "lnk-T"
-	lnkT_csv = filter(contains(keyword), all_csv)
-	meta_data = ThermodynamicData.extract_meta_data(lnkT_csv)
+	keyword1 = "log10k-T"
+	keyword2 = "lnk-T"
+	log10kT_csv = filter(contains(keyword1), all_csv)
+	lnkT_csv = filter(contains(keyword2), all_csv)
+	meta_data = ThermodynamicData.extract_meta_data([log10kT_csv; lnkT_csv])
 	ThermodynamicData.load_csv_data!(meta_data)
 	return meta_data
 end
@@ -49,15 +51,26 @@ all_csv = ThermodynamicData.collect_csv_paths(db_path)
 
 # ╔═╡ ffa74790-bb57-4dc9-9bfc-8309d6d58f49
 begin # filter for certain key words in the filename
-	keyword = "lnk-T"
-	lnkT_csv = filter(contains(keyword), all_csv)
+	keyword1 = "lnk-T"
+	keyword2 = "log10k-T"
+	lnkT_csv = filter(contains(keyword1), all_csv)
+	log10kT_csv = filter(contains(keyword2), all_csv)
 end
 
+# ╔═╡ 34c6c2bd-63a3-4af1-b6ac-1dccdf3ddb4c
+[log10kT_csv; lnkT_csv]
+
 # ╔═╡ 15047914-7463-4d22-934a-00f7c81ee44a
-meta_data = ThermodynamicData.extract_meta_data(lnkT_csv)
+meta_data = ThermodynamicData.extract_meta_data([log10kT_csv; lnkT_csv])
 
 # ╔═╡ baf00ccd-0a30-4cb4-9704-d5d9b23cfe69
 ThermodynamicData.load_csv_data!(meta_data)
+
+# ╔═╡ 422b832b-0b52-4c35-995b-a904069d42c5
+contains(meta_data.filename[2], "log10k-T")
+
+# ╔═╡ 29232c11-9e21-42aa-aca3-500563bbc9a9
+log(2)/log10(2)
 
 # ╔═╡ 9ea6d953-8556-4ddc-806b-02a74a3b94d8
 Ts = names(meta_data.data[11])[2:end]
@@ -1980,8 +1993,11 @@ version = "0.9.1+5"
 # ╠═413fad2a-e73f-4933-9eed-b1aae8d376ce
 # ╠═e2566bfc-1912-45bb-90c4-b05ee59c16af
 # ╠═ffa74790-bb57-4dc9-9bfc-8309d6d58f49
+# ╠═34c6c2bd-63a3-4af1-b6ac-1dccdf3ddb4c
 # ╠═15047914-7463-4d22-934a-00f7c81ee44a
 # ╠═baf00ccd-0a30-4cb4-9704-d5d9b23cfe69
+# ╠═422b832b-0b52-4c35-995b-a904069d42c5
+# ╠═29232c11-9e21-42aa-aca3-500563bbc9a9
 # ╠═9ea6d953-8556-4ddc-806b-02a74a3b94d8
 # ╠═fbd168b6-8d91-4e60-b2ac-342e787ccb14
 # ╠═a356e7c7-c1da-4907-b8b4-e7cf7c6f5c57
