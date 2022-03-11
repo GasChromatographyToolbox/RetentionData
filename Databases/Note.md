@@ -13,7 +13,8 @@ with:
     - `A, B, C`
     - `DeltaHref`, `DeltaSref`, `DeltaCp`
     - `Tchar`, `thetachar`, `DeltaCp`
-  - `lnk-T`: The measured `lnk`-values (logarithm of the retention factor) of the substances for isothermal GC measurements at defined temperatures `T`. The thermodynamic parameters can be estimated from these measurements by fitting of the model.
+  - `lnk-T`: The measured `lnk`-values (natural logarithm of the retention factor) of the substances for isothermal GC measurements at defined temperatures `T`. The thermodynamic parameters can be estimated from these measurements by fitting of the model.
+  - `log10k-T`: The measured `log10(k)`-values (decadic logarithm of the retention factor) of the substances for isothermal GC measurements at defined temperatures `T`. The thermodynamic parameters can be estimated from these measurements by fitting of the model.
   - `tR-T`: The measured `tR`-values (retention time) of the substances for isothermal GC measurements at defined temperatures `T`. Also, the hold-up time `tM` must be included (measured or calculated), to calculate `lnk` from this data and estimate the thermodynamic parameters by model fitting. 
   - `AllParam`: thermodynamic parameters of all three sets are in the data, also a reference temperature `Tref`, the phase ratio $\beta$ (see below), and the argument for the Lambert W function are included 
   - `IDList`: A list of at least two columns. First column has the shortname or number (ID), the second column has a full name or alternative name. Some data (`Parameters`, `lnk-T` or `tR-T`) use the shortname/ID-number instead of a full name. This file can be used to convert the ID to full name.
