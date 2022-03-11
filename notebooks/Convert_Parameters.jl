@@ -16,7 +16,7 @@ end
 
 # ╔═╡ ff3195db-9f37-4968-bc0a-8f6a6211bb60
 begin
-	using CSV, DataFrames, LambertW, Plots, ChemicalIdentifiers, LsqFit, Statistics
+	using CSV, DataFrames, LambertW, Plots, ChemicalIdentifiers, LsqFit, Statistics, Measurements
 	include("/Users/janleppert/Documents/GitHub/ThermodynamicData/src/ThermodynamicData.jl")
 	using PlutoUI
 	TableOfContents()
@@ -44,10 +44,13 @@ db_path = "/Users/janleppert/Documents/GitHub/ThermodynamicData/Databases"
 data = ThermodynamicData.load_parameter_data(db_path)
 
 # ╔═╡ 89814556-78e3-463b-b235-ba95f6df3d9e
-data.data[31]
+data.parameters[31]
 
 # ╔═╡ 793dd685-660a-46f0-838a-b032cbf4c24d
 #ThermodynamicData.save_all_parameter_data(data)
+
+# ╔═╡ e299149d-af13-4aae-a214-7e1f19f0b3e9
+# following in the new notebook `AllParam.jl`
 
 # ╔═╡ 25c17cc1-a9d8-4fa8-9ec2-20f8d6f996f6
 alldata = ThermodynamicData.dataframe_of_all(data)
@@ -187,6 +190,7 @@ ChemicalIdentifiers = "fa4ea961-1416-484e-bda2-883ee1634ba5"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 LambertW = "984bce1d-4616-540c-a9ee-88d1112d94c9"
 LsqFit = "2fda8390-95c7-5789-9bda-21331edee243"
+Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
@@ -197,6 +201,7 @@ ChemicalIdentifiers = "~0.1.5"
 DataFrames = "~1.3.2"
 LambertW = "~0.4.5"
 LsqFit = "~0.12.1"
+Measurements = "~2.7.1"
 Plots = "~1.25.11"
 PlutoUI = "~0.7.35"
 """
@@ -820,6 +825,12 @@ version = "1.0.3"
 deps = ["Artifacts", "Libdl"]
 uuid = "c8ffd9c3-330d-5841-b78e-0817d7145fa1"
 
+[[deps.Measurements]]
+deps = ["Calculus", "LinearAlgebra", "Printf", "RecipesBase", "Requires"]
+git-tree-sha1 = "88cd033eb781c698e75ae0b680e5cef1553f0856"
+uuid = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
+version = "2.7.1"
+
 [[deps.Measures]]
 git-tree-sha1 = "e498ddeee6f9fdb4551ce855a46f54dbd900245f"
 uuid = "442fdcdd-2543-5da2-b0f3-8c86c306513e"
@@ -1413,19 +1424,20 @@ version = "0.9.1+5"
 # ╠═a5a4507a-3553-46f9-bfe1-c25456c23423
 # ╠═89814556-78e3-463b-b235-ba95f6df3d9e
 # ╠═793dd685-660a-46f0-838a-b032cbf4c24d
+# ╠═e299149d-af13-4aae-a214-7e1f19f0b3e9
 # ╠═25c17cc1-a9d8-4fa8-9ec2-20f8d6f996f6
 # ╟─9f5ee5f3-5c25-4ad2-a7e3-3b76aab7a1ea
 # ╟─bd3b96f3-f34e-43e6-b560-c140c83f74e1
-# ╟─1a4628c5-f19d-4503-b417-1eff05cb8fd9
+# ╠═1a4628c5-f19d-4503-b417-1eff05cb8fd9
 # ╠═eb659948-fe19-4dbb-9c1c-2dc2eff8540d
 # ╟─577a606c-a75d-4653-a789-96a624aa6066
 # ╟─47747281-133b-4c8a-b3ca-543caece9f28
 # ╟─c80a2bb9-622b-472d-8c14-7eb94d23ca20
-# ╟─4486b981-0170-4999-8b45-68671c456a1e
+# ╠═4486b981-0170-4999-8b45-68671c456a1e
 # ╟─37a49842-4cc9-4c0d-a967-c8fde9664ff2
 # ╟─546e17e9-761b-4642-a5bf-13f5a3f8a5c0
 # ╠═458a41f5-447a-4dd0-a18d-c30e349c206c
-# ╟─bdf9c6b0-c5a5-422b-861b-b99d916ec6bb
+# ╠═bdf9c6b0-c5a5-422b-861b-b99d916ec6bb
 # ╟─460af06f-3a07-497a-9865-6acde1b552ad
 # ╟─04b6d431-c9d6-4802-a7c7-8e2e24486db6
 # ╠═87666436-b144-463f-94eb-bfc801bfaa23
