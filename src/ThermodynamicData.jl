@@ -69,9 +69,10 @@ function extract_meta_data(csv_paths::Array{String,1})
 		split_fn = split(split(filename[i], r".csv")[1], '_')
 		source[i] = split_fn[1]
 		phase[i] = split_fn[4]
-		beta0[i] = parse(Float64, split(split_fn[5], rg)[2])
-		for j=6:length(split_fn)
-			if contains(split_fn[j], "Tref")
+		for j=5:length(split_fn)
+			if contains(split_fn[j], "beta")
+				beta0[i] = parse(Float64, split(split_fn[5], rg)[2])
+			elseif contains(split_fn[j], "Tref")
 				Tref[i] = parse(Float64, split(split_fn[j], "Tref")[2])
 			elseif contains(split_fn[j], "d")
 				d[i] = parse(Float64, split(split_fn[j], "d")[2])
@@ -118,6 +119,10 @@ function load_csv_data(meta_data::DataFrame)
 					data[i][!,1][j] = IDlist[!,2][j_ID]
 				end
 			end
+		end
+		# if the loaded data is `log10k-T` data, than the loaded values hav to be convert to ln(k)-values
+		if contains(meta_data.filename[i], "log10k-T")
+			data[i][!, 2:end] = data[i][!, 2:end].*log(2)./log10(2)
 		end
 	end
 	return data
@@ -445,7 +450,7 @@ A new array of dataframes. The dataframes have the following columns:
 function all_parameters!(meta_data)
 	paramset, paramindex = indentify_parameters(meta_data.data)
 	new_data = all_parameters(meta_data.data, paramset, paramindex, meta_data.beta0, meta_data.Tref)
-	meta_data[!, "data"] = new_data
+	meta_data[!, "parameters"] = new_data
 	return meta_data
 end
 
@@ -480,11 +485,40 @@ function load_parameter_data(db_path)
 end
 
 """
+	load_allparameter_data(db_path)
+
+Load the data files (.csv format) with the `Parameters` data from the folder `db_path` including all subfolders. Based on the loaded parameters, the parameters of the not included parameter sets are calculated. Additional information from the filenames are also saved.
+
+# Output
+A dataframes with the following columns:
+- `path`: Path of the folder from where the data was loaded.
+- `filename`: Name of the file from where the data was loaded.
+- `source`: Short name for the source from where the data original is taken.
+- `phase`: Name of the stationary phase corresponding to the data.
+- `beta0`: The phase ratio corresponding to the data.
+- `Tref`: The reference temperature used for the thermodynamic parameter set. Optional parameter, if not available it has the value `missing`.
+- `d`: The column diameter. Optional parameter, if not available it has the value `missing`.
+- `gas`: The used gas for the mobile phase. Optional parameter, if not available it has the value `missing`.
+- `data`: Dataframes with the parameters of the three different parameter sets. See function all_parameters().
+
+# Note
+For the naming convention of the filenames see Note.md.
+"""
+function load_allparameter_data(db_path)
+	all_csv = collect_csv_paths(db_path)
+	keyword = "AllParam"
+	parameters_csv = filter(contains(keyword), all_csv)
+	meta_data = extract_meta_data(parameters_csv)
+	load_csv_data!(meta_data)
+	return meta_data
+end
+
+"""
 	save_all_parameter_data(meta_data::DataFrame)
 
 Save the `data` in the `meta_data` dataframe in new .csv-files in the same folder as the original data using the new filename `Source_AllParam_Tablename_statPhase(_d)(_gas).csv`. `Source` is the name of the source of the original data, `statPhase` is the stationary phase corresponding to the data and `Tablename` the name of the table of the original data. The optional entrys `d` and `gas` stand for the column diameter and the gas of the mobile phase. 
 """
-function save_all_parameter_data(meta_data::DataFrame)
+function save_all_parameter_data(meta_data::DataFrame; rounding=true, sigdigits=5) # ?add options for rounding resp. for Measurements.value()
 	for i=1:length(meta_data.data)
 		tablename = split(meta_data.filename[i], "_")[3]
 		if ismissing(meta_data.d[i]) && ismissing(meta_data.gas[i])
@@ -497,7 +531,27 @@ function save_all_parameter_data(meta_data::DataFrame)
 			new_filename = string(meta_data.source[i], "_AllParam_", tablename, "_", meta_data.phase[i], "_d", meta_data.d[i], "_gas", meta_data.gas[i], ".csv")
 		end
 		# add a round for significant digits
-		CSV.write(joinpath(meta_data.path[i], new_filename), meta_data.data[i])
+		#if contains(meta_data.filename[i], "Parameters")
+		header = names(meta_data.parameters[i])
+		param = DataFrame()
+		for j=1:length(header)
+			if typeof(meta_data.parameters[i][!, j]) == Array{Measurement{Float64}, 1}
+				if rounding == true # information about std-errors for fits is lost here
+					param[!, header[j]] = round.(Measurements.value.(meta_data.parameters[i][!, j]); sigdigits=sigdigits)
+				else
+					param[!, header[j]] = Measurements.value.(meta_data.parameters[i][!, j])
+				end
+			elseif typeof(meta_data.parameters[i][!, j]) == Array{Float64, 1}
+				if rounding == true
+					param[!, header[j]] = round.(meta_data.parameters[i][!, j]; sigdigits=sigdigits)
+				else
+					param[!, header[j]] = meta_data.parameters[i][!, j]
+				end
+			else
+				param[!, header[j]] = meta_data.parameters[i][!, j]
+			end
+		end
+		CSV.write(joinpath(meta_data.path[i], new_filename), param)
 	end
 	
 end
@@ -509,10 +563,10 @@ Combine the separate dataframes with the parameter sets of the different entrys 
 """
 function dataframe_of_all(meta_data)
 	# number of all data entrys
-	Nall = 0
-	for i=1:length(meta_data.data)
-		Nall = Nall + length(meta_data.data[i].Name)
-	end
+	#Nall = 0
+	#for i=1:length(meta_data.data)
+	#	Nall = Nall + length(meta_data.data[i].Name)
+	#end
 
 	Name = String[]
 	Phase = String[]
@@ -527,7 +581,7 @@ function dataframe_of_all(meta_data)
 	DeltaSref = Float64[]
 	Tref = Float64[]
 	beta0 = Float64[]
-	lambertw_x = Float64[]
+	#lambertw_x = Float64[]
 	d = Any[]
 	gas = Any[]
 
@@ -546,7 +600,7 @@ function dataframe_of_all(meta_data)
 			push!(DeltaSref, meta_data.data[i].DeltaSref[j])
 			push!(Tref, meta_data.data[i].Tref[j])
 			push!(beta0, meta_data.data[i].beta0[j])
-			push!(lambertw_x, meta_data.data[i].lambertw_x[j])
+			#push!(lambertw_x, meta_data.data[i].lambertw_x[j])
 			push!(d, meta_data.d[i])
 			push!(gas, meta_data.gas[i])
 		end
@@ -555,25 +609,65 @@ function dataframe_of_all(meta_data)
 						A=A, B=B, C=C,
 						Tchar=Tchar, thetachar=thetachar, DeltaCp=DeltaCp,
 						DeltaHref=DeltaHref, DeltaSref=DeltaSref, Tref=Tref,
-						beta0=beta0, lambertw_x=lambertw_x, d=d, gas=gas)
+						beta0=beta0, d=d, gas=gas)
 	return dfall
+end
+
+"""
+	flag(data)
+
+Create a flag if certain conditions for the parameters are not fullfilled:
+	- value of `lambertw_x` is < -1/e or > 0
+	- value of `A` > 0
+	- value of `B` < 0
+	- value of `C` < 0
+	- value of `Tchar` < -Tst
+	- value of `θchar` < 0
+"""
+function flag(data)
+	flag = Array{Array{String,1}}(undef, length(data.Name))
+	for i=1:length(data.Name)
+		fl = String[]
+		x_lambertw = ThermodynamicData.lambertw_x.(data.A[i], data.B[i], data.C[i], data.beta0[i])
+		if x_lambertw < -1/exp(1)
+			push!(fl, "lambertw < -1/e")
+		end
+		if x_lambertw > 0.0
+			push!(fl, "lambertw > 0")
+		end
+		if data.A[i] > 0
+			push!(fl, "A > 0")
+		end
+		if data.B[i] < 0
+			push!(fl, "B < 0")
+		end
+		if data.C[i] < 0
+			push!(fl,"C < 0")
+		end
+		if data.Tchar[i] < -273.15
+			push!(fl, "Tchar < -Tst")
+		end
+		if data.thetachar[i] < 0
+			push!(fl, "θchar < 0")
+		end
+		flag[i] = fl
+	end
+	return flag
 end
 
 """
 	flagged_data(alldata::DataFrame)
 
-Flag the substance data for which a certain criteria of the parameters is not fullfilled, by filter `alldata` for these substances. The criterias are:
-- value of `lambertw_x` is < -1/e or > 0
-- value of `DeltaCp` < 0
+Filter the parameter data for flagged and not-flagged datasets. 
+
 """
 function flagged_data(alldata::DataFrame)
-	# 1st flag reason: not -1/e ≤ lambertw_x < 0
-	df = filter([:lambertw_x] => x -> x < -1/exp(1) || x > 0.0, alldata)
-	# additional flag reasons
-	df1 = filter([:DeltaCp] => x -> x < 0.0, alldata)
-	# combine the filtered dataframes and delete duplicates
-	df_final = unique(vcat(df, df1))
-	return df_final
+	fl = flag(alldata)
+	fl_i = findall(isempty.(fl).==false)
+	nofl_i = findall(isempty.(fl).==true)
+	flagged = alldata[fl_i,:]
+	not_flagged = alldata[nofl_i,:]
+	return flagged, not_flagged
 end
 
 """
@@ -582,7 +676,7 @@ end
 Look up the substance name from the `data` dataframe with ChemicalIdentifiers.jl to find the `CAS`-number, the `formula`, the molecular weight `MW` and the `smiles`-identifier. If the name is not found in the database of ChemicalIdentifiers.jl a list with alternative names (`shortnames.csv`) is used. If there are still no matches, `missing` is used.
 """
 function substance_identification(data::DataFrame)
-	shortnames = DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/ThermodynamicData/src/shortnames.csv"))
+	shortnames = DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/ThermodynamicData/data/shortnames.csv"))
 	
 	CAS = Array{Union{Missing,String}}(missing, length(data.Name))
 	formula = Array{Union{Missing,String}}(missing, length(data.Name))
@@ -621,11 +715,13 @@ end
 Load the data files (.csv format) with `lnk-T` data from the folder `db_path` including all subfolders.
 """
 function load_lnkT_data(db_path)
-	all_csv = ThermodynamicData.collect_csv_paths(db_path)
-	keyword = "lnk-T"
-	lnkT_csv = filter(contains(keyword), all_csv)
-	meta_data = ThermodynamicData.extract_meta_data(lnkT_csv)
-	ThermodynamicData.load_csv_data!(meta_data)
+	all_csv = collect_csv_paths(db_path)
+	keyword1 = "log10k-T"
+	keyword2 = "lnk-T"
+	log10kT_csv = filter(contains(keyword1), all_csv)
+	lnkT_csv = filter(contains(keyword2), all_csv)
+	meta_data = extract_meta_data([log10kT_csv; lnkT_csv])
+	load_csv_data!(meta_data)
 	return meta_data
 end
 
@@ -667,7 +763,7 @@ function coeff_of_determination(model, fit, x, y)
 	return R²
 end
 
-"""
+#="""
 	chi_square(fit)
 
 Calculate chi-square χ² and the adjusted chi-square χ̄² for LsqFit.jl result `fit`.
@@ -676,7 +772,7 @@ function chi_square(fit)
 	χ² = sum(fit.resid.^2) #-> rss(fit) from LSqFit.jl
 	χ̄² = sum(fit.resid.^2)/dof(fit) #-> mse(fit) from LSqFit.jl
 	return χ², χ̄²
-end
+end=#
 
 """
 	T_column_names_to_Float(data::DataFrame)
@@ -696,64 +792,7 @@ function T_column_names_to_Float(data::DataFrame)
 	return T
 end
 
-#const lb_ABC = [-Inf, 0.0, 0.0]
-#const ub_ABC = [-log(β0[i]), Inf, Inf] # ub[1] = 0.0 or Inf, ub[3] 500.0/R ≈ 50.0
-#const lb_Kcentric = [0.0, 0.0, 0.0]
-#const ub_Kcentric = [Inf, Inf, 500.0]
 
-
-
-#="""
-	fit_models(data::Array{DataFrame}, β0::Array{Float64})
-
-Fit the ABC-model and the K-centric-model at the lnk(T) data of the `data`-array of dataframes, using LsqFit.jl 
-"""
-function fit_models(data::Array{DataFrame}, β0::Array{Float64})
-
-	fit = Array{DataFrame}(undef, length(data))
-	for i=1:length(data)
-		fitABC = Array{Any}(undef, length(data[i][!,1]))
-		fitKcentric = Array{Any}(undef, length(data[i][!,1]))
-		T = Array{Array{Float64}}(undef, length(data[i][!,1]))
-		lnk = Array{Any}(undef, length(data[i][!,1]))
-		name = Array{String}(undef, length(data[i][!,1]))
-		ok_i = Array{Array{Int,1}}(undef, length(data[i][!,1]))
-		R²_ABC = Array{Float64}(undef, length(data[i][!,1]))
-		R²_Kcentric = Array{Float64}(undef, length(data[i][!,1]))
-		for j=1:length(data[i][!,1])
-			T[j] = T_column_names_to_Float(data[i])
-			lnk[j] = collect(Union{Missing,Float64}, data[i][j,2:end])
-			ii = findall(isa.(lnk[j], Float64)) # indices of `lnk` which are NOT missing
-			name[j] = data[i][!, 1][j]
-
-			fit_ABC(T, lnk, β0, res_threshold)
-			ABC0 = [-100.0, 10000.0, 10.0] # for p[1] = -100.0 - log(beta0) ?
-			#lb_ABC = [-Inf, 0.0, 0.0]
-			#ub_ABC = [-log(β0[i]), Inf, Inf]
-			Kcentric0 = [200.0+Tst, 30.0, 10.0]
-			#lb_Kcentric = [0.0, 0.0, 0.0]
-			#ub_Kcentric = [Inf, Inf, 500.0]
-			fitABC[j] = curve_fit(ABC, T[j][ii].+Tst, lnk[j][ii], ABC0, lower=lb_ABC, upper=ub_ABC)
-			fitKcentric[j] = curve_fit(Kcentric, T[j][ii].+Tst, lnk[j][ii], Kcentric0, lower=lb_Kcentric, upper=ub_Kcentric)
-			ok_i[j] = ii
-			R²_ABC[j] = coeff_of_determination(fitABC[j], lnk[j][ii])
-			R²_Kcentric[j] = coeff_of_determination(fitKcentric[j], lnk[j][ii])
-		end
-		fit[i] = DataFrame(Name=name, T=T, lnk=lnk, fitABC=fitABC, fitKcentric=fitKcentric, ok_i=ok_i, R²_ABC=R²_ABC, R²_Kcentric=R²_Kcentric)
-	end
-	return fit
-end=#
-
-#="""
-	fit_models!(meta_data::DataFrame)
-
-Fit the ABC-model and the K-centric-model at the lnk(T) data of the `data`-array of dataframes, using LsqFit.jl and add the result in a new column (`fit`) of `meta_data 
-"""
-function fit_models!(meta_data::DataFrame)
-	fit = fit_models(meta_data.data, meta_data.beta0)
-	meta_data[!, "fit"] = fit
-	return meta_data
-end=#
 
 """
 	plot_lnk_fit(fit, i, j)
@@ -779,26 +818,29 @@ end
 """
 	plot_res_lnk_fit(fit, i, j)
 
-Plot the residuum of `lnk`-values over `T` of the selected dataset `i` of the selected substance `j` to the fitted models.
+Plot the absolute residuals (not the weighted) of `lnk`-values over `T` of the selected dataset `i` of the selected substance `j` to the fitted models.
 """
 function plot_res_lnk_fit(fit, i, j)
-	if "i_ABC" in names(fit[i])
-		i_ABC = fit[i].i_ABC[j]
-		i_Kcentric = fit[i].i_Kcentric[j]
-	else
-		i_ABC = findall(isa.(fit[i].lnk[j], Float64))
-		i_Kcentric = findall(isa.(fit[i].lnk[j], Float64))
-	end
-	preslnk = scatter(fit[i].T[j][i_ABC], fit[i].fitABC[j].resid, 
+	#if "i_ABC" in names(fit[i])
+	i_ABC = fit[i].i_ABC[j]
+	i_Kcentric = fit[i].i_Kcentric[j]
+	#else
+	#	i_ABC = findall(isa.(fit[i].lnk[j], Float64))
+	#	i_Kcentric = findall(isa.(fit[i].lnk[j], Float64))
+	#end
+	preslnk = scatter(fit[i].T[j][i_ABC], fit[i].lnk[j][i_ABC] .- ABC(fit[i].T[j][i_ABC].+Tst, fit[i].fitABC[j].param), 
 							label=string("ABC, R²=", round(fit[i].R²_ABC[j]; digits=4)), title=fit[i].Name[j], xlabel="T in °C", ylabel="Resid(lnk)")
-	scatter!(preslnk, fit[i].T[j][i_Kcentric], fit[i].fitKcentric[j].resid, 
+	scatter!(preslnk, fit[i].T[j][i_Kcentric], fit[i].lnk[j][i_Kcentric] .- Kcentric(fit[i].T[j][i_Kcentric].+Tst, fit[i].fitKcentric[j].param), 
 							label=string("Kcentric, R²=", round(fit[i].R²_Kcentric[j]; digits=4)))
-	if "ex_i_ABC" in names(fit[i])
-		ex_i_ABC = fit[i].ex_i_ABC[j]
-		ex_i_Kcentric = fit[i].ex_i_Kcentric[j]
-		scatter!(preslnk, fit[i].T[j][ex_i_ABC], ABC(fit[i].T[j][ex_i_ABC].+Tst, fit[i].fitABC[j].param), 
+	#if "ex_i_ABC" in names(fit[i])
+	ex_i_ABC = fit[i].ex_i_ABC[j]
+	ex_i_Kcentric = fit[i].ex_i_Kcentric[j]
+	if length(ex_i_ABC) > 0
+		scatter!(preslnk, fit[i].T[j][ex_i_ABC], fit[i].lnk[j][ex_i_ABC] .- ABC(fit[i].T[j][ex_i_ABC].+Tst, fit[i].fitABC[j].param), 
 							label="excluded ABC", m=:diamond, mcolor=:grey, msize=2)
-		scatter!(preslnk, fit[i].T[j][ex_i_Kcentric], Kcentric(fit[i].T[j][ex_i_Kcentric].+Tst, fit[i].fitKcentric[j].param), 
+	end
+	if length(ex_i_Kcentric) > 0
+		scatter!(preslnk, fit[i].T[j][ex_i_Kcentric], fit[i].lnk[j][ex_i_Kcentric] .- Kcentric(fit[i].T[j][ex_i_Kcentric].+Tst, fit[i].fitKcentric[j].param), 
 							label="excluded Kcentric", m=:cross, mcolor=:orange, msize=2)
 	end
 	return preslnk
@@ -817,9 +859,14 @@ function fit(model, T, lnk, lb, ub; weighted=false, threshold=NaN)
 	ok_index = findall(ismissing.(lnk).==false) # indices of `lnk` which are NOT missing
 	
 	if model == ABC
-		p0 = [-100.0, 10000.0, 10.0] # for p[1] = -100.0 - log(beta0) ?
+		# seems to be reliable for all measured data
+		p0 = [-100.0, 10000.0, 10.0]
 	elseif model == Kcentric
-		p0 = [200.0+Tst, 30.0, 10.0]
+		# in case of weighted fit, a rough estimator for Tchar is needed
+		# otherwise the fit can be far off
+		TT = T[ok_index]
+		Tchar0 = TT[findfirst(minimum(abs.(lnk[ok_index])).==abs.(lnk[ok_index]))] # estimator for Tchar -> Temperature with the smalles lnk-value
+		p0 = [Tchar0+Tst, 30.0, 10.0]
 	end
 
 	if weighted == false
@@ -833,8 +880,13 @@ function fit(model, T, lnk, lb, ub; weighted=false, threshold=NaN)
 	end
 
 	if isnan(threshold) == false
+		if weighted == false
+			res = fit.resid
+		else
+			res = lnk[ok_index] .- model(T[ok_index].+Tst, fit.param)
+		end
 		# check the residuen
-		while maximum(abs.(fit.resid)) > threshold
+		while maximum(abs.(res)) > threshold
 			if length(ok_index) <= 3
 				break
 			end
@@ -843,11 +895,13 @@ function fit(model, T, lnk, lb, ub; weighted=false, threshold=NaN)
 			ok_index = ok_index[findall(ok_index.!=ok_index[imax])]
 			if weighted == false
 				fit = curve_fit(model, T[ok_index].+Tst, lnk[ok_index], p0, lower=lb, upper=ub)
+				res = fit.resid
 			elseif weighted == true
 				fit_OLS = curve_fit(model, T[ok_index].+Tst, lnk[ok_index], p0, lower=lb, upper=ub)
 				# estimate weights from the residuals of the ordinary least squared
 				w = 1.0./fit_OLS.resid.^2
 				fit = curve_fit(model, T[ok_index].+Tst, lnk[ok_index], w, p0, lower=lb, upper=ub)
+				res = lnk[ok_index] .- model(T[ok_index].+Tst, fit.param)
 			end
 		end
 	end
@@ -859,7 +913,7 @@ end
 
 Fit the ABC-model and the K-centric-model at the lnk(T) data of the `data`-array of dataframes, using LsqFit.jl 
 """
-function fit_models(data::Array{DataFrame}; weighted=false, threshold=NaN, lb_ABC=[-Inf, 0.0, 0.0], ub_ABC=[0.0, Inf, 50.0], lb_Kcentric=[0.0, 0.0, 0.0], ub_Kcentric=[Inf, Inf, 500.0])
+function fit_models(data::Array{DataFrame}; weighted=false, threshold=NaN, lb_ABC=[-Inf, -Inf, -Inf], ub_ABC=[Inf, Inf, Inf], lb_Kcentric=[-Inf, -Inf, -Inf], ub_Kcentric=[Inf, Inf, Inf])
 
 	fits = Array{DataFrame}(undef, length(data))
 	for i=1:length(data)
@@ -915,178 +969,7 @@ function fit_models!(meta_data::DataFrame; weighted=false, threshold=NaN, lb_ABC
 	return meta_data
 end
 
-#="""
-	fit_ABC(T, lnk, β0, res_threshold)
 
-Fit the ABC-model for `lnk` over `T` data. Data points with a residuum above `res_threshold` are excluded and the fit is recalculated, until all residua are below the threshold or only three data points are left.
-"""
-function fit_ABC(T, lnk; weighted=false, threshold=NaN, lb_ABC=[-Inf, 0.0, 0.0], ub_ABC=[0.0, Inf, 50.0])
-
-	flagged_index = Int[]
-	ok_index = findall(ismissing.(lnk).==false)
-	
-	ABC0 = [-100.0, 10000.0, 10.0] # for p[1] = -100.0 - log(beta0) ?
-	
-	if weighted == false
-		fit = curve_fit(ABC, T[ok_index].+Tst, lnk[ok_index], ABC0, lower=lb_ABC, upper=ub_ABC)
-	elseif weighted == true
-		fit_OLS = curve_fit(ABC, T[ok_index].+Tst, lnk[ok_index], ABC0, lower=lb_ABC, upper=ub_ABC)
-		# estimate weights from the residuals of the ordinary least squared
-		w_ABC = 1.0./fit_OLS.resid.^2
-		fit = curve_fit(ABC, T[ok_index].+Tst, lnk[ok_index], w_ABC, ABC0, lower=lb_ABC, upper=ub_ABC)
-	end
-
-	if isnan(threshold) == false
-		# check the residuen
-		while maximum(abs.(fit.resid)) > res_threshold
-			if length(ok_index) <= 3
-				break
-			end
-			imax = findfirst(abs.(fit.resid).==maximum(abs.(fit.resid))) # exclude this data point
-			push!(flagged_index, ok_index[imax])
-			ok_index = ok_index[findall(ok_index.!=ok_index[imax])]
-			if weighted == false
-				fit = curve_fit(ABC, T[ok_index].+Tst, lnk[ok_index], ABC0, lower=lb_ABC, upper=ub_ABC)
-			elseif weighted == true
-				fit_OLS = curve_fit(ABC, T[ok_index].+Tst, lnk[ok_index], ABC0, lower=lb_ABC, upper=ub_ABC)
-				# estimate weights from the residuals of the ordinary least squared
-				w_ABC = 1.0./fit_OLS.resid.^2
-				fit = curve_fit(ABC, T[ok_index].+Tst, lnk[ok_index], w_ABC, ABC0, lower=lb_ABC, upper=ub_ABC)
-			end
-		end
-	end
-	return fit, ok_index, flagged_index
-end=#
-
-#="""
-	fit_Kcentric(T, lnk, res_threshold)
-
-Fit the Kcentric-model for `lnk` over `T` data. Data points with a residuum above `res_threshold` are excluded and the fit is recalculated, until all residua are below the threshold or only three data points are left.
-"""
-function fit_Kcentric(T, lnk, res_threshold)
-
-	flagged_index = Int[]
-	ok_index = findall(ismissing.(lnk).==false)
-	
-	Kcentric0 = [200.0+Tst, 30.0, 10.0]
-	#lb_Kcentric = [0.0, 0.0, 0.0]
-	#ub_Kcentric = [Inf, Inf, 500.0]
-	fit = curve_fit(Kcentric, T[ok_index].+Tst, lnk[ok_index], Kcentric0, lower=lb_Kcentric, upper=ub_Kcentric)
-	
-	# check the residuen
-	while maximum(abs.(fit.resid)) > res_threshold
-		if length(ok_index) <= 3
-			break
-		end
-		imax = findfirst(abs.(fit.resid).==maximum(abs.(fit.resid))) # exclude this data point
-		push!(flagged_index, ok_index[imax])
-		ok_index = ok_index[findall(ok_index.!=ok_index[imax])]
-		fit = curve_fit(Kcentric, T[ok_index].+Tst, lnk[ok_index], Kcentric0, lower=lb_Kcentric, upper=ub_Kcentric)
-	end
-	return fit, flagged_index, ok_index
-end=#
-
-#="""
-	fit_models_th(data::Array{DataFrame}, res_threshold)
-
-Fit the ABC-model and the K-centric-model at the lnk(T) data of the `data`-array of dataframes, using LsqFit.jl 
-"""
-function fit_models_th(data::Array{DataFrame}, β0::Array{Float64}, res_threshold)
-	fit = Array{DataFrame}(undef, length(data))
-	for i=1:length(data)
-		fitABC = Array{Any}(undef, length(data[i][!,1]))
-		fitKcentric = Array{Any}(undef, length(data[i][!,1]))
-		T = Array{Array{Float64}}(undef, length(data[i][!,1]))
-		lnk = Array{Any}(undef, length(data[i][!,1]))
-		name = Array{String}(undef, length(data[i][!,1]))
-		excludedABC_i = Array{Array{Int,1}}(undef, length(data[i][!,1]))
-		okABC_i = Array{Array{Int,1}}(undef, length(data[i][!,1]))
-		excludedKcentric_i = Array{Array{Int,1}}(undef, length(data[i][!,1]))
-		okKcentric_i = Array{Array{Int,1}}(undef, length(data[i][!,1]))
-		R²_ABC = Array{Float64}(undef, length(data[i][!,1]))
-		R²_Kcentric = Array{Float64}(undef, length(data[i][!,1]))
-		for j=1:length(data[i][!,1])
-			T[j] = T_column_names_to_Float(data[i])
-			lnk[j] = collect(Union{Missing,Float64}, data[i][j,2:end])
-			
-			name[j] = data[i][!, 1][j]
-
-			fitABC[j], excludedABC_i[j], okABC_i[j] = fit_ABC(T[j], lnk[j], β0[i], res_threshold)
-			fitKcentric[j], excludedKcentric_i[j], okKcentric_i[j] = fit_Kcentric(T[j], lnk[j], res_threshold)
-
-			R²_ABC[j] = coeff_of_determination(fitABC[j], lnk[j][okABC_i[j]])
-			R²_Kcentric[j] = coeff_of_determination(fitKcentric[j], lnk[j][okKcentric_i[j]])
-		end
-		fit[i] = DataFrame(Name=name, T=T, lnk=lnk, fitABC=fitABC, fitKcentric=fitKcentric, i_ABC=okABC_i, i_Kcentric=okKcentric_i, ex_i_ABC=excludedABC_i, ex_i_Kcentric=excludedKcentric_i, R²_ABC=R²_ABC, R²_Kcentric=R²_Kcentric)
-	end
-	return fit
-end=#
-
-#="""
-	fit_models_th!(meta_data::DataFrame, β0::Array{Float64}, res_threshold)
-
-Fit the ABC-model and the K-centric-model at the lnk(T) data of the `data`-array of dataframes, using LsqFit.jl and add the result in a new column (`fit`) of `meta_data 
-"""
-function fit_models_th!(meta_data::DataFrame, res_threshold)
-	fit = fit_models_th(meta_data.data, meta_data.beta0, res_threshold)
-	meta_data[!, "fit"] = fit
-	return meta_data
-end=#
-
-#="""
-	fit_models_w(data::Array{DataFrame}, β0::Array{Float64})
-
-Fit the ABC-model and the K-centric-model at the lnk(T) data of the `data`-array of dataframes, using LsqFit.jl 
-"""
-function fit_models_w(data::Array{DataFrame}, β0::Array{Float64})
-	fit = Array{DataFrame}(undef, length(data))
-	for i=1:length(data)
-		fitABC = Array{Any}(undef, length(data[i][!,1]))
-		fitKcentric = Array{Any}(undef, length(data[i][!,1]))
-		T = Array{Array{Float64}}(undef, length(data[i][!,1]))
-		lnk = Array{Any}(undef, length(data[i][!,1]))
-		name = Array{String}(undef, length(data[i][!,1]))
-		ok_i = Array{Array{Int,1}}(undef, length(data[i][!,1]))
-		R²_ABC = Array{Float64}(undef, length(data[i][!,1]))
-		R²_Kcentric = Array{Float64}(undef, length(data[i][!,1]))
-		for j=1:length(data[i][!,1])
-			T[j] = T_column_names_to_Float(data[i])
-			lnk[j] = collect(Union{Missing,Float64}, data[i][j,2:end])
-			ii = findall(isa.(lnk[j], Float64))
-			name[j] = data[i][!, 1][j]
-			ABC0 = [-100.0, 10000.0, 10.0] # for p[1] = -100.0 - log(beta0) ?
-			#lb_ABC = [-Inf, 0.0, 0.0]
-			#ub_ABC = [-log(β0[i]), Inf, Inf]
-			Kcentric0 = [200.0+Tst, 30.0, 10.0]
-			#lb_Kcentric = [0.0, 0.0, 0.0]
-			#ub_Kcentric = [Inf, Inf, 500.0]
-			fitABC0 = curve_fit(ABC, T[j][ii].+Tst, lnk[j][ii], ABC0, lower=lb_ABC, upper=ub_ABC)
-			# estimate weights from the residuals of the ordinary least squared
-			w_ABC = 1.0./fitABC0.resid.^2
-			fitABC[j] = curve_fit(ABC, T[j][ii].+Tst, lnk[j][ii], w_ABC, ABC0, lower=lb_ABC, upper=ub_ABC)
-			
-			fitKcentric0 = curve_fit(Kcentric, T[j][ii].+Tst, lnk[j][ii], Kcentric0, lower=lb_Kcentric, upper=ub_Kcentric)
-			w_Kcentric = 1.0./fitKcentric0.resid.^2
-			fitKcentric[j] = curve_fit(Kcentric, T[j][ii].+Tst, lnk[j][ii], w_Kcentric, Kcentric0, lower=lb_Kcentric, upper=ub_Kcentric)
-			ok_i[j] = ii
-			R²_ABC[j] = coeff_of_determination(fitABC[j], lnk[j][ii])
-			R²_Kcentric[j] = coeff_of_determination(fitKcentric[j], lnk[j][ii])
-		end
-		fit[i] = DataFrame(Name=name, T=T, lnk=lnk, fitABC=fitABC, fitKcentric=fitKcentric, ok_i=ok_i, R²_ABC=R²_ABC, R²_Kcentric=R²_Kcentric)
-	end
-	return fit
-end=#
-
-#="""
-	fit_models_w!(meta_data::DataFrame)
-
-Fit the ABC-model and the K-centric-model at the lnk(T) data of the `data`-array of dataframes, using LsqFit.jl and add the result in a new column (`fit`) of `meta_data 
-"""
-function fit_models_w!(meta_data::DataFrame)
-	fit = fit_models_w(meta_data.data, meta_data.beta0)
-	meta_data[!, "fit"] = fit
-	return meta_data
-end=#
 
 """
 	extract_paramaters_from_fit(fit, β0)
@@ -1104,8 +987,12 @@ function extract_parameters_from_fit(fit, β0)
 		ΔCp = Array{Measurement{Float64}}(undef, length(fit[i].Name))
 		ΔHref = Array{Measurement{Float64}}(undef, length(fit[i].Name))
 		ΔSref = Array{Measurement{Float64}}(undef, length(fit[i].Name))
+		beta0 = β0[i].*ones(length(fit[i].Name))
+		Tref = T0.*ones(length(fit[i].Name))
 		n_ABC = Array{Int}(undef, length(fit[i].Name))
 		n_Kcentric = Array{Int}(undef, length(fit[i].Name))
+		approx_equal = Array{Bool}(undef, length(fit[i].Name))
+		WLS = Array{Bool}(undef, length(fit[i].Name))
 		for j=1:length(fit[i].Name)
 			A[j] = (fit[i].fitABC[j].param[1] ± stderror(fit[i].fitABC[j])[1]) + log(β0[i])
 			B[j] = fit[i].fitABC[j].param[2] ± stderror(fit[i].fitABC[j])[2]
@@ -1118,17 +1005,35 @@ function extract_parameters_from_fit(fit, β0)
 			ΔHref[j] = TD[1]
 			ΔSref[j] = TD[2]
 
-			n_ABC[j] = length(fit[i].i_ABC)
-			n_Kcentric[j] = length(fit[i].i_Kcentric)
+			n_ABC[j] = length(fit[i].i_ABC[j])
+			n_Kcentric[j] = length(fit[i].i_Kcentric[j])
+			if round(fit[i].χ²_ABC[j]; sigdigits=5) == round(fit[i].χ²_Kcentric[j]; sigdigits=5)
+				approx_equal[j] = true
+			else
+				approx_equal[j] = false
+			end
+			if length(fit[i].fitABC[j].wt) == 0
+				WLS[j] = false
+			else
+				WLS[j] = true
+			end
 		end
-		Par[i] = DataFrame(Name=fit[i].Name, A=A, B=B, C=C, Tchar=Tchar, thetachar=θchar, DeltaCp=ΔCp, DeltaHref=ΔHref, DeltaSref=ΔSref, 
+		Par[i] = DataFrame(Name=fit[i].Name, A=A, B=B, C=C, Tchar=Tchar, thetachar=θchar, DeltaCp=ΔCp, DeltaHref=ΔHref, DeltaSref=ΔSref,
+							beta0=beta0, Tref=Tref, 
 							R²_ABC=fit[i].R²_ABC, R²_Kcentric=fit[i].R²_Kcentric,
 							χ²_ABC=fit[i].χ²_ABC, χ²_Kcentric=fit[i].χ²_Kcentric,
 							χ̄²_ABC=fit[i].χ̄²_ABC, χ̄²_Kcentric=fit[i].χ̄²_Kcentric,
-							n_ABC=n_ABC, n_Kcentric=n_Kcentric)
+							n_ABC=n_ABC, n_Kcentric=n_Kcentric,
+							approx_equal=approx_equal, WLS=WLS)
 	end
 	return Par
-end		
+end	
+
+function extract_parameters_from_fit!(meta_data)
+	par = extract_parameters_from_fit(meta_data.fitting, meta_data.beta0)
+	meta_data[!, "parameters"] = par
+	return meta_data
+end
 # --- ThermodynamicData_reading_lnk-T_files.jl --- #
 
 end # module
