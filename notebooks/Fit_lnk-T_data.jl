@@ -35,29 +35,29 @@ db_path = "/Users/janleppert/Documents/GitHub/ThermodynamicData/Databases"
 md"""
 ## Settings
 
-- weighted: $(@bind weight CheckBox())
+- weighted: $(@bind weight CheckBox(default=true))
 
-- threshold: $(@bind bool_th CheckBox()) $(@bind threshold NumberField(0.0:0.01:10.0; default=0.1))
+- threshold: $(@bind bool_th CheckBox()) $(@bind threshold NumberField(0.0:0.01:10.0; default=0.025))
 
 lower bounds ABC-model:
 - `A-ln(β₀)`: $(@bind bool_lb_ABC1 CheckBox(default=false)) $(@bind lb_ABC1 NumberField(-1000:1:1000; default=-1000))
-- `B`: $(@bind bool_lb_ABC2 CheckBox(default=true)) $(@bind lb_ABC2 NumberField(-100000:1:100000; default=0))
-- `C`: $(@bind bool_lb_ABC3 CheckBox(default=true)) $(@bind lb_ABC3 NumberField(-1000:1:1000; default=0))
+- `B`: $(@bind bool_lb_ABC2 CheckBox(default=false)) $(@bind lb_ABC2 NumberField(-100000:1:100000; default=0))
+- `C`: $(@bind bool_lb_ABC3 CheckBox(default=false)) $(@bind lb_ABC3 NumberField(-1000:1:1000; default=0))
 
 upper bounds ABC-model:
-- `A-ln(β₀)`: $(@bind bool_ub_ABC1 CheckBox(default=true)) $(@bind ub_ABC1 NumberField(-1000:1:1000; default=0))
+- `A-ln(β₀)`: $(@bind bool_ub_ABC1 CheckBox(default=false)) $(@bind ub_ABC1 NumberField(-1000:1:1000; default=0))
 - `B`: $(@bind bool_ub_ABC2 CheckBox(default=false)) $(@bind ub_ABC2 NumberField(-100000:1:100000; default=100000))
 - `C`: $(@bind bool_ub_ABC3 CheckBox(default=false)) $(@bind ub_ABC3 NumberField(-1000:1:1000; default=1000))
 
 lower bounds Kcentric-model:
-- `Tchar + Tst`: $(@bind bool_lb_Kc1 CheckBox(default=true)) $(@bind lb_Kc1 NumberField(0:1:10000; default=0))
-- `θchar`: $(@bind bool_lb_Kc2 CheckBox(default=true)) $(@bind lb_Kc2 NumberField(-1000:1:1000; default=0))
-- `C=ΔCp/R`: $(@bind bool_lb_Kc3 CheckBox(default=true)) $(@bind lb_Kc3 NumberField(-1000:1:1000; default=0))
+- `Tchar + Tst`: $(@bind bool_lb_Kc1 CheckBox(default=false)) $(@bind lb_Kc1 NumberField(0:1:10000; default=0))
+- `θchar`: $(@bind bool_lb_Kc2 CheckBox(default=false)) $(@bind lb_Kc2 NumberField(-1000:1:1000; default=0))
+- `C=ΔCp/R`: $(@bind bool_lb_Kc3 CheckBox(default=false)) $(@bind lb_Kc3 NumberField(-1000:1:1000; default=0))
 
 upper bounds ABC-model:
 - `Tchar + Tst`: $(@bind bool_ub_Kc1 CheckBox(default=false)) $(@bind ub_Kc1 NumberField(0:1:10000; default=10000))
 - `θchar`: $(@bind bool_ub_Kc2 CheckBox(default=false)) $(@bind ub_Kc2 NumberField(-1000:1:1000; default=1000))
-- `C=ΔCp/R`: $(@bind bool_ub_Kc3 CheckBox(default=true)) $(@bind ub_Kc3 NumberField(-1000:1:1000; default=500))
+- `C=ΔCp/R`: $(@bind bool_ub_Kc3 CheckBox(default=false)) $(@bind ub_Kc3 NumberField(-1000:1:1000; default=500))
 """
 
 # ╔═╡ 363ee826-14d1-4e1c-a4b9-a2d00e8d48cc
@@ -169,14 +169,17 @@ md"""
 """
 
 # ╔═╡ f57fc4ec-9522-401f-91de-9495ca50bbb9
-par = ThermodynamicData.extract_parameters_from_fit(data.fitting, data.beta0)
+ThermodynamicData.extract_parameters_from_fit!(data);
+
+# ╔═╡ a65c584d-a669-4dfe-8deb-03ce2fd3a0c0
+data.parameters[end]
 
 # ╔═╡ 8a0d3816-b114-42e3-8bef-cda7b63af509
 begin
 	plotly()
-	pABC = scatter(Measurements.value.(par[1].A), Measurements.value.(par[1].B), Measurements.value.(par[1].C), label=1, xlabel="A", ylabel="B", zlabel="C")
-	for i=2:length(par)
-		scatter!(pABC, Measurements.value.(par[i].A), Measurements.value.(par[i].B), Measurements.value.(par[i].C), label=i)
+	pABC = scatter(Measurements.value.(data.parameters[1].A), Measurements.value.(data.parameters[1].B), Measurements.value.(data.parameters[1].C), label=1, xlabel="A", ylabel="B", zlabel="C")
+	for i=2:length(data.parameters)
+		scatter!(pABC, Measurements.value.(data.parameters[i].A), Measurements.value.(data.parameters[i].B), Measurements.value.(data.parameters[i].C), label=i)
 	end
 	pABC
 end
@@ -184,169 +187,49 @@ end
 # ╔═╡ baba96bf-b0fb-43a3-8f58-954343b918fd
 begin
 	plotly()
-	pKcentric = scatter(Measurements.value.(par[1].Tchar), Measurements.value.(par[1].thetachar), Measurements.value.(par[1].DeltaCp), label=1, xlabel="Tchar in °C", ylabel="θchar in °C", zlabel="ΔCp in J mol⁻¹ K⁻¹")
-	for i=2:length(par)
-		scatter!(pKcentric, Measurements.value.(par[i].Tchar), Measurements.value.(par[i].thetachar), Measurements.value.(par[i].DeltaCp), label=i)
+	pKcentric = scatter(Measurements.value.(data.parameters[1].Tchar), Measurements.value.(data.parameters[1].thetachar), Measurements.value.(data.parameters[1].DeltaCp), label=1, xlabel="Tchar in °C", ylabel="θchar in °C", zlabel="ΔCp in J mol⁻¹ K⁻¹")
+	for i=2:length(data.parameters)
+		scatter!(pKcentric, Measurements.value.(data.parameters[i].Tchar), Measurements.value.(data.parameters[i].thetachar), Measurements.value.(data.parameters[i].DeltaCp), label=i)
 	end
 	pKcentric
 end
 
 # ╔═╡ 8eb557fa-8e94-49fd-8fc5-17f8d42943c6
 begin
-	p_R2_ABC = scatter(par[1].R²_ABC, title="R², ABC-model", ylabel="R²", label=1)
-	for i=2:length(par)
-		scatter!(p_R2_ABC, par[i].R²_ABC, label=i)
+	p_R2_ABC = scatter(data.parameters[1].R²_ABC, title="R², ABC-model", ylabel="R²", label=1)
+	for i=2:length(data.parameters)
+		scatter!(p_R2_ABC, data.parameters[i].R²_ABC, label=i)
 	end
 
-	p_R2_Kcentric = scatter(par[1].R²_Kcentric, title="R², Kcentric-model", ylabel="R²", label=1)
-	for i=2:length(par)
-		scatter!(p_R2_Kcentric, par[i].R²_Kcentric, label=i)
+	p_R2_Kcentric = scatter(data.parameters[1].R²_Kcentric, title="R², Kcentric-model", ylabel="R²", label=1)
+	for i=2:length(data.parameters)
+		scatter!(p_R2_Kcentric, data.parameters[i].R²_Kcentric, label=i)
 	end
 	
-	p_χ2_ABC = scatter(par[1].χ²_ABC, title="χ², ABC-model", ylabel="χ²", label=1)
-	for i=2:length(par)
-		scatter!(p_χ2_ABC, par[i].χ²_ABC, label=i)
+	p_χ2_ABC = scatter(data.parameters[1].χ²_ABC, title="χ², ABC-model", ylabel="χ²", label=1)
+	for i=2:length(data.parameters)
+		scatter!(p_χ2_ABC, data.parameters[i].χ²_ABC, label=i)
 	end
 	
-	p_χ2_Kcentric = scatter(par[1].χ²_Kcentric, title="χ², Kcentric-model", ylabel="χ²", label=1)
-	for i=2:length(par)
-		scatter!(p_χ2_Kcentric, par[i].χ²_Kcentric, label=i)
+	p_χ2_Kcentric = scatter(data.parameters[1].χ²_Kcentric, title="χ², Kcentric-model", ylabel="χ²", label=1)
+	for i=2:length(data.parameters)
+		scatter!(p_χ2_Kcentric, data.parameters[i].χ²_Kcentric, label=i)
 	end
 	plot(p_R2_ABC, p_R2_Kcentric, p_χ2_ABC, p_χ2_Kcentric)
 end
 
-# ╔═╡ d6f76ae4-4a89-42b9-8080-a37deec3ad3f
-md"""
-## Compare Fits for Boswell data with previous fits
-"""
+# ╔═╡ 23426e0b-98a1-4d25-9acf-d579c7420b12
+# ToDo
+# export AllParam (only values, without errors)
 
-# ╔═╡ a41e3262-a973-435d-9752-664bd0a77f86
-old_db = DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/ThermodynamicData/Databases/Database_append.csv"))
+# in new notebook:-> read all AllParam-files, 
+#                 -> combine them in one big database
+#                 -> flag substances (parameters outside certain range, n=3, approx_equal=false)
+#                 -> use ChemicalIdentifiers.jl
+#                 -> export databases without flagged substances and for one certain parameter set
 
-# ╔═╡ f8b971a6-b859-4979-9a4a-b156520a1df2
-old_boswell = filter([:Annotation] => x -> x == "Boswell.2012", old_db)
-
-# ╔═╡ ab17278f-5fcc-4872-99d4-d4c27ca1b5c2
-new_boswell = par[1]
-
-# ╔═╡ 06237216-8009-4432-a9c3-73b8f017ae81
-begin
-	s_new = sort(new_boswell, :Name)
-	s_old = sort(old_boswell, :Name)
-	p_Tchar = scatter(s_new.Tchar, s_old.Tchar, title="Tchar", xlabel="new", ylabel="old", label="")
-	p_thetachar = scatter(s_new.thetachar, s_old.thetachar, title="θchar", xlabel="new", ylabel="old", label="")
-	p_DeltaCp = scatter(s_new.DeltaCp, s_old.DeltaCp, title="ΔCp", xlabel="new", ylabel="old", label="")
-end;
-
-# ╔═╡ 02657f8c-7a0d-4682-b1d1-ec650a5312bf
-begin
-	p_diff_Tchar = scatter(s_new.Tchar.-s_old.Tchar, title="Tchar", xlabel="i", ylabel="ΔTchar", label="")
-	p_diff_thetachar = scatter(s_new.thetachar.-s_old.thetachar, title="θchar", xlabel="i", ylabel="Δθchar", label="")
-	p_diff_DeltaCp = scatter(s_new.DeltaCp.-s_old.DeltaCp, title="ΔCp", xlabel="i", ylabel="ΔΔCp", label="")
-	p_diff_thetachar_diff_DeltaCp = scatter(s_new.thetachar.-s_old.thetachar, s_new.DeltaCp.-s_old.DeltaCp, title="", xlabel="Δθchar", ylabel="ΔΔCp", label="")
-end;
-
-# ╔═╡ 10fb7079-9b27-4f06-ac91-478b082039ac
-md"""
-### Observation
-
-$(embed_display(plot(p_Tchar, p_thetachar, p_DeltaCp)))
-
-$(embed_display(plot(p_diff_Tchar, p_diff_thetachar, p_diff_DeltaCp, p_diff_thetachar_diff_DeltaCp)))
-
-The parameters for the two `Boswell`-datasets correlate, but they are only equal for `Tchar`.
-
-For the parameters θchar the value is higher in the new parameter set and for ΔCp the value is lower in the new parameter set.
-"""
-
-# ╔═╡ 570ffc0c-c873-477d-afd4-2ecad09c9020
-md"""
-### Compare lnk
-"""
-
-# ╔═╡ 3207a44d-158d-4107-9ca7-e647fe269d91
-@bind ii Slider(1:length(s_new.Name); show_value=true)
-
-# ╔═╡ 4a672bc4-14a3-42ce-a162-83f3ff04894e
-begin
-	T = 40.0:1.0:400.0
-	new_lnk = Measurements.value.(ThermodynamicData.Kcentric(T.+273.15, [s_new.Tchar[ii]+273.15, s_new.thetachar[ii], s_new.DeltaCp[ii]]))
-	old_lnk = ThermodynamicData.Kcentric(T.+273.15, [s_old.Tchar[ii]+273.15, s_old.thetachar[ii], s_old.DeltaCp[ii]])
-	p_lnk_b = plot(T, new_lnk, xlabel="T in °C", ylabel="lnk", label="new")
-	plot!(p_lnk_b, T, old_lnk, label="old")
-	md"""
-
-	$(embed_display(p_lnk_b))
-
-	$(embed_display(plot(T, old_lnk./new_lnk)))
-	#### Observation
-
-	The ratio between new and old lnk-plots seems to be the same for all substances with a value of `new/old ≈ 0.4343` resp. `old/new ≈ 2.30`.
-
-	The reason could be:
-	
-	a) a wrong value for the phase ratio β₀
-	
-	b) log₁₀_k_ instead of ln_k_ values
-
-	-> log₁₀_k_/ln_k_ = $(round(log10(10)/log(10); digits=4)) resp. ln_k_/log₁₀_k_ = $(round(log(10)/log10(10); digits=3))
-	"""
-end
-
-# ╔═╡ 98b2e6ec-033e-4412-9dec-db39ea54ec44
-log10(100)/log(100)
-
-# ╔═╡ 033da5c1-b298-407a-8c16-ef2434da84fb
-md"""
-## Compare Fits for Marquart data with previous fits
-"""
-
-# ╔═╡ 97430fc3-f23c-4e1f-8cc0-ef80b6428d56
-old_marquart = filter([:Annotation] => x -> x == "Masterthesis.Marquart.2020", old_db)
-
-# ╔═╡ 9507ab97-bb73-4be0-90fa-0f312a0d78ff
-begin
-	i_Marquart = findall(data.source.=="Marquart2020")
-	new_marquart = DataFrame()
-	for i=1:length(i_Marquart)
-		append!(new_marquart, par[i_Marquart[i]])
-	end
-	new_marquart
-end
-
-# ╔═╡ 06fe6a15-9f9a-47d4-8f29-e4560fb6a8af
-begin
-	# use only common names in both
-	s_new_m = sort(filter([:Name] => x -> x in old_marquart.Name, new_marquart), :Name)
-	s_old_m = sort(filter([:Name] => x -> x in s_new_m.Name, old_marquart), :Name)
-	p_Tchar_m = scatter(s_new_m.Tchar, s_old_m.Tchar, title="Tchar", xlabel="new", ylabel="old", label="")
-	p_thetachar_m = scatter(s_new_m.thetachar, s_old_m.thetachar, title="θchar", xlabel="new", ylabel="old", label="")
-	p_DeltaCp_m = scatter(s_new_m.DeltaCp, s_old_m.DeltaCp, title="ΔCp", xlabel="new", ylabel="old", label="")
-end;
-
-# ╔═╡ bab7b4d7-f719-429b-ab90-dd9c60e20a48
-begin
-	p_diff_Tchar_m = scatter(s_new_m.Tchar.-s_old_m.Tchar, title="Tchar", xlabel="i", ylabel="ΔTchar", label="")
-	p_diff_thetachar_m = scatter(s_new_m.thetachar.-s_old_m.thetachar, title="θchar", xlabel="i", ylabel="Δθchar", label="")
-	p_diff_DeltaCp_m = scatter(s_new_m.DeltaCp.-s_old_m.DeltaCp, title="ΔCp", xlabel="i", ylabel="ΔΔCp", label="")
-end;
-
-# ╔═╡ 0490b8b6-b21b-4280-b129-16586eaa6b27
-md"""
-### Observation 
-
-$(embed_display(plot(p_Tchar_m, p_thetachar_m, p_DeltaCp_m)))
-
-$(embed_display(plot(p_diff_Tchar_m, p_diff_thetachar_m, p_diff_DeltaCp_m)))
-
-For the `Marquart`-data all three parameters are equal for the old and the new set, except for one substance:
-
-i = 18
-
-$(s_new_m.Name[18])
-
-The difference is small. Biggest difference for the parameters ΔCp.
-"""
+# ╔═╡ d57b2b89-9763-4998-8434-465de994ce54
+#ThermodynamicData.save_all_parameter_data(data)
 
 # ╔═╡ 91c46525-43f9-4ef2-98f4-35fb3974d64f
 md"""
@@ -1588,7 +1471,7 @@ version = "0.9.1+5"
 """
 
 # ╔═╡ Cell order:
-# ╠═6f0ac0bc-9a3f-11ec-0866-9f56a0d489dd
+# ╟─6f0ac0bc-9a3f-11ec-0866-9f56a0d489dd
 # ╠═0b608842-5672-44cc-bd70-c168c537667e
 # ╠═c8f6712d-84d7-45eb-bdcc-d6a3a7504df3
 # ╟─4cf9351d-b5d0-4469-a543-8d428094884e
@@ -1599,26 +1482,12 @@ version = "0.9.1+5"
 # ╟─c037a761-f192-4a3b-a617-b6024ac6cd61
 # ╟─2fd4d728-9068-415c-b006-26f93dddce28
 # ╠═f57fc4ec-9522-401f-91de-9495ca50bbb9
-# ╠═8a0d3816-b114-42e3-8bef-cda7b63af509
-# ╠═baba96bf-b0fb-43a3-8f58-954343b918fd
+# ╠═a65c584d-a669-4dfe-8deb-03ce2fd3a0c0
+# ╟─8a0d3816-b114-42e3-8bef-cda7b63af509
+# ╟─baba96bf-b0fb-43a3-8f58-954343b918fd
 # ╟─8eb557fa-8e94-49fd-8fc5-17f8d42943c6
-# ╠═d6f76ae4-4a89-42b9-8080-a37deec3ad3f
-# ╠═a41e3262-a973-435d-9752-664bd0a77f86
-# ╠═f8b971a6-b859-4979-9a4a-b156520a1df2
-# ╠═ab17278f-5fcc-4872-99d4-d4c27ca1b5c2
-# ╟─06237216-8009-4432-a9c3-73b8f017ae81
-# ╠═02657f8c-7a0d-4682-b1d1-ec650a5312bf
-# ╟─10fb7079-9b27-4f06-ac91-478b082039ac
-# ╟─570ffc0c-c873-477d-afd4-2ecad09c9020
-# ╟─3207a44d-158d-4107-9ca7-e647fe269d91
-# ╟─4a672bc4-14a3-42ce-a162-83f3ff04894e
-# ╠═98b2e6ec-033e-4412-9dec-db39ea54ec44
-# ╠═033da5c1-b298-407a-8c16-ef2434da84fb
-# ╠═97430fc3-f23c-4e1f-8cc0-ef80b6428d56
-# ╠═9507ab97-bb73-4be0-90fa-0f312a0d78ff
-# ╟─06fe6a15-9f9a-47d4-8f29-e4560fb6a8af
-# ╟─bab7b4d7-f719-429b-ab90-dd9c60e20a48
-# ╟─0490b8b6-b21b-4280-b129-16586eaa6b27
-# ╠═91c46525-43f9-4ef2-98f4-35fb3974d64f
+# ╠═23426e0b-98a1-4d25-9acf-d579c7420b12
+# ╠═d57b2b89-9763-4998-8434-465de994ce54
+# ╟─91c46525-43f9-4ef2-98f4-35fb3974d64f
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
