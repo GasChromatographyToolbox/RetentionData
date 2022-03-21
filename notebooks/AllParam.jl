@@ -80,7 +80,10 @@ md"""
 """
 
 # ╔═╡ 4129a813-51b6-4790-9f20-a0d5e188b5c7
-ThermodynamicData.substance_identification(alldata)
+CI = ThermodynamicData.substance_identification(alldata)
+
+# ╔═╡ 5cf8c59b-f927-4904-bc26-21048ae3d252
+filter([:CAS] => x -> ismissing(x), CI)  
 
 # ╔═╡ 5ee8d8f2-3c3c-4d4a-a14d-e9a0f23c3ef5
 # filter for not identified substances -> alternative names (save in `shortnames.csv`) or they are not in the database of ChemicalIdentifiers.jl (in this case add a separate database with name, CAS, formula, MW, Smiles)
@@ -89,7 +92,10 @@ ThermodynamicData.substance_identification(alldata)
 # find duplicates (same substance(CAS) on same stationary phase)
 
 # ╔═╡ 806193c4-be37-4eed-8598-331a9c91ec22
+search_chemical("55673-89-7")
 
+# ╔═╡ 28bcb945-b2d0-4ceb-969b-edbe8964d174
+search_chemical("1,2,3,7,8,9-Hexachlorodibenzofuran")
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1341,8 +1347,10 @@ version = "0.9.1+5"
 # ╟─80c784b2-35a6-4fc9-a1fd-7b1d6d89462f
 # ╠═453cbd8f-8f98-4bc7-8577-877455d8354e
 # ╠═4129a813-51b6-4790-9f20-a0d5e188b5c7
+# ╠═5cf8c59b-f927-4904-bc26-21048ae3d252
 # ╠═5ee8d8f2-3c3c-4d4a-a14d-e9a0f23c3ef5
 # ╠═917e88c6-cf5d-4d8f-93e5-f50ea2bb2cdc
 # ╠═806193c4-be37-4eed-8598-331a9c91ec22
+# ╠═28bcb945-b2d0-4ceb-969b-edbe8964d174
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
