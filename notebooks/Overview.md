@@ -21,3 +21,11 @@
       heating rate (hold-up time at 150°C as reference time) and three different
       models are fitted against the data (**TODO: derive the heating rate for**
       **which ``\Delta T_{char}=0``°C in relation to the phase ratio ``\beta``**) 
+
+
+- `AllParam.jl`: 
+  - Load all files with keyword `AllParam` from a folder
+  - combine the data of all these files in one dataframe
+  - flag substances with parameters which do not fulfill certain conditions
+  - plots of the parameter sets
+  - use of ChemicalIdentifiers.jl to add CAS, formula, MW and smiles
