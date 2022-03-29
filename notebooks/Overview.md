@@ -28,4 +28,10 @@
   - combine the data of all these files in one dataframe
   - flag substances with parameters which do not fulfill certain conditions
   - plots of the parameter sets
-  - use of ChemicalIdentifiers.jl to add CAS, formula, MW and smiles
+  - use of ChemicalIdentifiers.jl to identify CAS, formula, MW and smiles
+
+- `Convert_Parameters.jl`:
+  - Load all files with the keyword `Parameters` from a folder
+  - convert the parameter set from the file into the other parameter sets
+  - ToDo: if no column for `CAS` number exists in the data, add one with the `CAS`-numbers from ChemicalIdentifiers.jl (also by using the file `shortname.csv`) resp. from the file `missing.csv` (chemical substances, which are not found in the database of ChemicalIdentifiers.jl)
+  - optional: save the data of all three parameter sets into a file with the keyword `AllParam`
