@@ -82,6 +82,21 @@ md"""
 # ╔═╡ 4129a813-51b6-4790-9f20-a0d5e188b5c7
 CI = ThermodynamicData.substance_identification(alldata)
 
+# ╔═╡ 192cefa8-4834-4d09-b432-512c08f1ed12
+findfirst(CI.CAS.=="108-38-3")
+
+# ╔═╡ f3ec4e20-e5b4-436a-99a6-def48b00371b
+findfirst(CI.Name.=="m-Xylene")
+
+# ╔═╡ 1d602fb6-64d2-4ff2-920f-73c0025df1ad
+CI[544, :]
+
+# ╔═╡ 0123f15b-1a25-4597-9b0d-3d728a623fae
+CI.CAS[544].=="108-38-3"
+
+# ╔═╡ 79e7d1da-e2ef-4d8e-99f1-b9b53322a4ce
+filter([:CAS] => x -> ismissing(x)==false && x.=="503-74-2", CI)
+
 # ╔═╡ 5cf8c59b-f927-4904-bc26-21048ae3d252
 filter([:CAS] => x -> ismissing(x), CI)  
 
@@ -92,7 +107,7 @@ filter([:CAS] => x -> ismissing(x), CI)
 # find duplicates (same substance(CAS) on same stationary phase)
 
 # ╔═╡ 806193c4-be37-4eed-8598-331a9c91ec22
-search_chemical("55673-89-7")
+search_chemical("503-74-2")
 
 # ╔═╡ 28bcb945-b2d0-4ceb-969b-edbe8964d174
 search_chemical("1,2,3,7,8,9-Hexachlorodibenzofuran")
@@ -1347,6 +1362,11 @@ version = "0.9.1+5"
 # ╟─80c784b2-35a6-4fc9-a1fd-7b1d6d89462f
 # ╠═453cbd8f-8f98-4bc7-8577-877455d8354e
 # ╠═4129a813-51b6-4790-9f20-a0d5e188b5c7
+# ╠═192cefa8-4834-4d09-b432-512c08f1ed12
+# ╠═f3ec4e20-e5b4-436a-99a6-def48b00371b
+# ╠═1d602fb6-64d2-4ff2-920f-73c0025df1ad
+# ╠═0123f15b-1a25-4597-9b0d-3d728a623fae
+# ╠═79e7d1da-e2ef-4d8e-99f1-b9b53322a4ce
 # ╠═5cf8c59b-f927-4904-bc26-21048ae3d252
 # ╠═5ee8d8f2-3c3c-4d4a-a14d-e9a0f23c3ef5
 # ╠═917e88c6-cf5d-4d8f-93e5-f50ea2bb2cdc
