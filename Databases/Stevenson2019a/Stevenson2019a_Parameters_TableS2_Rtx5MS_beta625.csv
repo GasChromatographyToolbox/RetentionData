@@ -1,7 +1,7 @@
-Compound name,A,B,C
-2-heptanone,387.1808,-13812.5882,-58.4646
-trans-5-decene,283.3943,-8860.8554,-42.9966
-2-nonanol,223.9268,-5845.6965,-34.1673
-methyl nonanoate,199.7856,-4573.6015,-30.5088
-undecanal,178.9601,-3517.8651,-27.3743
-n-pentadecane,176.7571,-3233.6979,-26.9303
+Compound name,A,B,C,Cat
+2-heptanone,387.1808,-13812.5882,-58.4646,ketone
+trans-5-decene,283.3943,-8860.8554,-42.9966,alkene
+2-nonanol,223.9268,-5845.6965,-34.1673,alcohol
+methyl nonanoate,199.7856,-4573.6015,-30.5088,FAME
+undecanal,178.9601,-3517.8651,-27.3743,aldehyde
+n-pentadecane,176.7571,-3233.6979,-26.9303,alkane

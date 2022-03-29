@@ -1,8 +1,8 @@
-Compound name,A,B,C
-Naphthalene,143.7983,-2224.6318,-22.1569
-Acenaphthylene,108.5452,-174.4166,-16.8642
-Acenaphthene,106.6473,-11.1973,-16.5846
-Fluorene,102.5193,324.5194,-15.9537
-Fluoranthene,71.8331,2535.4045,-11.4174
-Pyrene,72.7065,2452.1307,-11.5005
-Benzo[a]pyrene,128.3663,-845.0117,-19.0640
+Compound name,A,B,C,Cat
+Naphthalene,143.7983,-2224.6318,-22.1569,PAH
+Acenaphthylene,108.5452,-174.4166,-16.8642,PAH
+Acenaphthene,106.6473,-11.1973,-16.5846,PAH
+Fluorene,102.5193,324.5194,-15.9537,PAH
+Fluoranthene,71.8331,2535.4045,-11.4174,PAH
+Pyrene,72.7065,2452.1307,-11.5005,PAH
+Benzo[a]pyrene,128.3663,-845.0117,-19.0640,PAH
