@@ -4,16 +4,6 @@
 using Markdown
 using InteractiveUtils
 
-# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
-macro bind(def, element)
-    quote
-        local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
-        local el = $(esc(element))
-        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
-        el
-    end
-end
-
 # ╔═╡ ff3195db-9f37-4968-bc0a-8f6a6211bb60
 begin
 	using CSV, DataFrames, LambertW, Plots, ChemicalIdentifiers, LsqFit, Statistics, Measurements
@@ -44,138 +34,13 @@ db_path = "/Users/janleppert/Documents/GitHub/ThermodynamicData/Databases"
 data = ThermodynamicData.load_parameter_data(db_path)
 
 # ╔═╡ 89814556-78e3-463b-b235-ba95f6df3d9e
-data.parameters[31]
+data.parameters[35]
+
+# ╔═╡ ccb253b1-9805-43d6-b181-241b544fad8d
+data.data[35]
 
 # ╔═╡ 793dd685-660a-46f0-838a-b032cbf4c24d
 #ThermodynamicData.save_all_parameter_data(data)
-
-# ╔═╡ e299149d-af13-4aae-a214-7e1f19f0b3e9
-# following in the new notebook `AllParam.jl`
-
-# ╔═╡ 25c17cc1-a9d8-4fa8-9ec2-20f8d6f996f6
-alldata = ThermodynamicData.dataframe_of_all(data)
-
-# ╔═╡ 9f5ee5f3-5c25-4ad2-a7e3-3b76aab7a1ea
-flagged = filter([:lambertw_x] => x -> x < -1/exp(1) || x > 0.0, alldata)
-
-# ╔═╡ bd3b96f3-f34e-43e6-b560-c140c83f74e1
-flagged_ABC = filter([:A, :B, :C] => (x, y, z) -> x > 0.0 && y < 0.0 && z < 0.0, alldata)
-
-# ╔═╡ 1a4628c5-f19d-4503-b417-1eff05cb8fd9
-md"""
-## Plot parameters A, B, C
-"""
-
-# ╔═╡ eb659948-fe19-4dbb-9c1c-2dc2eff8540d
-begin
-	plotly()
-	pABC = scatter(data.data[1].A, data.data[1].B, data.data[1].C, label=1, xlabel="A", ylabel="B", zlabel="C")
-	for i=2:length(data.data)
-		scatter!(pABC, data.data[i].A, data.data[i].B, data.data[i].C, label=i)
-	end
-	scatter!(pABC, flagged.A, flagged.B, flagged.C, label="", m=:cross, c=:black, msize=5)
-	scatter!(pABC, flagged_ABC.A, flagged_ABC.B, flagged_ABC.C, label="", m=:cross, c=:darkred, msize=4)
-	pABC
-end
-
-# ╔═╡ 577a606c-a75d-4653-a789-96a624aa6066
-md"""
-Additional flag reason:
-- A > 0
-- B < 0
-- C < 0
-"""
-
-# ╔═╡ 47747281-133b-4c8a-b3ca-543caece9f28
-flagged_ΔCp = filter([:DeltaCp] => x -> x < 0.0, alldata)
-
-# ╔═╡ c80a2bb9-622b-472d-8c14-7eb94d23ca20
-flagged_θchar = filter([:thetachar] => x -> x < 0.0, alldata)
-
-# ╔═╡ 4486b981-0170-4999-8b45-68671c456a1e
-md"""
-## Plot parameters Tchar, θchar, ΔCp
-"""
-
-# ╔═╡ 37a49842-4cc9-4c0d-a967-c8fde9664ff2
-begin
-	plotly()
-	pKcentric = scatter(data.data[1].Tchar, data.data[1].thetachar, data.data[1].DeltaCp, label=1, xlabel="Tchar", ylabel="thetachar", zlabel="DeltaCp")
-	for i=2:length(data.data)
-		scatter!(pKcentric, data.data[i].Tchar, data.data[i].thetachar, data.data[i].DeltaCp, label=i)
-	end
-	scatter!(pKcentric, flagged.Tchar, flagged.thetachar, flagged.DeltaCp, label="", m=:cross, c=:black, msize=5)
-	scatter!(pKcentric, flagged_ΔCp.Tchar, flagged_ΔCp.thetachar, flagged_ΔCp.DeltaCp, label="", m=:cross, c=:darkred, msize=4)
-	scatter!(pKcentric, flagged_θchar.Tchar, flagged_θchar.thetachar, flagged_θchar.DeltaCp, label="", m=:cross, c=:darkorange, msize=3)
-	pKcentric
-end
-
-# ╔═╡ 546e17e9-761b-4642-a5bf-13f5a3f8a5c0
-md"""
-Additional flag reason:
-- ΔCp < 0
-- Tchar << 0 (small neagtive values could be possible for very low retained solutes on a stationary phase)
-- θchar < 0
-"""
-
-# ╔═╡ 458a41f5-447a-4dd0-a18d-c30e349c206c
-flagged_ΔHref_ΔSref = filter([:DeltaHref, :DeltaSref] => (x, y) -> x > 0.0 || y > 0.0, alldata) 
-
-# ╔═╡ bdf9c6b0-c5a5-422b-861b-b99d916ec6bb
-md"""
-## Plot parameters ΔHref, ΔSref, ΔCp
-"""
-
-# ╔═╡ 460af06f-3a07-497a-9865-6acde1b552ad
-begin
-	plotly()
-	pTD = scatter(data.data[1].DeltaHref, data.data[1].DeltaSref, data.data[1].DeltaCp, label=1, xlabel="DeltaHref", ylabel="DeltaSref", zlabel="DeltaCp")
-	for i=2:length(data.data)
-		scatter!(pTD, data.data[i].DeltaHref, data.data[i].DeltaSref, data.data[i].DeltaCp, label=i)
-	end
-	scatter!(pTD, flagged.DeltaHref, flagged.DeltaSref, flagged.DeltaCp, label="", m=:cross, c=:black, msize=5)
-	scatter!(pTD, flagged_ΔHref_ΔSref.DeltaHref, flagged_ΔHref_ΔSref.DeltaSref, flagged_ΔHref_ΔSref.DeltaCp, label="", m=:cross, c=:darkred, msize=4)
-	pTD
-end
-
-# ╔═╡ 04b6d431-c9d6-4802-a7c7-8e2e24486db6
-md"""
-Additional flag reason:
-- ΔHref > 0
-- ΔSref > 0
-"""
-
-# ╔═╡ 87666436-b144-463f-94eb-bfc801bfaa23
-md"""
-## Plot lnK(A, B, C)
-$(@bind select_i Slider(1:length(alldata.Name); show_value=true))
-"""
-
-# ╔═╡ 22bcfa4d-9eec-4a97-84d5-93aa559a7082
-begin# plot lnK over T for selected solute
-	T = 0.0:5.0:400.0
-	A = alldata.A[select_i]
-	B = alldata.B[select_i]
-	C = alldata.C[select_i]
-	lnK(T) = A + B/(T+273.15) + C * log(T+273.15)
-	p_lnK = plot(T, lnK.(T), xlabel="T in °C", ylabel="lnK", title=string(alldata.Name[select_i], ", ", alldata.Source[select_i], ", ", alldata.Phase[select_i], "<br>", "A = ", alldata.A[select_i], ", B = ", alldata.B[select_i], ", C = ", alldata.C[select_i]), label="")
-	md"""
-	$(embed_display(p_lnK))
-	"""
-end
-
-# ╔═╡ 00cb00c4-e233-48ed-ba0a-29255ae2a3a9
-begin # plot lnk with Tchar, thetachar, DeltaCp
-	Tchar = alldata.Tchar[select_i]
-	θchar = alldata.thetachar[select_i]
-	ΔCp = alldata.DeltaCp[select_i]
-	lnk(T) = (ΔCp/ThermodynamicData.R + (Tchar+273.15)/θchar)*((Tchar+273.15)/(T+273.15) - 1) + ΔCp/ThermodynamicData.R*log((T+273.15)/(Tchar+273.15))
-	p_lnk = plot(T, lnk.(T), xlabel="T in °C", ylabel="lnk", title=string(alldata.Name[select_i], ", ", alldata.Source[select_i], ", ", alldata.Phase[select_i], "<br>", "Tchar = ", round(alldata.Tchar[select_i]; sigdigits=5), "°C, θchar = ", round(alldata.thetachar[select_i]; sigdigits=5), "°C, ΔCp = ", round(alldata.DeltaCp[select_i]; sigdigits=5), "J mol⁻¹ K⁻¹"), label="")
-	md"""
-	## Plot lnk(Tchar, θchar, ΔCp)
-	$(embed_display(p_lnk))
-	"""
-end
 
 # ╔═╡ d080abf1-1b9e-4aec-900a-d6d219c11672
 md"""
@@ -1423,26 +1288,8 @@ version = "0.9.1+5"
 # ╠═4708475e-5e9c-4666-b094-f42dc8aa9ba2
 # ╠═a5a4507a-3553-46f9-bfe1-c25456c23423
 # ╠═89814556-78e3-463b-b235-ba95f6df3d9e
+# ╠═ccb253b1-9805-43d6-b181-241b544fad8d
 # ╠═793dd685-660a-46f0-838a-b032cbf4c24d
-# ╠═e299149d-af13-4aae-a214-7e1f19f0b3e9
-# ╠═25c17cc1-a9d8-4fa8-9ec2-20f8d6f996f6
-# ╟─9f5ee5f3-5c25-4ad2-a7e3-3b76aab7a1ea
-# ╟─bd3b96f3-f34e-43e6-b560-c140c83f74e1
-# ╠═1a4628c5-f19d-4503-b417-1eff05cb8fd9
-# ╠═eb659948-fe19-4dbb-9c1c-2dc2eff8540d
-# ╟─577a606c-a75d-4653-a789-96a624aa6066
-# ╟─47747281-133b-4c8a-b3ca-543caece9f28
-# ╟─c80a2bb9-622b-472d-8c14-7eb94d23ca20
-# ╠═4486b981-0170-4999-8b45-68671c456a1e
-# ╟─37a49842-4cc9-4c0d-a967-c8fde9664ff2
-# ╟─546e17e9-761b-4642-a5bf-13f5a3f8a5c0
-# ╠═458a41f5-447a-4dd0-a18d-c30e349c206c
-# ╠═bdf9c6b0-c5a5-422b-861b-b99d916ec6bb
-# ╟─460af06f-3a07-497a-9865-6acde1b552ad
-# ╟─04b6d431-c9d6-4802-a7c7-8e2e24486db6
-# ╠═87666436-b144-463f-94eb-bfc801bfaa23
-# ╟─22bcfa4d-9eec-4a97-84d5-93aa559a7082
-# ╠═00cb00c4-e233-48ed-ba0a-29255ae2a3a9
 # ╠═d080abf1-1b9e-4aec-900a-d6d219c11672
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
