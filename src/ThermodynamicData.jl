@@ -424,6 +424,11 @@ function all_parameters(data::Array{DataFrame,1}, paramset::Array{Array{String,1
 			W_x[j] = lambertw_x(A[j], B[j], C[j], beta0[j])
 		end
 		new_data[i] = DataFrame(Name=data[i][!, 1], A=A, B=B, C=C, Tchar=Tchar, thetachar=θchar, DeltaCp=ΔCp, DeltaHref=ΔHref, DeltaSref=ΔSref, Tref=Tref, beta0=beta0, lambertw_x=W_x)
+		# add columns with "Cat" in column name
+		i_cat = findall(occursin.("Cat", names(data[i])))
+		for j=1:length(i_cat)
+			new_data[i][!, "Cat_$(j)"] = data[i][!, i_cat[j]]
+		end
 	end
 	return new_data
 end
@@ -562,12 +567,6 @@ end
 Combine the separate dataframes with the parameter sets of the different entrys of the meta_data dataframe into one big dataframe.
 """
 function dataframe_of_all(meta_data)
-	# number of all data entrys
-	#Nall = 0
-	#for i=1:length(meta_data.data)
-	#	Nall = Nall + length(meta_data.data[i].Name)
-	#end
-
 	Name = String[]
 	Phase = String[]
 	Source = String[]
@@ -600,7 +599,7 @@ function dataframe_of_all(meta_data)
 			push!(DeltaSref, meta_data.data[i].DeltaSref[j])
 			push!(Tref, meta_data.data[i].Tref[j])
 			push!(beta0, meta_data.data[i].beta0[j])
-			#push!(lambertw_x, meta_data.data[i].lambertw_x[j])
+			#push!(lambertw_x, meta_data.parameters[i].lambertw_x[j])
 			push!(d, meta_data.d[i])
 			push!(gas, meta_data.gas[i])
 		end
