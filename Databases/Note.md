@@ -35,6 +35,7 @@ with:
   - `Parameters`: three columns of the different thermodynamic parameter sets (or multiple for multiple datasets)
   - `lnk_T`: several columns with the `lnk`-values at the several temperatures `T`. Every columns stands for one temperature.
   - `tR_T`: similar to `lnk_T` plus an additional column with the hold-up time `tM`
+- optional columns containing information about affiliations of the substances to different classes or categories 
 - first row contains the name of the columns, resp. in case of `lnk_T`or `tR_T` the name of the column is the value of the temperature
 - (Optional) second row contains the units corresponding to the values in the columns
 - if no row with units is present, it is assumed, that the values have their corresponding SI-units
