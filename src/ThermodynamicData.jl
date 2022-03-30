@@ -779,7 +779,7 @@ end=#
 Translates the column names of the dataframe `data` containing the values of isothermal temperature to Float64. For the case of identical temperatures, a number is appended, separated by an underscore `_`. If this is the case the string is splited at the `_` and only the first part is used.
 """
 function T_column_names_to_Float(data::DataFrame)
-	Ts = names(data)[2:end]
+	Ts = names(data)[findall(occursin.("Cat", names(data)).==false)[2:end]]
 	T = Array{Float64}(undef, length(Ts))
 	for i=1:length(Ts)
 		if occursin("_", Ts[i])
@@ -933,7 +933,8 @@ function fit_models(data::Array{DataFrame}; weighted=false, threshold=NaN, lb_AB
 		χ̄²_Kcentric = Array{Float64}(undef, length(data[i][!,1]))
 		for j=1:length(data[i][!,1])
 			T[j] = T_column_names_to_Float(data[i])
-			lnk[j] = collect(Union{Missing,Float64}, data[i][j,2:end])
+			Tindex = findall(occursin.("Cat", names(data[i])).==false)[2:end]
+			lnk[j] = collect(Union{Missing,Float64}, data[i][j, Tindex])
 			#ii = findall(isa.(lnk[j], Float64)) # indices of `lnk` which are NOT missing
 			name[j] = data[i][!, 1][j]
 
@@ -953,6 +954,11 @@ function fit_models(data::Array{DataFrame}; weighted=false, threshold=NaN, lb_AB
 							R²_ABC=R²_ABC, R²_Kcentric=R²_Kcentric,
 							χ²_ABC=χ²_ABC, χ²_Kcentric=χ²_Kcentric,
 							χ̄²_ABC=χ̄²_ABC, χ̄²_Kcentric=χ̄²_Kcentric)
+		# add columns with "Cat" in column name
+		i_cat = findall(occursin.("Cat", names(data[i])))
+		for j=1:length(i_cat)
+			fits[i][!, "Cat_$(j)"] = data[i][!, i_cat[j]]
+		end
 	end
 	return fits
 end
@@ -1024,6 +1030,11 @@ function extract_parameters_from_fit(fit, β0)
 							χ̄²_ABC=fit[i].χ̄²_ABC, χ̄²_Kcentric=fit[i].χ̄²_Kcentric,
 							n_ABC=n_ABC, n_Kcentric=n_Kcentric,
 							approx_equal=approx_equal, WLS=WLS)
+		# add columns with "Cat" in column name
+		i_cat = findall(occursin.("Cat", names(fit[i])))
+		for j=1:length(i_cat)
+			Par[i][!, "Cat_$(j)"] = fit[i][!, i_cat[j]]
+		end
 	end
 	return Par
 end	
