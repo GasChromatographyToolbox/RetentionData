@@ -1,13 +1,13 @@
-Compound,DeltaHref,DeltaSref,DeltaCp
-,(kJ/mol),(J/mol∙K),(J/mol∙K)
-Decane,-43.94,-69.57,11.51
-1-Octanol,-47.69,-75.66,31.99
-Undecane,-48.02,-74.90,26.22
-Nonanal,-47.69,-73.70,23.39
-"2,6-Dimethylphenol",-47.53,-73.17,109.60
-2-Ethylhexanoic acid,-49.83,-79.17,5.97
-"2,6-Dimethylaniline",-47.40,-69.35,39.46
-C10 acid methyl ester,-57.35,-87.61,58.77
-Dicyclohexylamine,-56.09,-79.39,45.16
-C11 acid methyl ester,-59.97,-89.28,41.88
-C12 acid methyl ester,-65.36,-98.18,74.80
+Compound,DeltaHref,DeltaSref,DeltaCp,Cat_1,Cat_2
+,(kJ/mol),(J/mol∙K),(J/mol∙K),
+Decane,-43.94,-69.57,11.51,alkane,Grob
+1-Octanol,-47.69,-75.66,31.99,alcohol,Grob
+Undecane,-48.02,-74.90,26.22,alkane,Grob
+Nonanal,-47.69,-73.70,23.39,aldehyde,Grob
+"2,6-Dimethylphenol",-47.53,-73.17,109.60,aromatic,Grob
+2-Ethylhexanoic acid,-49.83,-79.17,5.97,carboxylic acid,Grob
+"2,6-Dimethylaniline",-47.40,-69.35,39.46,aromatic,Grob
+C10 acid methyl ester,-57.35,-87.61,58.77,FAME,Grob
+Dicyclohexylamine,-56.09,-79.39,45.16,amine,Grob
+C11 acid methyl ester,-59.97,-89.28,41.88,FAME,Grob
+C12 acid methyl ester,-65.36,-98.18,74.80,FAME,Grob

@@ -1,5 +1,5 @@
-Compound,DeltaHref,DeltaSref,DeltaCp
-,(kJ/mol),(J/mol∙K),(J/mol∙K)
-dodecane,-44.28,-63.72,197.14
-1-dodecanol,-61.45,-90.93,169.25
-2-dodecanone,-58.56,-86.65,169.20
+Compound,DeltaHref,DeltaSref,DeltaCp,Cat
+,(kJ/mol),(J/mol∙K),(J/mol∙K),
+dodecane,-44.28,-63.72,197.14,alkane
+1-dodecanol,-61.45,-90.93,169.25,alcohol
+2-dodecanone,-58.56,-86.65,169.20,ketone

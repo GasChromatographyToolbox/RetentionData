@@ -1,8 +1,8 @@
-Compound,DeltaHref,DeltaSref,DeltaCp
-,(kJ/mol),(J/mol∙K),(J/mol∙K)
-2-Undecanone,-52.7,-75.9,80.2
-2-Dodecanone,-56.4,-81.1,85.9
-2-Tridecanone,-60.1,-86.3,91.7
-1-Undecanol,-64.3,-95.0,110.6
-1-Dodecanol,-67.8,-99.7,114.6
-1-Tridecanol,-71.2,-104.6,119.2
+Compound,DeltaHref,DeltaSref,DeltaCp,Cat
+,(kJ/mol),(J/mol∙K),(J/mol∙K),
+2-Undecanone,-52.7,-75.9,80.2,ketone
+2-Dodecanone,-56.4,-81.1,85.9,ketone
+2-Tridecanone,-60.1,-86.3,91.7,ketone
+1-Undecanol,-64.3,-95.0,110.6,alcohol
+1-Dodecanol,-67.8,-99.7,114.6,alcohol
+1-Tridecanol,-71.2,-104.6,119.2,alcohol
