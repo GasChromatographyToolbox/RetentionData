@@ -35,3 +35,10 @@
   - convert the parameter set from the file into the other parameter sets
   - ToDo: if no column for `CAS` number exists in the data, add one with the `CAS`-numbers from ChemicalIdentifiers.jl (also by using the file `shortname.csv`) resp. from the file `missing.csv` (chemical substances, which are not found in the database of ChemicalIdentifiers.jl)
   - optional: save the data of all three parameter sets into a file with the keyword `AllParam`
+
+- `Fit_lnk-T_data.jl`
+  - Load all files with the keyword `lnk-T` resp. `log10k-T` from a folder
+  - fit of the ABC-model and the Kcentric model to the data and convert them to the third parameter set
+  - export the parameter sets together with some statistics of the fits
+  - ToDo: if no column for `CAS` number exists in the data, add one with the `CAS`-numbers from ChemicalIdentifiers.jl (also by using the file `shortname.csv`) resp. from the file `missing.csv` (chemical substances, which are not found in the database of ChemicalIdentifiers.jl)
+  - optional: save the data of all three parameter sets into a file with the keyword `AllParam`
