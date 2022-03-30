@@ -163,6 +163,15 @@ begin
 	"""
 end
 
+# ╔═╡ 2d7ed692-9524-428c-92cf-d4ecabe8278e
+test = ["name", "60", "70", "Cat", "Cat_b"]
+
+# ╔═╡ faa843f7-ef50-47ab-a5a4-9d32265b7e5a
+test[findall(occursin.("Cat", test).==false)[2:end]]
+
+# ╔═╡ dbf47c68-709f-45b5-9ae1-b75fe2e76c5f
+Tindex = findall(occursin.("Cat", test).==false)[2:end]
+
 # ╔═╡ 2fd4d728-9068-415c-b006-26f93dddce28
 md"""
 ## Compare parameters
@@ -172,7 +181,7 @@ md"""
 ThermodynamicData.extract_parameters_from_fit!(data);
 
 # ╔═╡ a65c584d-a669-4dfe-8deb-03ce2fd3a0c0
-data.parameters[end]
+data.parameters[13]
 
 # ╔═╡ 8a0d3816-b114-42e3-8bef-cda7b63af509
 begin
@@ -217,16 +226,6 @@ begin
 	end
 	plot(p_R2_ABC, p_R2_Kcentric, p_χ2_ABC, p_χ2_Kcentric)
 end
-
-# ╔═╡ 23426e0b-98a1-4d25-9acf-d579c7420b12
-# ToDo
-# export AllParam (only values, without errors)
-
-# in new notebook:-> read all AllParam-files, 
-#                 -> combine them in one big database
-#                 -> flag substances (parameters outside certain range, n=3, approx_equal=false)
-#                 -> use ChemicalIdentifiers.jl
-#                 -> export databases without flagged substances and for one certain parameter set
 
 # ╔═╡ d57b2b89-9763-4998-8434-465de994ce54
 #ThermodynamicData.save_all_parameter_data(data)
@@ -1480,13 +1479,15 @@ version = "0.9.1+5"
 # ╟─3bac9f60-8749-425b-8e87-ba1d7442ca93
 # ╟─cd5d0b6c-6e76-4293-80a0-b07ea94a05d8
 # ╟─c037a761-f192-4a3b-a617-b6024ac6cd61
+# ╠═2d7ed692-9524-428c-92cf-d4ecabe8278e
+# ╠═faa843f7-ef50-47ab-a5a4-9d32265b7e5a
+# ╠═dbf47c68-709f-45b5-9ae1-b75fe2e76c5f
 # ╟─2fd4d728-9068-415c-b006-26f93dddce28
 # ╠═f57fc4ec-9522-401f-91de-9495ca50bbb9
 # ╠═a65c584d-a669-4dfe-8deb-03ce2fd3a0c0
 # ╟─8a0d3816-b114-42e3-8bef-cda7b63af509
 # ╟─baba96bf-b0fb-43a3-8f58-954343b918fd
 # ╟─8eb557fa-8e94-49fd-8fc5-17f8d42943c6
-# ╠═23426e0b-98a1-4d25-9acf-d579c7420b12
 # ╠═d57b2b89-9763-4998-8434-465de994ce54
 # ╟─91c46525-43f9-4ef2-98f4-35fb3974d64f
 # ╟─00000000-0000-0000-0000-000000000001
