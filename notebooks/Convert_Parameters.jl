@@ -34,7 +34,7 @@ db_path = "/Users/janleppert/Documents/GitHub/ThermodynamicData/Databases"
 data = ThermodynamicData.load_parameter_data(db_path)
 
 # ╔═╡ 89814556-78e3-463b-b235-ba95f6df3d9e
-data.parameters[35]
+data.parameters[1]
 
 # ╔═╡ ccb253b1-9805-43d6-b181-241b544fad8d
 data.data[35]
