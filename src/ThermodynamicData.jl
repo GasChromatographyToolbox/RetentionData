@@ -239,8 +239,8 @@ the following units:
 - `ΔCp` in J mol⁻¹ K⁻¹
 """
 function ABC_to_TD(A, B, C, Tref)
-	ΔHref = R*(C*Tref - B)
-	ΔSref = R*(A + C + C*log(Tref))
+	ΔHref = R*(C*(Tref+Tst) - B)
+	ΔSref = R*(A + C + C*log(Tref+Tst))
 	ΔCp = R*C
 	return ΔHref, ΔSref, ΔCp
 end
@@ -583,7 +583,6 @@ function dataframe_of_all(meta_data)
 	#lambertw_x = Float64[]
 	d = Any[]
 	gas = Any[]
-
 	for i=1:length(meta_data.data)
 		for j=1:length(meta_data.data[i].Name)
 			push!(Name, meta_data.data[i].Name[j])
@@ -609,7 +608,48 @@ function dataframe_of_all(meta_data)
 						Tchar=Tchar, thetachar=thetachar, DeltaCp=DeltaCp,
 						DeltaHref=DeltaHref, DeltaSref=DeltaSref, Tref=Tref,
 						beta0=beta0, d=d, gas=gas)
+	# add categories
+	cat = collect_categories(meta_data)
+	for j=1:size(cat)[2]
+		catstring = Any[]
+		for i=1:size(cat)[1]
+			append!(catstring, cat[i,j])
+		end
+		dfall[!, "Cat_$(j)"] = catstring
+	end	
 	return dfall
+end
+
+"""
+	collect_categories(meta_data)
+
+Collect the category entrys of the substances in the different datasets of meta_data, if they are available in a multidimensionsal array.
+"""
+function collect_categories(meta_data)
+	# number of categories of the different datasets
+	nCat = Array{Int}(undef, length(meta_data.data))
+	# indices of the category columns of the different datasets
+	iCat = Array{Array{Int,1}}(undef, length(meta_data.data))
+	for i=1:length(meta_data.data)
+		iCat[i] = findall(occursin.("Cat", names(meta_data.data[i])))
+		nCat[i] = length(iCat[i])
+	end
+	# maximum number of category columns
+	maxnCat = maximum(nCat)
+	# array of the categories of dataset `i` of category column `j`, filled with an array of the length of the substances of dataset `i` 
+	Cat_array = Array{Array{Union{Missing, String},1}}(undef, length(meta_data.data), maxnCat)
+	for j=1:maxnCat
+		for i=1:length(meta_data.data)
+			catstrings = missings(String, length(meta_data.data[i].Name))
+			for k=1:length(meta_data.data[i].Name)
+				if length(iCat[i])>=j #&& length(iCat[i])!=0
+					catstrings[k] = meta_data.data[i][k, iCat[i][j]]
+				end
+			end
+			Cat_array[i,j] = catstrings
+		end
+	end
+	return Cat_array
 end
 
 """
@@ -676,11 +716,12 @@ Look up the substance name from the `data` dataframe with ChemicalIdentifiers.jl
 """
 function substance_identification(data::DataFrame)
 	shortnames = DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/ThermodynamicData/data/shortnames.csv"))
+	missing_subs = DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/ThermodynamicData/data/missing.csv"))
 	
-	CAS = Array{Union{Missing,String}}(missing, length(data.Name))
-	formula = Array{Union{Missing,String}}(missing, length(data.Name))
+	CAS = Array{Union{Missing,AbstractString}}(missing, length(data.Name))
+	formula = Array{Union{Missing,AbstractString}}(missing, length(data.Name))
 	MW = Array{Union{Missing,Float64}}(missing, length(data.Name))
-	smiles = Array{Union{Missing,String}}(missing, length(data.Name))
+	smiles = Array{Union{Missing,AbstractString}}(missing, length(data.Name))
 	for i=1:length(data.Name)
 		if data.Name[i] in shortnames.shortname
 			j = findfirst(data.Name[i].==shortnames.shortname)
@@ -689,10 +730,18 @@ function substance_identification(data::DataFrame)
 			ci = search_chemical(data.Name[i])
 		end
 		if ismissing(ci)
-			CAS[i] = missing
-			formula[i] = missing
-			MW[i] = missing
-			smiles[i] = missing
+			if data.Name[i] in missing_subs.name
+				j = findfirst(data.Name[i].==missing_subs.name)
+				CAS[i] = missing_subs.CAS[j]
+				formula[i] = missing_subs.formula[j]
+				MW[i] = missing_subs.MW[j]
+				smiles[i] = missing_subs.smiles[j]
+			else
+				CAS[i] = missing
+				formula[i] = missing
+				MW[i] = missing
+				smiles[i] = missing
+			end
 		else
 			CAS[i] = string(ci.CAS[1], "-", ci.CAS[2], "-", ci.CAS[3])
 			formula[i] = ci.formula
@@ -703,6 +752,86 @@ function substance_identification(data::DataFrame)
 	id = DataFrame(Name=data.Name, CAS=CAS, formula=formula, MW=MW, smiles=smiles)
 	#no_id = filter([:CAS] => x -> ismissing(x), id)
 	return id
+end
+
+"""
+	duplicated_data(alldata)
+
+Find the duplicated data entrys in alldata based on identical CAS-number and identical stationary phase. The dataframe `alldata` must not have `missing` CAS-number entrys.
+
+# Output
+- array of dataframe `duplicated_data`: every array element has a dataframe of the duplicated data
+- array of Bool `duplicated_entry`: true, if data has a duplicated, fals if not.
+"""
+function duplicated_data(alldata)
+	# duplicate entrys based on CAS and Phase (first nonunique entries not in this list)
+	duplicates = alldata[findall(nonunique(alldata, ["CAS", "Phase"]).==true),:]
+	# unique duplicates based on CAS and Phase
+	unique_duplicates = unique(duplicates, ["CAS", "Phase"])
+	# find the indices of the unique duplicates in the original data
+	duplicate_entry = falses(length(alldata.CAS))
+	all_duplicate_index = Int[]
+	duplicate_index = Array{Array{Int,1}}(undef, length(unique_duplicates.CAS))
+	duplicate_data = Array{DataFrame}(undef, length(unique_duplicates.CAS))
+	for i=1:length(unique_duplicates.CAS)
+		duplicate_index[i] = intersect(findall(unique_duplicates.CAS[i].==alldata.CAS),findall(unique_duplicates.Phase[i].==alldata.Phase))
+		append!(all_duplicate_index, duplicate_index[i])
+		duplicate_data[i] = alldata[duplicate_index[i], :]
+	end
+	duplicate_entry[all_duplicate_index].=true
+	return duplicate_data, duplicate_entry
+end
+
+"""
+	formula_to_dict(formula)
+
+Translate the formula string of a chemical substance into a dictionary, where the elements contained in the substance are the keys and the number of atoms are the values.
+
+# Example 
+```
+julia> formula_to_dict("C14H20O")
+Dict{String, Int64}("C" => 14, "H" => 20, "O" => 1)
+```
+"""
+function formula_to_dict(formula)
+	if ismissing(formula)
+		formula_dict = missing
+	else
+		split_formula = eachmatch(r"[A-Z][a-z]*\d*", formula)
+		elements = Array{Tuple{String, Int64}}(undef, length(collect(split_formula)))
+		for i=1:length(collect(split_formula))
+			formula_parts = collect(split_formula)[i].match
+			element_string = match(r"[A-Za-z]+", formula_parts).match
+			element_digit = match(r"[0-9]+", formula_parts)
+			if isnothing(element_digit)
+				elements[i] = (element_string, 1)
+			else
+				elements[i] = (element_string, parse(Int64, element_digit.match))
+			end
+		end
+		formula_dict = Dict(elements)
+	end
+	return formula_dict
+end
+
+"""
+	ring_number(smiles)
+
+Extract the number of rings of a substance defined by its SMILES. The highest digit contained in the SMILES is returned as the number of rings. Only single digit ring numbers are recognized.
+"""
+function ring_number(smiles)
+	if ismissing(smiles)
+		rn = missing
+	else
+		allmatch = eachmatch(r"[0-9]", smiles)
+		if isempty(allmatch)
+			rn = 0
+		else
+			rn = maximum(parse.(Int64, [ match.match for match in allmatch]))
+			# additional check, all integers from 1 to rn should be in allmatch, e.g. for rn=4 the integers 1, 2, 3, 4 should be in allmatch
+		end
+	end
+	return rn
 end
 # --- ThermodynamicData_reading_parameter_files.jl --- #
 
@@ -1044,6 +1173,187 @@ function extract_parameters_from_fit!(meta_data)
 	meta_data[!, "parameters"] = par
 	return meta_data
 end
+
+# some functions for Categories
+"""
+	align_categories(newdata)
+
+Aligns the entrys for categorys for the same substances (same CAS number).
+"""
+function align_categories(newdata)
+	# find all columns with "Cat" in the name
+	iCat = findall(occursin.("Cat", names(newdata)))
+	# find identical CAS entrys
+	uniqueCAS = unique(newdata.CAS)
+	i_identicalCAS = Array{Array{Int64,1}}(undef, length(uniqueCAS))
+	union_catstrings = Array{Array{Union{Missing,Any},1}}(undef, length(uniqueCAS))
+	for i=1:length(uniqueCAS)
+		i_identicalCAS[i] = findall(newdata.CAS.==uniqueCAS[i])
+		union_catstring = Array{Union{Missing,Any}}(undef, length(i_identicalCAS[i]))
+		for j=1:length(i_identicalCAS[i])
+			union_catstrings[i] = unique(Matrix(newdata[i_identicalCAS[i],iCat]))
+			filter!(x -> ismissing(x).==false, union_catstrings[i])
+		end
+	end
+	i_identicalCAS
+	# number of Cat columns needed
+	ncat = Array{Int64}(undef, length(union_catstrings))
+	for i=1:length(union_catstrings)
+		ncat[i] = length(union_catstrings[i])
+	end
+	maxcat = maximum(ncat)
+	# copy data, without old Cat columns
+	newnewdata = select(newdata, Not(iCat))
+	# add the new Cat Columns
+	categories = Array{Union{Missing,String}}(missing, length(newnewdata.CAS), maxcat)
+	for i=1:length(newnewdata.CAS)
+		ii = findfirst(uniqueCAS.==newnewdata.CAS[i])
+		for j=1:length(union_catstrings[ii])
+			categories[i,j] = union_catstrings[ii][j]
+		end
+	end
+	categories
+	for i=1:maxcat
+		newnewdata[!,"Cat_$(i)"] = categories[:,i]
+	end
+	return newnewdata
+end
+
+"""
+	add_group_to_Cat!(newdata)
+
+Add categories defined by the file `groups.csv` (group name and a list of CAS numbers)
+"""
+function add_group_to_Cat!(newdata)
+	groups = DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/ThermodynamicData/data/groups.csv"))
+	CAS = Array{Array{String,1}}(undef, length(groups.CAS))
+	for i=1:length(groups.CAS)
+		CAS[i] = split(groups.CAS[i],',')
+	end
+	groups[!,"CAS"]	= CAS
+
+	iCat = findall(occursin.("Cat", names(newdata)))
+	for i=1:length(newdata.CAS)
+		for j=1:length(groups.CAS)
+			if newdata.CAS[i] in groups.CAS[j]
+				if  ismissing(!(groups.Group[j] in newdata[i, iCat])) || !(groups.Group[j] in newdata[i, iCat])# group not allready in Cat
+					# find the first Cat column with missing entry
+					if isnothing(findfirst(ismissing.(collect(newdata[i,iCat]))))
+						ii = iCat[end] + 1
+					else
+						ii = iCat[findfirst(ismissing.(collect(newdata[i,iCat])))]
+					end
+					newdata[i,ii] = groups.Group[j]
+				end
+			end
+		end
+	end
+	return newdata
+end
+
+"""
+	old_database_format(data)
+
+Export the data into the old database format with the columns:
+* Name
+* CAS
+* Cnumber
+* Hnumber
+* Onumber
+* Nnumber
+* Ringnumber
+* Molmass
+* Phase
+* Tchar
+* thetachar
+* DeltaCp
+* phi0
+* Annotation
+"""
+function old_database_format(data) 
+	CI = ThermodynamicData.substance_identification(data)
+	Cnumber = Array{Int}(undef, length(data.Name))
+	Hnumber = Array{Int}(undef, length(data.Name))
+	Onumber = Array{Int}(undef, length(data.Name))
+	Nnumber = Array{Int}(undef, length(data.Name))
+	for i=1:length(data.Name)
+		element_numbers = ThermodynamicData.formula_to_dict(CI.formula[i])
+		Cnumber[i] = element_numbers["C"]
+		Hnumber[i] = element_numbers["H"]
+		if haskey(element_numbers, "O")
+			Onumber[i] = element_numbers["O"]
+		else
+			Onumber[i] = 0
+		end
+		if haskey(element_numbers, "N")
+			Nnumber[i] = element_numbers["N"]
+		else
+			Nnumber[i] = 0
+		end
+	end
+	oldformat = DataFrame(Name=data.Name, 
+							CAS=data.CAS,
+							Cnumber=Cnumber,
+							Hnumber=Hnumber,
+							Onumber=Onumber,
+							Nnumber=Nnumber,
+							Ringnumber=ThermodynamicData.ring_number.(CI.smiles),
+							Molmass=CI.MW,
+							Phase=data.Phase,
+							Tchar=data.Tchar,
+							thetachar=data.thetachar,
+							DeltaCp=data.DeltaCp,
+							phi0=1.0./(4.0.*data.beta0),
+							Annotation=data.Source)
+	return oldformat
+end
+
+"""
+	new_database_format(data; ParSet="Kcentric")
+
+Export the data into the new database format with the columns:
+* Name
+* CAS
+* Phase
+* Tchar resp. A
+* thetachar resp. B
+* DeltaCp resp. C
+* phi0
+* Source
+* Cat ... several columns with categories 
+
+With the parameters `ParSet="ABC"` the ABC-parameters are exported, with `ParSet="Kcentric"` (default) the K-centric parameters are exported.
+"""
+function new_database_format(data; ParSet="Kcentric")
+	if ParSet=="ABC"
+		newformat = DataFrame(Name=data.Name,
+								CAS=data.CAS,
+								Phase=data.Phase,
+								A=data.A,
+								B=data.B,
+								C=data.C,
+								phi0=1.0./(4.0.*data.beta0),
+								Source=data.Source
+								)
+	else # ParSet="Kcentric", default
+		newformat = DataFrame(Name=data.Name,
+								CAS=data.CAS,
+								Phase=data.Phase,
+								Tchar=data.Tchar,
+								thetachar=data.thetachar,
+								DeltaCp=data.DeltaCp,
+								phi0=1.0./(4.0.*data.beta0),
+								Source=data.Source
+								)
+	end
+	# add columns with "Cat" in column name
+	i_cat = findall(occursin.("Cat", names(data)))
+	for j=1:length(i_cat)
+		newformat[!, "Cat_$(j)"] = data[!, i_cat[j]]
+	end
+	return newformat
+end
+
 # --- ThermodynamicData_reading_lnk-T_files.jl --- #
 
 end # module
