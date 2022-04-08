@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.18.1
+# v0.19.0
 
 using Markdown
 using InteractiveUtils
@@ -35,7 +35,7 @@ db_path = "/Users/janleppert/Documents/GitHub/ThermodynamicData/Databases"
 md"""
 ## Settings
 
-- weighted: $(@bind weight CheckBox(default=true))
+- weighted: $(@bind weight CheckBox(default=false))
 
 - threshold: $(@bind bool_th CheckBox()) $(@bind threshold NumberField(0.0:0.01:10.0; default=0.025))
 
@@ -181,7 +181,7 @@ md"""
 ThermodynamicData.extract_parameters_from_fit!(data);
 
 # ╔═╡ a65c584d-a669-4dfe-8deb-03ce2fd3a0c0
-data.parameters[13]
+data.parameters[2]
 
 # ╔═╡ 8a0d3816-b114-42e3-8bef-cda7b63af509
 begin
@@ -201,6 +201,39 @@ begin
 		scatter!(pKcentric, Measurements.value.(data.parameters[i].Tchar), Measurements.value.(data.parameters[i].thetachar), Measurements.value.(data.parameters[i].DeltaCp), label=i)
 	end
 	pKcentric
+end
+
+# ╔═╡ 4a2c19cb-0321-4d64-91a5-51127f31ce9d
+begin
+	plotly()
+	pKcentric_ = scatter(Measurements.value.(data.parameters[1].Tchar), Measurements.value.(data.parameters[1].thetachar), Measurements.value.(data.parameters[1].DeltaCp), label=1, xlabel="Tchar in °C", ylabel="θchar in °C", zlabel="ΔCp in J mol⁻¹ K⁻¹")
+	for i=2:length(data.parameters)
+		if i!=3
+			scatter!(pKcentric_, Measurements.value.(data.parameters[i].Tchar), Measurements.value.(data.parameters[i].thetachar), Measurements.value.(data.parameters[i].DeltaCp), label=i)
+		end
+	end
+	pKcentric_
+end
+
+# ╔═╡ 47c7be28-de48-41a6-ae5d-51bcb9879beb
+data.filename
+
+# ╔═╡ 68963b1a-b636-42c4-bb22-ae71df4e80f4
+data.filename[18]
+
+# ╔═╡ 98c5dbba-2e8f-4aad-a4f3-db1ced28c841
+data.parameters[8]
+
+# ╔═╡ 4dd4f07a-4654-4fd5-99f1-0fab845a545d
+begin
+	plotly()
+	pEntalpie = scatter(Measurements.value.(data.parameters[1].DeltaHref), Measurements.value.(data.parameters[1].DeltaSref), Measurements.value.(data.parameters[1].DeltaCp), label=1, xlabel="ΔHref in ", ylabel="ΔSref in", zlabel="ΔCp in J mol⁻¹ K⁻¹")
+	for i=2:length(data.parameters)
+		if i!=3
+			scatter!(pEntalpie, Measurements.value.(data.parameters[i].DeltaHref), Measurements.value.(data.parameters[i].DeltaSref), Measurements.value.(data.parameters[i].DeltaCp), label=i)
+		end
+	end
+	pEntalpie
 end
 
 # ╔═╡ 8eb557fa-8e94-49fd-8fc5-17f8d42943c6
@@ -1486,7 +1519,12 @@ version = "0.9.1+5"
 # ╠═f57fc4ec-9522-401f-91de-9495ca50bbb9
 # ╠═a65c584d-a669-4dfe-8deb-03ce2fd3a0c0
 # ╟─8a0d3816-b114-42e3-8bef-cda7b63af509
-# ╟─baba96bf-b0fb-43a3-8f58-954343b918fd
+# ╠═baba96bf-b0fb-43a3-8f58-954343b918fd
+# ╠═4a2c19cb-0321-4d64-91a5-51127f31ce9d
+# ╠═47c7be28-de48-41a6-ae5d-51bcb9879beb
+# ╠═68963b1a-b636-42c4-bb22-ae71df4e80f4
+# ╠═98c5dbba-2e8f-4aad-a4f3-db1ced28c841
+# ╠═4dd4f07a-4654-4fd5-99f1-0fab845a545d
 # ╟─8eb557fa-8e94-49fd-8fc5-17f8d42943c6
 # ╠═d57b2b89-9763-4998-8434-465de994ce54
 # ╟─91c46525-43f9-4ef2-98f4-35fb3974d64f
