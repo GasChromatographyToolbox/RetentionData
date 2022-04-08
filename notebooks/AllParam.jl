@@ -1,8 +1,18 @@
 ### A Pluto.jl notebook ###
-# v0.18.1
+# v0.19.0
 
 using Markdown
 using InteractiveUtils
+
+# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
+macro bind(def, element)
+    quote
+        local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
+        local el = $(esc(element))
+        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
+        el
+    end
+end
 
 # ╔═╡ fec530e6-d675-4bb9-8b5a-6aa607574a81
 begin
@@ -11,6 +21,9 @@ begin
 	using PlutoUI
 	TableOfContents()
 end
+
+# ╔═╡ 819788d0-55c1-4244-b7f0-2e950cacd3a4
+using Dates
 
 # ╔═╡ 5861512e-a14b-11ec-3c6b-9bd2953bf909
 md"""
@@ -30,7 +43,17 @@ data = ThermodynamicData.load_allparameter_data(db_path)
 data.data[end]
 
 # ╔═╡ d26fc674-ace5-43ef-af1d-855dfc21eba5
-alldata = ThermodynamicData.dataframe_of_all(data)
+begin
+	alldata = ThermodynamicData.dataframe_of_all(data)
+	# add flags to alldata
+	alldata[!, "flag"] = ThermodynamicData.flag(alldata)
+	alldata
+end
+
+# ╔═╡ 3c860294-55cd-4b8d-8fa2-46583793fe00
+md"""
+## Flag the parameter sets
+"""
 
 # ╔═╡ 5d719450-b016-4cb5-b4a7-2f0e71eba5f3
 fl, nfl = ThermodynamicData.flagged_data(alldata)
@@ -48,6 +71,20 @@ begin
 	pABC
 end
 
+# ╔═╡ a56ed363-4cc7-4471-b0aa-34109d2dcb45
+pABC_nfl = scatter(nfl.A, nfl.B, nfl.C, label="not flagged", xlabel="A", ylabel="B", zlabel="C")
+
+# ╔═╡ bfc0bd73-94c2-4742-b334-e632933d6dfe
+md"""
+### Observations
+
+The parameters of the ABC-model span a plane in the ABC-space. With a estimated plane equation the divergence of single data points can be evaluated. This could also be used in the estimation of parameters.
+
+#### ToDo:
+- fit a plane equation to the points
+- estimate the residua of single points
+"""
+
 # ╔═╡ 49ddd8eb-a833-43b8-9f62-18f4d5afaf10
 md"""
 ## Plot parameters Tchar, θchar, ΔCp
@@ -60,6 +97,20 @@ begin
 	scatter!(pKcentric, fl.Tchar, fl.thetachar, fl.DeltaCp, label="flagged", c=:red, m=:cross)
 	pKcentric
 end
+
+# ╔═╡ e9f134c3-25e7-45a8-a07e-a3cfdc6c027b
+pKcentric_nfl = scatter(nfl.Tchar, nfl.thetachar, nfl.DeltaCp, label="not flagged", xlabel="Tchar", ylabel="thetachar", zlabel="DeltaCp")
+
+# ╔═╡ 326a0c21-454d-489f-b960-be356671e1db
+md"""
+### Observations
+
+The parameters of the K-centric-model do **not** span a plane in the parameter-space. But it could still be worth to fit a plane into this data cloud.
+
+#### ToDo:
+- fit a plane equation to the points
+- estimate the residua of single points
+"""
 
 # ╔═╡ b4044a75-03ad-4f75-a2ac-716b0c2c628f
 md"""
@@ -74,43 +125,319 @@ begin
 	pTD
 end
 
+# ╔═╡ 6260e6e0-02e4-4c95-9889-020e5c3c2d60
+pTD_nfl = scatter(nfl.DeltaHref, nfl.DeltaSref, nfl.DeltaCp, label="not flagged", xlabel="DeltaHref", ylabel="DeltaSref", zlabel="DeltaCp")
+
+# ╔═╡ 7c95815d-11e5-4de5-8d83-a7ef8518751c
+begin 
+	pTD_nfl_ = plot(xlabel="DeltaHref", ylabel="DeltaSref", zlabel="DeltaCp")
+	source = unique(nfl.Source)
+	for i=1:length(source)
+		nfl_filter = filter([:Source] => x -> x == source[i], nfl)
+		scatter!(pTD_nfl_, nfl_filter.DeltaHref, nfl_filter.DeltaSref, nfl_filter.DeltaCp, label=source[i])
+	end
+	pTD_nfl_
+end
+
+# ╔═╡ 32fd5862-e14b-4cea-b99c-0f26e0d8fbb5
+md"""
+### Observations
+
+The parameters of the Thermodynamic-model do span two planes in the parameter-space. One plane consits soly of data from the group of Harynuk (Karolat, McGinitie). The other plane consists of other sources, including ower one measurements. Interestingly, the parameters from Blumberg are in the second plane, while the data from which they are derived (Karolat) are in the first plane.
+
+The data from the sources of Karolat2010, McGinitie2011, McGinitie2012a, McGinitie2014a and McGinitie2014b are given in the Thermodynamic-model (ΔHref, ΔSref, ΔCp).
+
+The data from Blumberg2017 is given in the ABC and Kcentric parameter sets and with enthalpy/entropy change at Tchar as reference temperature. Therefore, the calculation of refereence entropy/entalpy change at the reference temperature of 90°C should be re-evaluated. 
+
+#### ToDo:
+- check the calculation of ΔHref and ΔSref
+"""
+
 # ╔═╡ 453cbd8f-8f98-4bc7-8577-877455d8354e
 md"""
 ## ChemicalIdentifiers.jl
 """
 
+# ╔═╡ 5ee8d8f2-3c3c-4d4a-a14d-e9a0f23c3ef5
+# [x] filter for not identified substances -> alternative names (save in `shortnames.csv`) or they are not in the database of ChemicalIdentifiers.jl (in this case add a separate database with name, CAS, formula, MW, Smiles -> missing.csv)
+
 # ╔═╡ 4129a813-51b6-4790-9f20-a0d5e188b5c7
 CI = ThermodynamicData.substance_identification(alldata)
-
-# ╔═╡ 192cefa8-4834-4d09-b432-512c08f1ed12
-findfirst(CI.CAS.=="108-38-3")
-
-# ╔═╡ f3ec4e20-e5b4-436a-99a6-def48b00371b
-findfirst(CI.Name.=="m-Xylene")
-
-# ╔═╡ 1d602fb6-64d2-4ff2-920f-73c0025df1ad
-CI[544, :]
-
-# ╔═╡ 0123f15b-1a25-4597-9b0d-3d728a623fae
-CI.CAS[544].=="108-38-3"
-
-# ╔═╡ 79e7d1da-e2ef-4d8e-99f1-b9b53322a4ce
-filter([:CAS] => x -> ismissing(x)==false && x.=="503-74-2", CI)
 
 # ╔═╡ 5cf8c59b-f927-4904-bc26-21048ae3d252
 filter([:CAS] => x -> ismissing(x), CI)  
 
-# ╔═╡ 5ee8d8f2-3c3c-4d4a-a14d-e9a0f23c3ef5
-# filter for not identified substances -> alternative names (save in `shortnames.csv`) or they are not in the database of ChemicalIdentifiers.jl (in this case add a separate database with name, CAS, formula, MW, Smiles)
+# ╔═╡ 31a4dc3a-0b29-45b1-9876-47bd082e72bb
+# add CAS to alldata
+alldata[!, "CAS"] = CI.CAS
+
+# ╔═╡ 4000c057-c75a-4bd8-93fd-dcfce907101c
+search_chemical("Fluoren")
+
+# ╔═╡ aa7bd88a-4722-493b-9c1d-2e69cf4333f3
+md"""
+## Extract number of elements from formula
+"""
+
+# ╔═╡ b54b46bb-d420-42a7-acc4-000f2177860d
+ThermodynamicData.formula_to_dict(CI.formula[end])
+
+# ╔═╡ c28cca6a-fdf3-4edf-9534-5c4f677c2889
+element_numbers = ThermodynamicData.formula_to_dict.(CI.formula)
+
+# ╔═╡ a39e1661-4765-411c-a062-233a64770391
+md""" 
+## Extract number of rings from SMILES
+"""
+
+# ╔═╡ e34c35f8-1ec8-47ba-af8e-77f10cf2c27b
+rimgnumbers = ThermodynamicData.ring_number.(CI.smiles)
+
+# ╔═╡ 11de4e14-3b56-4238-bed8-c110f4de2d44
+md"""
+## Some Filters
+
+- exclude flagged data
+- exclude data with `CAS = missing`
+"""
+
+# ╔═╡ d619df94-5bb2-4349-a83d-ccfd13b95906
+# only use substances with a CAS entry
+alldata_f = filter([:CAS, :flag] => (x, y) -> ismissing(x)==false && isempty(y), alldata)
+
+# ╔═╡ e17bf6fe-f3b6-4904-bb05-8b068fd9cf1f
+md"""
+## Same categories for same substances
+"""
+
+# ╔═╡ 54a2712b-d696-4097-8522-f5e1a87ecbec
+alldata_f_ = ThermodynamicData.align_categories(alldata_f)
+
+# ╔═╡ d5381c2d-1794-4af1-9ebb-5188334fc592
+md"""
+## Add Category groups (e.g. BTEX, Grob, ...)
+"""
+
+# ╔═╡ 610d535a-2025-4419-b35b-8d28dbaa62b8
+ThermodynamicData.add_group_to_Cat!(alldata_f_)
 
 # ╔═╡ 917e88c6-cf5d-4d8f-93e5-f50ea2bb2cdc
-# find duplicates (same substance(CAS) on same stationary phase)
+md"""
+## Find duplicates
+"""
 
-# ╔═╡ 806193c4-be37-4eed-8598-331a9c91ec22
-search_chemical("503-74-2")
+# ╔═╡ e5b49869-2763-4ec9-ae7f-7b70164c0c67
+dup_data, dup_entry = ThermodynamicData.duplicated_data(alldata_f_)
 
-# ╔═╡ 28bcb945-b2d0-4ceb-969b-edbe8964d174
-search_chemical("1,2,3,7,8,9-Hexachlorodibenzofuran")
+# ╔═╡ dd48df07-4bed-47ce-9799-05958e3adc7a
+count(dup_entry)
+
+# ╔═╡ 47138dbf-5c60-4cdc-b484-ff168d11055f
+dup_data[70]
+
+# ╔═╡ 87a761c6-85ce-4342-a7d4-a13a378c6c45
+md"""
+### Plot of duplicates
+$(@bind select_dup Slider(1:length(dup_data); show_value=true))
+"""
+
+# ╔═╡ 8b0b5a9f-666a-43c2-bdab-3d771334f12b
+md"""
+### Conclusions from duplicates
+- if _Blumberg2017_ is one of the sources, keep these
+- in the case of the three duplicates from _McGinitie2011_ different mobile phases where used (He, H₂ and N₂) resp. different column diameters (0.1mm, 0.2mm, 0.25mm, 0.32mm, 0.53mm; these are also duplicates with _McGinitie2014a_)-> similar results, keep the ones with He resp. 0.25mm
+- duplicates from only _Marquart2020_ represent different observed isomers? related to the substance -> keep them all
+- some complete duplicates (parameters have the same value) -> use only the first substance
+"""
+
+# ╔═╡ f02137a4-75a1-49ac-81a3-a1f04bab9ca2
+begin
+	T = 0.0:1.0:400.0
+	Tst = 273.15
+	R = 8.31446261815324
+	lnk = Array{Float64}(undef, length(T), size(dup_data[select_dup])[1])
+	plnk_dup = plot(xlabel="temperature in °C", ylabel="lnk")
+	for j=1:size(dup_data[select_dup])[1]
+		for i=1:length(T)
+			par = [dup_data[select_dup].Tchar[j]+Tst, dup_data[select_dup].thetachar[j], dup_data[select_dup].DeltaCp[j]/R]
+			lnk[i,j] = ThermodynamicData.Kcentric(T[i]+Tst, par)
+		end
+		plot!(plnk_dup, T, lnk[:,j], title="duplicated data, $(dup_data[select_dup].Name[1]), $(dup_data[select_dup].Phase[1])", label=dup_data[select_dup].Source[j])
+	end
+end
+
+# ╔═╡ c7f1acaa-d53e-427e-b646-f3920a2ce6b7
+pABC_dup = scatter(dup_data[select_dup].A, dup_data[select_dup].B, dup_data[select_dup].C, title="duplicated data, $(dup_data[select_dup].Name[1]), $(dup_data[select_dup].Phase[1])", label="", xlabel="A", ylabel="B", zlabel="C");
+
+# ╔═╡ 9a09e9cb-26cf-4576-a581-7b832fbab775
+pKcentric_dup = scatter(dup_data[select_dup].Tchar, dup_data[select_dup].thetachar, dup_data[select_dup].DeltaCp, title="duplicated data, $(dup_data[select_dup].Name[1]), $(dup_data[select_dup].Phase[1])", label="", xlabel="Tchar", ylabel="θchar", zlabel="ΔCp");
+
+# ╔═╡ ba1c7f65-3e24-4b86-b2e2-521459993250
+md"""
+$(embed_display(plnk_dup))
+$(embed_display(pABC_dup))
+$(embed_display(pKcentric_dup))
+"""
+
+# ╔═╡ fda7f746-0f7e-4dff-b8e6-7765f580e542
+md"""
+## Some more filters for the duplicates
+"""
+
+# ╔═╡ b7be7b57-7e69-4cc9-af54-db9465f18d05
+# 1st take only the entrys without duplicates, delete columns 'd', 'gas' and 'flag'
+nondup_data = alldata_f_[findall(dup_entry.==false),Not([:d, :gas, :flag])]
+
+# ╔═╡ 81ccb3e6-dcca-4b66-9be6-a1fb63f7e056
+# 2nd filter the duplicate data dup_data according to decisions
+# change the rule, if needed 
+begin
+	selected_dup_data = DataFrame()
+	
+	for i=1:length(dup_data)
+		sources = unique(dup_data[i].Source)
+		cols = names(dup_data[i])
+		if "Blumberg2017" in sources # use Blumberg2017 data
+			j = findfirst(dup_data[i].Source.=="Blumberg2017")
+			push!(selected_dup_data, dup_data[i][j,cols])
+		elseif ["Marquart2020"] == sources # use all data, if only duplicates from Marquart (different isomers)
+			append!(selected_dup_data, dup_data[i][!,cols])
+		elseif ["McGinitie2011"] == sources # different gases, use "He"
+			j = findfirst(dup_data[i].gas.=="He")
+			push!(selected_dup_data, dup_data[i][j,cols])
+		elseif "McGinitie2011" in sources && "McGinitie2014a" in sources # different diameters, use d=0.25mm
+			j = findfirst(dup_data[i].d.==0.25)
+			push!(selected_dup_data, dup_data[i][j,cols])
+		elseif length(sources) == 1 # duplicates from the same source
+			# choose first
+			if i == 1
+				selected_dup_data =DataFrame(dup_data[i][1,cols])
+			else
+				push!(selected_dup_data, dup_data[i][1,cols]) 
+			end
+		else # not decided cases
+			append!(selected_dup_data, dup_data[i][!,cols]) # choose all
+			#push!(selected_dup_data, dup_data[i][1,cols]) # choose first -> error
+		end
+	end
+	selected_dup_data
+end
+
+# ╔═╡ a50d4f05-0f4a-4ae0-ba5d-a27bad3869e0
+dup_data_1, dup_entry_1 = ThermodynamicData.duplicated_data(selected_dup_data)
+# -> remaining cases of duplicates (some will stay, e.g. Marquart2020)
+
+# ╔═╡ 4a73771a-3adc-4fad-8d6a-148dcf9cc3c4
+# 3rd combine both dataframes and sort for "source", "phase", "Tchar"
+begin
+	newdata = sort!(unique(vcat(nondup_data, selected_dup_data, cols = :union)), [:Source, :Phase, :Tchar])
+	newdata
+end
+
+# ╔═╡ baa7d024-ec90-4744-922d-830f40683abe
+dup_data_2, dup_entry_2 = ThermodynamicData.duplicated_data(newdata)
+# only duplicated data from Marquart2020 remain
+
+# ╔═╡ 1b8f3f28-e612-40d0-9b09-136543cbb126
+md"""
+## DataFrame with the structure of database for GasChromatographySimulator.jl v0.3 and lower
+"""
+
+# ╔═╡ 390a66a8-e497-4a0f-b6c4-34487df787e9
+# Name, CAS, Cnumber, Hnumber, Onumber, Nnumber, Ringnumber, Molmass, Phase, Tchar, thetachar, DeltaCp, phi0, Annotation
+
+# ╔═╡ 23e0cf31-1c67-48d1-b014-26c1b44e04a8
+old_db = ThermodynamicData.old_database_format(newdata)
+
+# ╔═╡ eaed9fdd-d4a2-41f7-8e05-588869e12780
+#CSV.write("../Databases/oldformat_$(string(Dates.now())).csv", old_db)
+
+# ╔═╡ 9634b96c-18f1-479e-b28b-3d614893ce7c
+md"""
+## DataFrame with the new structure of database for GasChromatographySimulator.jl v0.4 and higher
+"""
+
+# ╔═╡ 58c8bd1d-2e69-48ac-9cfc-bb525ebe79c8
+# - Name, CAS, Phase, Tchar, thetachar, DeltaCp, phi0, Source, Cat_1, Cat_2, ...
+# - Name, CAS, Phase, A, B, C, phi0, Source, Cat_1, Cat_2, ...
+
+# ╔═╡ 3eeea8dd-de5c-4c73-8d82-4bdb4979d2b0
+parset = "Kcentric"
+
+# ╔═╡ 8397c671-c0d1-4632-ae9a-55a6dccd1002
+new_db = ThermodynamicData.new_database_format(newdata; ParSet=parset)
+
+# ╔═╡ 496b86c5-900e-4786-a254-082b8155c65b
+#CSV.write("../Databases/newformat_$(parset)_$(string(Dates.now())).csv", new_db)
+
+# ╔═╡ ccc85a17-690a-4fa4-9b14-9ca58a22e9c8
+md"""
+## Filter for homologous series
+"""
+
+# ╔═╡ 46e16092-d952-4c4f-a952-c5201797fcd1
+homologous_series = DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/ThermodynamicData/data/homologous.csv"))
+
+# ╔═╡ f51eb4f5-3529-4c5a-8e2d-1902242ab7af
+names(homologous_series)
+
+# ╔═╡ 6dac8047-1170-4b65-9cee-2c8db3b62d63
+homologous_series."homologous series"
+
+# ╔═╡ e74f1990-5dd2-4062-a8d0-345a5005d0c2
+function add_homologous_to_Cat!(newdata)
+	hs = DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/ThermodynamicData/data/homologous.csv"))
+	CAS = Array{Array{String,1}}(undef, length(hs.CAS))
+	for i=1:length(hs.CAS)
+		CAS[i] = split(hs.CAS[i],',')
+	end
+	hs[!,"CAS"]	= CAS
+
+	iCat = findall(occursin.("Cat", names(newdata)))
+	for i=1:length(newdata.CAS)
+		for j=1:length(hs.CAS)
+			if newdata.CAS[i] in hs.CAS[j]
+				if  ismissing(!(hs."homologous series"[j] in newdata[i, iCat])) || !(hs."homologous series"[j] in newdata[i, iCat])# group not allready in Cat
+					# find the first Cat column with missing entry
+					if isnothing(findfirst(ismissing.(collect(newdata[i,iCat]))))
+						ii = iCat[end] + 1
+					else
+						ii = iCat[findfirst(ismissing.(collect(newdata[i,iCat])))]
+					end
+					newdata[i,ii] = hs."homologous series"[j]
+				end
+			end
+		end
+	end
+	return newdata
+end
+
+# ╔═╡ ff046879-3607-47e4-afe3-b42bb1738b9f
+add_homologous_to_Cat!(newdata)
+
+# ╔═╡ ef0c1872-da54-48b5-8212-634d7d91e9ac
+# filter for all alkanes
+function filter_Cat(newdata, cat)
+	iCat = findall(occursin.("Cat", names(newdata)))
+	i_true = Int[]
+	for i=1:length(newdata.CAS)
+		for j=1:length(iCat)
+			if ismissing(newdata[!, iCat[j]][i]) == false
+				if cat == newdata[!, iCat[j]][i]
+					push!(i_true, i)
+				end
+			end
+		end
+	end
+	filtered_data = newdata[i_true,:]
+	return filtered_data
+end
+
+# ╔═╡ 8d1c0954-ace2-4621-99aa-ce692936247b
+hs = unique(homologous_series[!,3])
+
+# ╔═╡ 5356fd33-c959-40b0-bdf8-d1363a0726c9
+filter_Cat(newdata, hs[5])
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -118,6 +445,7 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 ChemicalIdentifiers = "fa4ea961-1416-484e-bda2-883ee1634ba5"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 LambertW = "984bce1d-4616-540c-a9ee-88d1112d94c9"
 LsqFit = "2fda8390-95c7-5789-9bda-21331edee243"
 Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
@@ -1353,24 +1681,72 @@ version = "0.9.1+5"
 # ╠═3757151c-2244-4e45-985c-2ef869abd23d
 # ╠═3b9c6610-6839-4012-aa0b-219a347ca52f
 # ╠═d26fc674-ace5-43ef-af1d-855dfc21eba5
+# ╟─3c860294-55cd-4b8d-8fa2-46583793fe00
 # ╠═5d719450-b016-4cb5-b4a7-2f0e71eba5f3
 # ╠═93a5ed9f-64ce-4ee8-bee0-ecd2ff2dcbb8
-# ╟─560c76d6-9e50-461a-9815-66b40b59e580
+# ╠═560c76d6-9e50-461a-9815-66b40b59e580
+# ╠═a56ed363-4cc7-4471-b0aa-34109d2dcb45
+# ╠═bfc0bd73-94c2-4742-b334-e632933d6dfe
 # ╠═49ddd8eb-a833-43b8-9f62-18f4d5afaf10
-# ╟─c99ca5d6-7f7d-4462-afab-e11154370054
+# ╠═c99ca5d6-7f7d-4462-afab-e11154370054
+# ╠═e9f134c3-25e7-45a8-a07e-a3cfdc6c027b
+# ╠═326a0c21-454d-489f-b960-be356671e1db
 # ╠═b4044a75-03ad-4f75-a2ac-716b0c2c628f
-# ╟─80c784b2-35a6-4fc9-a1fd-7b1d6d89462f
+# ╠═80c784b2-35a6-4fc9-a1fd-7b1d6d89462f
+# ╠═6260e6e0-02e4-4c95-9889-020e5c3c2d60
+# ╠═7c95815d-11e5-4de5-8d83-a7ef8518751c
+# ╟─32fd5862-e14b-4cea-b99c-0f26e0d8fbb5
 # ╠═453cbd8f-8f98-4bc7-8577-877455d8354e
-# ╠═4129a813-51b6-4790-9f20-a0d5e188b5c7
-# ╠═192cefa8-4834-4d09-b432-512c08f1ed12
-# ╠═f3ec4e20-e5b4-436a-99a6-def48b00371b
-# ╠═1d602fb6-64d2-4ff2-920f-73c0025df1ad
-# ╠═0123f15b-1a25-4597-9b0d-3d728a623fae
-# ╠═79e7d1da-e2ef-4d8e-99f1-b9b53322a4ce
-# ╠═5cf8c59b-f927-4904-bc26-21048ae3d252
 # ╠═5ee8d8f2-3c3c-4d4a-a14d-e9a0f23c3ef5
-# ╠═917e88c6-cf5d-4d8f-93e5-f50ea2bb2cdc
-# ╠═806193c4-be37-4eed-8598-331a9c91ec22
-# ╠═28bcb945-b2d0-4ceb-969b-edbe8964d174
+# ╠═4129a813-51b6-4790-9f20-a0d5e188b5c7
+# ╠═5cf8c59b-f927-4904-bc26-21048ae3d252
+# ╠═31a4dc3a-0b29-45b1-9876-47bd082e72bb
+# ╠═4000c057-c75a-4bd8-93fd-dcfce907101c
+# ╠═aa7bd88a-4722-493b-9c1d-2e69cf4333f3
+# ╠═b54b46bb-d420-42a7-acc4-000f2177860d
+# ╠═c28cca6a-fdf3-4edf-9534-5c4f677c2889
+# ╠═a39e1661-4765-411c-a062-233a64770391
+# ╠═e34c35f8-1ec8-47ba-af8e-77f10cf2c27b
+# ╟─11de4e14-3b56-4238-bed8-c110f4de2d44
+# ╠═d619df94-5bb2-4349-a83d-ccfd13b95906
+# ╠═e17bf6fe-f3b6-4904-bb05-8b068fd9cf1f
+# ╠═54a2712b-d696-4097-8522-f5e1a87ecbec
+# ╠═d5381c2d-1794-4af1-9ebb-5188334fc592
+# ╠═610d535a-2025-4419-b35b-8d28dbaa62b8
+# ╟─917e88c6-cf5d-4d8f-93e5-f50ea2bb2cdc
+# ╠═e5b49869-2763-4ec9-ae7f-7b70164c0c67
+# ╠═dd48df07-4bed-47ce-9799-05958e3adc7a
+# ╠═47138dbf-5c60-4cdc-b484-ff168d11055f
+# ╠═87a761c6-85ce-4342-a7d4-a13a378c6c45
+# ╠═ba1c7f65-3e24-4b86-b2e2-521459993250
+# ╠═8b0b5a9f-666a-43c2-bdab-3d771334f12b
+# ╟─f02137a4-75a1-49ac-81a3-a1f04bab9ca2
+# ╟─c7f1acaa-d53e-427e-b646-f3920a2ce6b7
+# ╟─9a09e9cb-26cf-4576-a581-7b832fbab775
+# ╠═fda7f746-0f7e-4dff-b8e6-7765f580e542
+# ╠═b7be7b57-7e69-4cc9-af54-db9465f18d05
+# ╠═81ccb3e6-dcca-4b66-9be6-a1fb63f7e056
+# ╠═a50d4f05-0f4a-4ae0-ba5d-a27bad3869e0
+# ╟─4a73771a-3adc-4fad-8d6a-148dcf9cc3c4
+# ╠═baa7d024-ec90-4744-922d-830f40683abe
+# ╠═1b8f3f28-e612-40d0-9b09-136543cbb126
+# ╠═390a66a8-e497-4a0f-b6c4-34487df787e9
+# ╠═23e0cf31-1c67-48d1-b014-26c1b44e04a8
+# ╠═819788d0-55c1-4244-b7f0-2e950cacd3a4
+# ╠═eaed9fdd-d4a2-41f7-8e05-588869e12780
+# ╠═9634b96c-18f1-479e-b28b-3d614893ce7c
+# ╠═58c8bd1d-2e69-48ac-9cfc-bb525ebe79c8
+# ╠═8397c671-c0d1-4632-ae9a-55a6dccd1002
+# ╠═3eeea8dd-de5c-4c73-8d82-4bdb4979d2b0
+# ╠═496b86c5-900e-4786-a254-082b8155c65b
+# ╠═ccc85a17-690a-4fa4-9b14-9ca58a22e9c8
+# ╠═46e16092-d952-4c4f-a952-c5201797fcd1
+# ╠═f51eb4f5-3529-4c5a-8e2d-1902242ab7af
+# ╠═6dac8047-1170-4b65-9cee-2c8db3b62d63
+# ╠═e74f1990-5dd2-4062-a8d0-345a5005d0c2
+# ╠═ff046879-3607-47e4-afe3-b42bb1738b9f
+# ╠═ef0c1872-da54-48b5-8212-634d7d91e9ac
+# ╠═8d1c0954-ace2-4621-99aa-ce692936247b
+# ╠═5356fd33-c959-40b0-bdf8-d1363a0726c9
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
