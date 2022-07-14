@@ -928,7 +928,7 @@ end
 Plot the `lnk`-values over `T` of the selected dataset `i` of the selected substance `j`. Also the fit solution for the ABC-model and the K-centric-model are shown over the extended temperature range from 0°C to 400°C.
 """
 function plot_lnk_fit(fit, i, j)
-	T = 0.0:1.0:400.0
+	T = 0.0:1.0:800.0
 	plnk = scatter(fit[i].T[j], fit[i].lnk[j], label="data", title=fit[i].Name[j], xlabel="T in °C", ylabel="lnk")
 	if "i_ABC" in names(fit[i])
 		ex_i_ABC = fit[i].ex_i_ABC[j]
