@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.17.1
+# v0.19.4
 
 using Markdown
 using InteractiveUtils
@@ -45,7 +45,7 @@ begin
 					:poutsteps => [[1.0, 1.0 ] .* 101300],
 					:gf => gf, # no gradient
 					:a_gf => [[0.0, 0.0]],
-					:solute_db_path => datadir("Databases"),
+					:solute_db_path => datadir("/Users/janleppert/Documents/GitHub/ThermodynamicData/Databases/"),
 					:solute_db => "Database_append.csv",
 					:abstol => 1e-6,
 					:reltol => 1e-3
@@ -342,11 +342,11 @@ end
 # ╠═d243af7d-c7c7-49e3-810b-4ddbd7e4c8d2
 # ╠═44bcda5c-751f-11eb-32f7-53d72a578fe4
 # ╠═6dffdff4-751f-11eb-269d-2981558563dc
-# ╟─dc5213b0-75d2-11eb-28b7-0b9af9b307d0
-# ╟─519525a4-75d3-11eb-35be-990ffbd63057
+# ╠═dc5213b0-75d2-11eb-28b7-0b9af9b307d0
+# ╠═519525a4-75d3-11eb-35be-990ffbd63057
 # ╠═1ad8b6dc-7521-11eb-2660-e17f3c9a8e83
-# ╟─bf66134e-7520-11eb-08cc-b32ca71e220b
-# ╟─055c9c1c-7522-11eb-1335-79d5591172fa
-# ╟─c9bcaddc-7523-11eb-179b-d11cfc574b0e
-# ╟─ec126bf0-7524-11eb-3a08-d70fd0a3fb33
-# ╟─9ea9e414-75d4-11eb-11b4-4bcec0435589
+# ╠═bf66134e-7520-11eb-08cc-b32ca71e220b
+# ╠═055c9c1c-7522-11eb-1335-79d5591172fa
+# ╠═c9bcaddc-7523-11eb-179b-d11cfc574b0e
+# ╠═ec126bf0-7524-11eb-3a08-d70fd0a3fb33
+# ╠═9ea9e414-75d4-11eb-11b4-4bcec0435589
