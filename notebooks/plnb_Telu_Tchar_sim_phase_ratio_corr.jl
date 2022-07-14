@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.17.1
+# v0.19.4
 
 using Markdown
 using InteractiveUtils
@@ -58,7 +58,7 @@ begin
 	                #const pressure is needed for constant difference between elution temp. and Tchar
 	                :pin => pin, # in kPa(g)
 	                :pout => pout, # in kPa(a)
-	                :solute_db_path => datadir("Databases"),
+	                :solute_db_path => projectdir("Databases"),
 	                :solute_db => "Database_append.csv",
 	                :abstol => 1e-6,
 	                :reltol => 1e-3
@@ -70,6 +70,9 @@ Ndict = dict_list_count(parameters)
 
 # ╔═╡ b7f9ec8d-c637-401d-a47a-6d3c30568abd
 dicts = dict_list(parameters);
+
+# ╔═╡ 2bb5eb7c-7507-43ab-8c5e-0086f0e21a1c
+projectdir("Databases")
 
 # ╔═╡ 42e7ca1a-b7d8-4cd8-9998-02f27cedbc59
 function makesim(dict::Dict) #(adapted from 'script-sim-heating_rate.jl' in VGGC-project)
@@ -164,7 +167,7 @@ function Tchar_β(β, Tchar0, θchar0, ΔCp0, β0)
 end
 
 # ╔═╡ 2ccd805a-fcf3-44c6-a79e-6db1ff6e08d0
-function linear_fit_β(data, i;  solute_db_path=datadir("Databases"), α=0.05)
+function linear_fit_β(data, i;  solute_db_path=projectdir("Databases"), α=0.05)
 	# linear fit of TR over Tchar with slope = 1
 	# -> intercept = mean difference TR-Tchar
 	sub_sort = extract_sub_sort(data, i; solute_db_path=solute_db_path)
@@ -711,6 +714,7 @@ $(embed_display(p_m3))
 # ╠═7e517e2a-7ab7-4e2f-8c35-3f6b37c70e33
 # ╠═2f202810-dc23-4760-8bb4-f00e4fd96f23
 # ╠═b7f9ec8d-c637-401d-a47a-6d3c30568abd
+# ╠═2bb5eb7c-7507-43ab-8c5e-0086f0e21a1c
 # ╠═42e7ca1a-b7d8-4cd8-9998-02f27cedbc59
 # ╠═dc2c53dd-89cc-4e93-bd58-e20b2b5750e6
 # ╠═7c1b33e7-4e58-401a-b914-3c2004ce6ca8
@@ -728,8 +732,8 @@ $(embed_display(p_m3))
 # ╠═388a7f39-8faa-4cfa-9a38-360a9e124cde
 # ╠═e30cb724-1f9c-448c-9b59-977e4e1da4fc
 # ╠═b743e2e3-3dea-4897-baab-b438d6137daa
-# ╟─ef26356e-8f53-4eae-afa1-c6938500421b
-# ╟─9f6eefa6-b4e0-426e-a81f-42342ab05f3c
+# ╠═ef26356e-8f53-4eae-afa1-c6938500421b
+# ╠═9f6eefa6-b4e0-426e-a81f-42342ab05f3c
 # ╠═5a6b9a80-4be0-4a4f-84f4-c5e60e1e662a
 # ╠═b1435002-009b-4508-92de-df4458783396
 # ╠═480d9ab5-808c-43f8-83de-76ea40d804bb
