@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.0
+# v0.17.1
 
 using Markdown
 using InteractiveUtils
@@ -77,6 +77,26 @@ scatter!(pABC_nfl, [centroid_ABC[1]], [centroid_ABC[2]], [centroid_ABC[3]], c=:r
 
 # ╔═╡ f7d37583-6157-4805-b298-09fe89798696
 pABC_nfl_ = scatter(nfl.A.-centroid_ABC[1], nfl.B.-centroid_ABC[2], nfl.C.-centroid_ABC[3], label="not flagged", xlabel="A", ylabel="B", zlabel="C", title="centered")
+
+# ╔═╡ 39fd17ca-3f54-4e9b-95d9-3b2bd9acf63b
+md"""
+### Standardized data
+"""
+
+# ╔═╡ 2d87c4fb-6869-4609-9cd6-f12a64af3ddf
+sd_ABC = [std(nfl.A), std(nfl.B), std(nfl.C)]
+
+# ╔═╡ b6c985a1-381d-42b9-991e-a04970984c56
+standardize_ABC = [(nfl.A.-mean(nfl.A))./std(nfl.A) (nfl.B.-mean(nfl.B))./std(nfl.B) (nfl.C.-mean(nfl.C))./std(nfl.C)]
+
+# ╔═╡ 92e6cbab-9d8d-4b0b-a8f0-accd1171fa27
+μ⃗ = [mean(nfl.A), mean(nfl.B), mean(nfl.C)]
+
+# ╔═╡ 2c1d646e-f895-4dff-817b-df817921404e
+σ⃗ = [std(nfl.A), std(nfl.B), std(nfl.C)]
+
+# ╔═╡ 3bc6a35f-47af-4cf5-97a4-dbfbb38cacbd
+pABC_nfl_std = scatter(standardize_ABC[:,1], standardize_ABC[:,2], standardize_ABC[:,3], label="not flagged", xlabel="A", ylabel="B", zlabel="C", title="standardized")
 
 # ╔═╡ 0f9e6a3c-5898-4a4f-9e89-e92341578624
 md"""
@@ -249,6 +269,143 @@ ABC_data_c = [nfl.A.-mean(nfl.A) nfl.B.-mean(nfl.B) nfl.C.-mean(nfl.C)]
 # ╔═╡ ec4e5306-4dbb-4369-9d86-b37ca3afdf9d
 ABC_data_c'*ABC_data_c
 
+# ╔═╡ 9a975df7-b32a-444a-94eb-72346c28bfde
+md"""
+### PCA by hand
+
+- standardized data -> `standardize_ABC`
+"""
+
+# ╔═╡ 0f25d977-ea1c-4424-a5a3-17821cefe269
+function plane_PCA(A, B, C)
+	data = [A, B, C]
+	# standardize data
+	μ⃗ = [mean(A), mean(B), mean(C)]
+	σ⃗ = [std(A), std(B), std(C)]
+	data_std = [(A.-μ⃗[1])./σ⃗[1] (B.-μ⃗[2])./σ⃗[2] (C.-μ⃗[3])./σ⃗[3]]
+	# covariance matrix of the standardized data
+	cov_data = cov(data_std)
+	# Eigenvalues and Eigenvectors of the covariance matrix
+	eigval = eigvals(cov_data)
+	eigvec = eigvecs(cov_data)
+	# sort Eigenvalues and use the two biggest
+	eigval_s = sort(eigval)
+	# 2D plane in standardized space defined by the two vectors u, v and stützvektor p (which is zero) 
+	u = eigvec[:,findfirst(eigval_s[end].==eigval)]
+	v = eigvec[:,findfirst(eigval_s[2].==eigval)]
+	p = zeros(3)
+	# transform the plane in the standardized space back to the original data space
+	u⃗ = σ⃗ .* u .+ μ⃗
+	v⃗ = σ⃗ .* v .+ μ⃗
+	p⃗ = μ⃗
+	# transform into coordinate format aA + bB + cC = d
+	a,b,c = cross(u⃗, v⃗)
+	d = norm(p⃗)
+	return a, b, c, d
+end
+
+# ╔═╡ 1fbf4361-0297-419b-834a-6ab819add2cd
+# Covariance matrix of the standardized data
+
+# ╔═╡ 5c317f4c-a7e4-4f29-a9df-735c4668a2bb
+cov([nfl.A nfl.B nfl.C])
+
+# ╔═╡ 8b0b18ba-a79b-4714-8716-d6b4ef1686f3
+eigvals(cov([nfl.A nfl.B nfl.C]))
+
+# ╔═╡ 9582bef1-58cc-4248-9a34-f4944fb70b99
+ev = eigvecs(cov([nfl.A nfl.B nfl.C]))
+
+# ╔═╡ fdfa08d2-a12a-4c10-9b5f-80d4e9ddec60
+cov_ABC = cov(standardize_ABC)
+
+# ╔═╡ a5f1d57e-04c9-4d30-9c68-2338892087ba
+# Eigenvalues and Eigenvectors of the covariance matrix
+
+# ╔═╡ bb4345d9-82db-4090-b821-0f42b664a6ec
+eigval_ABC = eigvals(cov_ABC)
+
+# ╔═╡ 9028c0f7-22da-48f7-9f12-62e416621433
+eigvec_ABC = eigvecs(cov_ABC)
+
+# ╔═╡ 6a9a859d-f003-4465-8a40-8bbc8b1904fb
+# i = 3 biggest eigenvalue, i = 2 2nd biggest eigenvalue, i = 1 smallest eigen value
+
+# ╔═╡ 1762d924-57b7-440a-b4ed-c60df844a4d9
+eigval_ABC_s = sort(eigval_ABC)
+
+# ╔═╡ 0215b153-f084-49a6-8323-5bf3c8602084
+t1 = eigvec_ABC[:,findfirst(eigval_ABC_s[end].==eigval_ABC)]
+
+# ╔═╡ c64ae8b0-27ad-4643-bc55-66d256b4f2b5
+t2 = eigvec_ABC[:,findfirst(eigval_ABC_s[2].==eigval_ABC)]
+
+# ╔═╡ f88d67d9-80de-43a7-9236-52037fb1e461
+cross(t1,t2)
+
+# ╔═╡ c5fedf2e-d7e6-4812-9fc4-d21a05fab242
+k1_ABC = eigvec_ABC[:,3]
+
+# ╔═╡ 9364c8fa-4ead-47dd-8499-137f3c4952e9
+k2_ABC = eigvec_ABC[:,2]
+
+# ╔═╡ 07f542fb-249d-4c15-b940-cb56673d71d4
+a_ABC, b_ABC, c_ABC = cross(k1_ABC, k2_ABC)
+
+# ╔═╡ 2eec5eeb-83e1-431d-9e23-ccf2c2416a3e
+u⃗ = σ⃗ .* k1_ABC .+ μ⃗
+
+# ╔═╡ 295fb593-888a-49ba-9d44-26360eb2f4f0
+ev[:,3]./u⃗
+
+# ╔═╡ 25f70dc4-d620-449c-8b67-72b2c4979471
+v⃗ = σ⃗ .* k2_ABC .+ μ⃗
+
+# ╔═╡ 09e86b70-2331-401b-b3ae-3de100a0e5ce
+p⃗ = μ⃗
+
+# ╔═╡ 59396512-637e-45ac-92ba-c9e15ad06ff4
+plane_PCA(nfl.A, nfl.B, nfl.C)
+
+# ╔═╡ 5e84c8e0-a0da-49b8-a546-1699bbd4a20e
+a,b,c = cross(u⃗, v⃗)
+
+# ╔═╡ e3fb1034-414e-4097-87d4-80f8725955a9
+d = norm(p⃗)
+
+# ╔═╡ ab6d39a8-060d-4d70-95c6-c7ce91cff235
+edges = [[minimum(standardize_ABC[:,1]), maximum(standardize_ABC[:,1]), minimum(standardize_ABC[:,1]), maximum(standardize_ABC[:,1])] [minimum(standardize_ABC[:,2]), maximum(standardize_ABC[:,2]), maximum(standardize_ABC[:,2]), minimum(standardize_ABC[:,2])]]
+	
+
+# ╔═╡ 6f70b03f-611e-4db6-b6a0-c4531541cf65
+z_fit = (0.0.-a_ABC.*edges[:,1].-b_ABC.*edges[:,2])./c_ABC
+
+# ╔═╡ f65c8a03-8b53-4539-9ec1-67d5e27c3b95
+begin
+	plot!(pABC_nfl_std, edges[:,1], edges[:,2], z_fit, c=:orange, label="planePCA", st=:mesh3d, α=0.5)
+	plot!(pABC_nfl_std, [0.0,a_ABC], [0.0,b_ABC], [0.0,c_ABC], c=:black, label="nvec")
+	pABC_nfl_std
+end
+
+# ╔═╡ c77b1d8b-5189-40fc-8adf-bba6fa0a5cd9
+# back transformation
+
+# ╔═╡ ec523f32-2f6c-413f-adc6-957775c5f962
+z_fit_trans = (d.-a.*planeABC[3][:,1].-b.*planeABC[3][:,2])./c
+
+# ╔═╡ 109e3fba-5e7e-46c3-9c63-d71d142afbb3
+begin
+	plot!(pABC_nfl2, planeABC[3][:,1], planeABC[3][:,2], z_fit_trans, c=:blue, label="planeABC, R²=$(round(planeABC[2];digits=5))", st=:mesh3d, α=0.5)
+	plot!(pABC_nfl2, [p⃗[1],a/d], [p⃗[2],b/d], [p⃗[3],c/d], c=:black, label="nvec_PCA")
+	pABC_nfl2
+end
+
+# ╔═╡ e065a577-ba5b-44bc-825d-e57adc8d119a
+n_ABC_
+
+# ╔═╡ bfb8dab8-5b59-4c54-b5df-2ffbcfeb53c1
+# these two vectors should span a plane in which the data is located
+
 # ╔═╡ bfc0bd73-94c2-4742-b334-e632933d6dfe
 md"""
 ### Observations
@@ -342,6 +499,47 @@ Kc_data = [nfl.Tchar nfl.thetachar nfl.DeltaCp]
 # ╔═╡ 3184eb7b-30e2-4412-915b-67676e6059a1
 M_Kc = fit(PCA, Kc_data)
 
+# ╔═╡ d24dbced-9d9c-43fb-b1c4-baa075b946d2
+md"""
+### PCA by hand
+"""
+
+# ╔═╡ a6c9050a-7bd9-43b2-96b0-5884b5da0571
+a_Kc, b_Kc, c_Kc, d_Kc = plane_PCA(nfl.Tchar, nfl.thetachar, nfl.DeltaCp)
+
+# ╔═╡ 8b4642a3-e483-4da2-97b4-b00fd2a785e5
+planeKc[3]
+
+# ╔═╡ be1623aa-0db7-4ead-97dc-a8cee29656f0
+planeKc[3][1,2]
+
+# ╔═╡ 9d3f7d3a-f89b-41c9-bf9b-47a6d54768ea
+z_fit_Kc = (d_Kc.-a_Kc.*planeKc[3][:,1].-b_Kc.*planeKc[3][:,2])./c_Kc
+
+# ╔═╡ afb9b87c-8a03-424f-9123-28e1053697b6
+p1 = (planeKc[3][1,1], planeKc[3][1,2], z_fit_Kc[1])
+
+# ╔═╡ 33131da4-a7c8-4437-8dc2-2121d8cf5996
+p2 = (planeKc[3][2,1], planeKc[3][2,2], z_fit_Kc[2])
+
+# ╔═╡ 900c1395-41df-4128-ab11-e3619ffb922d
+p3 = (planeKc[3][3,1], planeKc[3][3,2], z_fit_Kc[3])
+
+# ╔═╡ 43ae138c-7e11-4dd5-931c-8f78dc882b83
+p4 = (planeKc[3][4,1], planeKc[3][4,2], z_fit_Kc[4])
+
+# ╔═╡ b87f5cc1-07a7-4fcf-bbce-60bc85811748
+begin
+plotly()
+plot!(pKc_nfl2,[p1,p2,p3,p4], c=:blue, st=:mesh3d)
+end
+
+# ╔═╡ 4cb058c5-cedf-4b6e-bbef-503541f11b2c
+begin
+	plot!(pKc_nfl2, planeKc2[3][:,1], planeKc2[3][:,2], z_fit_Kc, c=:blue, label="planeKc_PCA", st=:mesh3d, α=0.5)
+	pKc_nfl2
+end
+
 # ╔═╡ 326a0c21-454d-489f-b960-be356671e1db
 md"""
 ### Observations
@@ -422,6 +620,29 @@ TD_data = [nfl.DeltaHref nfl.DeltaSref nfl.DeltaCp]
 
 # ╔═╡ def7b6b7-83b6-4c69-9688-d4237c0e9578
 M_TD = fit(PCA, TD_data)
+
+# ╔═╡ d3dd901b-ab8d-407a-b7e6-ef61a8d22d38
+md"""
+### PCA by hand
+"""
+
+# ╔═╡ bcf2ff8a-c1f6-44dc-8c6e-d0b105e6be11
+a_TD, b_TD, c_TD, d_TD = plane_PCA(nfl.DeltaHref, nfl.DeltaSref, nfl.DeltaCp)
+
+# ╔═╡ 2ca4909a-41e1-420b-83b6-f66fdf6630b3
+TD1 = (planeTD[3][1,1], planeTD[3][1,2], (d_TD-a_TD*planeTD[3][1,1]-b_TD*planeTD[3][1,2])/c_TD)
+
+# ╔═╡ b972d0de-a4c3-4e8c-8a0e-778b3c9482d9
+TD2 = (planeTD[3][2,1], planeTD[3][2,2], (d_TD-a_TD*planeTD[3][2,1]-b_TD*planeTD[3][2,2])/c_TD)
+
+# ╔═╡ 47e22e79-c43f-4097-b94f-8717eb7ea8e3
+TD3 = (planeTD[3][3,1], planeTD[3][3,2], (d_TD-a_TD*planeTD[3][3,1]-b_TD*planeTD[3][3,2])/c_TD)
+
+# ╔═╡ a8267fe2-b0b2-45e9-98fe-d4eac8737a10
+TD4 = (planeTD[3][4,1], planeTD[3][4,2], (d_TD-a_TD*planeTD[3][4,1]-b_TD*planeTD[3][4,2])/c_TD)
+
+# ╔═╡ 1623c156-d01a-4e41-81de-d8b2f4a95f5b
+plot!(pTD_nfl2, [TD1, TD2, TD3, TD4], c=:blue, label="planeTD_PCA", st=:mesh3d, α=0.5)
 
 # ╔═╡ 32fd5862-e14b-4cea-b99c-0f26e0d8fbb5
 md"""
@@ -1268,9 +1489,9 @@ uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 
 [[deps.Qt5Base_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Fontconfig_jll", "Glib_jll", "JLLWrappers", "Libdl", "Libglvnd_jll", "OpenSSL_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libxcb_jll", "Xorg_xcb_util_image_jll", "Xorg_xcb_util_keysyms_jll", "Xorg_xcb_util_renderutil_jll", "Xorg_xcb_util_wm_jll", "Zlib_jll", "xkbcommon_jll"]
-git-tree-sha1 = "ad368663a5e20dbb8d6dc2fddeefe4dae0781ae8"
+git-tree-sha1 = "c6c0f690d0cc7caddb74cef7aa847b824a16b256"
 uuid = "ea2cea3b-5b76-57ae-a6ef-0a8af62496e1"
-version = "5.15.3+0"
+version = "5.15.3+1"
 
 [[deps.QuadGK]]
 deps = ["DataStructures", "LinearAlgebra"]
@@ -1713,6 +1934,12 @@ version = "0.9.1+5"
 # ╠═4b5fd893-2a6f-4a2c-b8df-c6143933fd32
 # ╠═9196753d-75ab-433a-8d01-92637abdb3ac
 # ╠═f7d37583-6157-4805-b298-09fe89798696
+# ╠═39fd17ca-3f54-4e9b-95d9-3b2bd9acf63b
+# ╠═2d87c4fb-6869-4609-9cd6-f12a64af3ddf
+# ╠═b6c985a1-381d-42b9-991e-a04970984c56
+# ╠═92e6cbab-9d8d-4b0b-a8f0-accd1171fa27
+# ╠═2c1d646e-f895-4dff-817b-df817921404e
+# ╠═3bc6a35f-47af-4cf5-97a4-dbfbb38cacbd
 # ╠═0f9e6a3c-5898-4a4f-9e89-e92341578624
 # ╠═18fb60ba-0c97-43f5-9257-3e01dad57daa
 # ╠═9e241abd-3da8-43c7-b925-1b8fd1236fc3
@@ -1760,6 +1987,39 @@ version = "0.9.1+5"
 # ╠═f446e5c5-b930-4b7f-b1a6-45264de889c7
 # ╠═e969538c-4293-4430-9053-cea2f4011081
 # ╠═ec4e5306-4dbb-4369-9d86-b37ca3afdf9d
+# ╠═9a975df7-b32a-444a-94eb-72346c28bfde
+# ╠═0f25d977-ea1c-4424-a5a3-17821cefe269
+# ╠═1fbf4361-0297-419b-834a-6ab819add2cd
+# ╠═5c317f4c-a7e4-4f29-a9df-735c4668a2bb
+# ╠═8b0b18ba-a79b-4714-8716-d6b4ef1686f3
+# ╠═9582bef1-58cc-4248-9a34-f4944fb70b99
+# ╠═295fb593-888a-49ba-9d44-26360eb2f4f0
+# ╠═fdfa08d2-a12a-4c10-9b5f-80d4e9ddec60
+# ╠═a5f1d57e-04c9-4d30-9c68-2338892087ba
+# ╠═bb4345d9-82db-4090-b821-0f42b664a6ec
+# ╠═9028c0f7-22da-48f7-9f12-62e416621433
+# ╠═6a9a859d-f003-4465-8a40-8bbc8b1904fb
+# ╠═1762d924-57b7-440a-b4ed-c60df844a4d9
+# ╠═0215b153-f084-49a6-8323-5bf3c8602084
+# ╠═c64ae8b0-27ad-4643-bc55-66d256b4f2b5
+# ╠═f88d67d9-80de-43a7-9236-52037fb1e461
+# ╠═c5fedf2e-d7e6-4812-9fc4-d21a05fab242
+# ╠═9364c8fa-4ead-47dd-8499-137f3c4952e9
+# ╠═07f542fb-249d-4c15-b940-cb56673d71d4
+# ╠═2eec5eeb-83e1-431d-9e23-ccf2c2416a3e
+# ╠═25f70dc4-d620-449c-8b67-72b2c4979471
+# ╠═09e86b70-2331-401b-b3ae-3de100a0e5ce
+# ╠═59396512-637e-45ac-92ba-c9e15ad06ff4
+# ╠═5e84c8e0-a0da-49b8-a546-1699bbd4a20e
+# ╠═e3fb1034-414e-4097-87d4-80f8725955a9
+# ╠═ab6d39a8-060d-4d70-95c6-c7ce91cff235
+# ╠═6f70b03f-611e-4db6-b6a0-c4531541cf65
+# ╠═f65c8a03-8b53-4539-9ec1-67d5e27c3b95
+# ╠═c77b1d8b-5189-40fc-8adf-bba6fa0a5cd9
+# ╠═ec523f32-2f6c-413f-adc6-957775c5f962
+# ╠═109e3fba-5e7e-46c3-9c63-d71d142afbb3
+# ╠═e065a577-ba5b-44bc-825d-e57adc8d119a
+# ╠═bfb8dab8-5b59-4c54-b5df-2ffbcfeb53c1
 # ╠═bfc0bd73-94c2-4742-b334-e632933d6dfe
 # ╠═49ddd8eb-a833-43b8-9f62-18f4d5afaf10
 # ╠═e9f134c3-25e7-45a8-a07e-a3cfdc6c027b
@@ -1777,6 +2037,17 @@ version = "0.9.1+5"
 # ╠═ddd3cdee-9cd4-4ed0-949a-7e3d970bf9e4
 # ╠═7f07b54a-41bd-4e37-8a86-c65039b533f0
 # ╠═3184eb7b-30e2-4412-915b-67676e6059a1
+# ╠═d24dbced-9d9c-43fb-b1c4-baa075b946d2
+# ╠═a6c9050a-7bd9-43b2-96b0-5884b5da0571
+# ╠═8b4642a3-e483-4da2-97b4-b00fd2a785e5
+# ╠═be1623aa-0db7-4ead-97dc-a8cee29656f0
+# ╠═9d3f7d3a-f89b-41c9-bf9b-47a6d54768ea
+# ╠═afb9b87c-8a03-424f-9123-28e1053697b6
+# ╠═33131da4-a7c8-4437-8dc2-2121d8cf5996
+# ╠═900c1395-41df-4128-ab11-e3619ffb922d
+# ╠═43ae138c-7e11-4dd5-931c-8f78dc882b83
+# ╠═b87f5cc1-07a7-4fcf-bbce-60bc85811748
+# ╠═4cb058c5-cedf-4b6e-bbef-503541f11b2c
 # ╠═326a0c21-454d-489f-b960-be356671e1db
 # ╠═b4044a75-03ad-4f75-a2ac-716b0c2c628f
 # ╠═6260e6e0-02e4-4c95-9889-020e5c3c2d60
@@ -1792,6 +2063,13 @@ version = "0.9.1+5"
 # ╠═c9541756-9208-4f88-8bdd-04ae893b38dc
 # ╠═80327d3b-40ee-4585-a4d0-ef69c14494b7
 # ╠═def7b6b7-83b6-4c69-9688-d4237c0e9578
+# ╠═d3dd901b-ab8d-407a-b7e6-ef61a8d22d38
+# ╠═bcf2ff8a-c1f6-44dc-8c6e-d0b105e6be11
+# ╠═2ca4909a-41e1-420b-83b6-f66fdf6630b3
+# ╠═b972d0de-a4c3-4e8c-8a0e-778b3c9482d9
+# ╠═47e22e79-c43f-4097-b94f-8717eb7ea8e3
+# ╠═a8267fe2-b0b2-45e9-98fe-d4eac8737a10
+# ╠═1623c156-d01a-4e41-81de-d8b2f4a95f5b
 # ╟─32fd5862-e14b-4cea-b99c-0f26e0d8fbb5
 # ╟─917e88c6-cf5d-4d8f-93e5-f50ea2bb2cdc
 # ╟─00000000-0000-0000-0000-000000000001
