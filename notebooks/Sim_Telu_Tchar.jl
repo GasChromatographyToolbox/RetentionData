@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.9
+# v0.19.4
 
 using Markdown
 using InteractiveUtils
@@ -37,7 +37,8 @@ end;
 
 # ╔═╡ 68f02f89-3af7-453c-bc62-59630bf2b44f
 begin
-	plotly()
+	#plotly()
+	gr()
 	TableOfContents()
 end
 
@@ -574,7 +575,7 @@ begin
 end
 
 # ╔═╡ Cell order:
-# ╟─68f02f89-3af7-453c-bc62-59630bf2b44f
+# ╠═68f02f89-3af7-453c-bc62-59630bf2b44f
 # ╟─ffab5c90-0ad2-46dc-953a-f995c04588fa
 # ╟─e09c4c7f-f7e6-4fcb-8e02-832e9c6146cf
 # ╠═d39c4cde-27cc-417b-8c5e-df53cad4695c
@@ -603,7 +604,7 @@ end
 # ╟─a2f9c71b-938f-4852-81d9-d33744d4db41
 # ╟─f332180b-4b9a-4a1b-b13c-24a3c50e3461
 # ╟─1add6cbe-9357-44a7-90d2-24604996ce71
-# ╟─8c9b564b-9ebe-4914-a378-68cd4ca029cf
+# ╠═8c9b564b-9ebe-4914-a378-68cd4ca029cf
 # ╟─952cc093-306a-460e-a421-2f9d3a3b6f32
 # ╟─7bb24245-2fe0-40e8-8f8b-27215c6a164d
 # ╟─a0c73457-bf0b-4553-ba1e-9b1fdff4eac2
