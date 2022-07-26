@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.9
+# v0.19.10
 
 using Markdown
 using InteractiveUtils
@@ -51,12 +51,12 @@ md"""
 # ╔═╡ e5f30f41-3205-4746-969f-3d7c106e11bf
 begin
 	df = collect_results("/Users/janleppert/Documents/GitHub/ThermodynamicData/data/sims/Telu_Tchar/")
-	df.dimless_rate = df.rate.*df.tMref./30.0
+	df.dimless_rate = df.rate.*df.tMref./30.0./60.0
 	df
 end
 
 # ╔═╡ 650a0f9b-77c8-4918-adf5-28fae3c7dd35
-scatter(df.rate, df.dimless_rate)
+scatter(df.rate, df.dimless_rate, xlabel="heating rate in °C/min", ylabel="dimensionless heating rate")
 
 # ╔═╡ e069b363-fc28-4665-9d27-f95371433dd2
 names(df)
@@ -131,7 +131,7 @@ Parameters:
 """
 
 # ╔═╡ ce4b4f7f-69f0-4622-81fe-7b3f5c8089de
-bconst = 0.1
+bconst = 0.06
 
 # ╔═╡ 7e51c8ab-2e1a-4b0f-8ea3-9ae9399eb82b
 @. model_b(x,p) = 1/bconst * log(exp(bconst*(p[1] + p[3]*x)) + exp(bconst*p[2]))
@@ -216,7 +216,7 @@ function plot_parameters_Tinit(param)
 		rate = unique(param.rT)
 		rate_key = :rT
 	end
-	for i=1:length(RT)
+	for i=1:length(rate)
 		param_f = filter([rate_key] => (x) -> x == rate[i], param)
 		plot!(p_b, param_f.Tinit.+273.15, Measurements.value.(param_f.b), label=round(rate[i],sigdigits=3), m=:circle)
 
@@ -228,6 +228,48 @@ function plot_parameters_Tinit(param)
 	end
 	plot(p_T₀, p_T₁, p_b, p_m)
 end
+
+# ╔═╡ eb37f6b4-23b8-4163-8ec4-67324aba214a
+function plot_parameters_rT(param; logrT=true)
+	if logrT == true
+		xlbl = "log(rT)"
+	else
+		xlbl = "rT"
+	end
+	p_T₀ = plot(xlabel=xlbl, ylabel="T₀")
+	p_T₁ = plot(xlabel=xlbl, ylabel="T₁")
+	p_b = plot(xlabel=xlbl, ylabel="b")
+	p_m = plot(xlabel=xlbl, ylabel="m")
+	rT = unique(param.rT)
+	Tinit = unique(param.Tinit)
+	for i=1:length(Tinit)
+		param_f = filter([:Tinit] => (x) -> x == Tinit[i], param)
+		if logrT == true
+			x = log.(param_f.rT)
+		else
+			x = param_f.rT
+		end
+		plot!(p_b, x, Measurements.value.(param_f.b), label=round(Tinit[i],sigdigits=3), m=:circle)
+
+		plot!(p_T₀, x, Measurements.value.(param_f.T₀), label=round(Tinit[i],sigdigits=3), m=:circle)
+	
+		plot!(p_m, x, Measurements.value.(param_f.m), label=round(Tinit[i],sigdigits=3), m=:circle)
+	
+		plot!(p_T₁, x, Measurements.value.(param_f.T₁), label=round(Tinit[i],sigdigits=3), m=:circle)
+	end
+	plot(p_T₀, p_T₁, p_b, p_m)
+end
+
+# ╔═╡ b5d6fb34-00ba-42c1-9d57-518bead48f4b
+md"""
+## Note
+
+The parameter ``T_1`` is a linear function of ``T_{init}``:
+
+``
+T_1 = a_1 + b_1 T_{init}
+``
+"""
 
 # ╔═╡ 4eac8fc5-3d30-44b6-828e-e40f17bd1d7e
 md"""
@@ -261,21 +303,6 @@ function plot_fit(TeluTchar, param, fit, model, i_Tinit, i_RT, i_pin)
 	return p_fit, T₀, T₁, b, m  
 end
 
-# ╔═╡ 030af251-fe5b-46c8-b6d1-1b2efb7cd6c3
-function plot_fit(TeluTchar, param, fit, model, i_Tinit, i_rT) 
-	Tinit = unique(TeluTchar.Tinit)
-	rT = unique(TeluTchar.rT)
-	TeluTchar_f = filter([:Tinit, :rT] => (x,y) -> x == Tinit[i_Tinit] && y == rT[i_rT], TeluTchar)
-	param_f = filter([:Tinit, :rT] => (x,y) -> x == Tinit[i_Tinit] && y == rT[i_rT], param)
-	p_fit = scatter(TeluTchar_f.Tchar, TeluTchar_f.Telu, label="sim", title=string("fit Tinit=", Tinit[i_Tinit], "°C, rT=", round(rT[i_rT];sigdigits=3)))
-	plot!(p_fit, TeluTchar_f.Tchar, model(TeluTchar_f.Tchar, fit[i_Tinit, i_rT].param), label="R²=$(round(param_f.R²[1]; digits=4))")
-	T₀ = param_f.T₀[1]
-	T₁ = param_f.T₁[1]
-	b = param_f.b[1]
-	m = param_f.m[1]
-	return p_fit, T₀, T₁, b, m  
-end
-
 # ╔═╡ 65c91137-034b-43c5-a7d1-c25cc694b1d4
 md"""
 ### ``r_T``
@@ -295,11 +322,6 @@ md"""
 The slope is depending on ``r_T`` and ``θ_{char}``.
 """
 
-# ╔═╡ 19f116ba-bfd3-4579-9e45-b1afb61a9cbd
-md"""
-# MARK
-"""
-
 # ╔═╡ 5bc9a02e-62b1-48de-8287-33be309402fe
 md"""
 ## Plot ``T_{elu}(T_{char}, θ_{char}, r_T, T_{init})``
@@ -313,6 +335,22 @@ Tinit: $(@bind select_i_Tinit__ Slider(1:length(Tinit)))
 md"""
 ## Fit ``r_T`` with filtered data
 **For now: exclude Brehmer_PCB, Duong_FAME, Stultz_Dioxins from the data**
+
+**Also filter out following substances:**
+
+- Pentanol, Rxi17SilMS	
+- 2,3-Butanediol, Rxi5ms
+- 2-Hexanone, Rxi17SilMS	
+- Heptanol, Rxi17SilMS	
+
+**limit the range of heating rates: 0.1<rT<1.0 (more typical values used in GC)**
+
+**limit the ``T_{init}>200``°C**
+"""
+
+# ╔═╡ 8a730b2f-a51f-40ac-a3a9-054f0c903031
+md"""
+### Fit model4
 """
 
 # ╔═╡ 0e504ae7-4165-4261-a02d-85141e2f5b5f
@@ -327,19 +365,196 @@ md"""
 ### Fit ``m=1``
 """
 
+# ╔═╡ be2237d4-be73-4368-9f38-88280732f225
+md"""
+``T_{init}``: $(@bind show_i_Tinit_2 Slider(1:length(Tinit)))
+
+``r_T``: $(@bind show_i_rT_2 Slider(1:length(rT)))
+"""
+
+# ╔═╡ 3844df54-1622-4313-92ee-36c6599f80d0
+md"""
+### Fit ``b=0.06``
+"""
+
+# ╔═╡ fbde7fa1-c584-4732-ba60-05837ee62d8f
+md"""
+``T_{init}``: $(@bind show_i_Tinit_3 Slider(1:length(Tinit)))
+
+``r_T``: $(@bind show_i_rT_3 Slider(1:length(rT)))
+"""
+
+# ╔═╡ 69113eb5-cca4-40e7-8a5e-96e196a99fc0
+md"""
+### Fit ``m=1`` and ``b=0.06``
+"""
+
+# ╔═╡ aec7dae9-c73a-4cce-a440-2724799085e1
+log(0.6)
+
+# ╔═╡ 32782159-a1ee-4570-bdbc-31a4506ad902
+md"""
+``T_{init}``: $(@bind show_i_Tinit_4 Slider(1:length(Tinit)))
+
+``r_T``: $(@bind show_i_rT_4 Slider(1:length(rT)))
+"""
+
+# ╔═╡ e8e0b85f-286e-4665-a992-3f26f8eb016e
+md"""
+## Assumptions for ``T_0`` and ``T_1``
+
+The constant linear branch ``T_1`` obviously depends directly on ``T_{init}``. For low and moderate heating rates, it linearly depend on ``rT``.
+
+Assumption:
+
+a) ``T_1 = a_1 + m_1 T_{init}``
+
+b) ``T_1 = a_1 + m_1 T_{init} + n_1 r_T``
+
+The intercept of the linear increasing branch, ``T_0`` depends on heating rate ``r_T``. A dependency on ``T_{init}`` is possible but not clear. For low to moderate heating rates ``T_0`` is a linear function of ``\log{r_T}``.
+
+Assumption:
+
+1) ``T_0 = a_0 + m_0 log(r_T)``
+
+2) ``T_0 = a_0 + m_0 log(r_T) + n_0 r_T``
+
+"""
+
+# ╔═╡ 34b5b40f-3be2-4b9f-ad4c-f4d99dac1299
+md"""
+## Multivariate fit ``T_{elu}(T_{char}, r_T, T_{init})``
+"""
+
+# ╔═╡ 78c48193-7021-4803-bf4b-bf4e03406c47
+md"""
+### 1a) model\_mv
+"""
+
+# ╔═╡ 494c2b8c-04b3-46ff-9c28-cc9b79f9a7d4
+@. model_mv(x,p) = 1/p[1] * log(exp(p[1]*(p[2] + p[3]*log(x[:,2]) + p[4]*x[:,1])) + exp(p[1]*(p[5] + p[6]*x[:,3])))
+
+# ╔═╡ ac33cbec-938b-472c-863f-97b8c3d6093d
+p0 = [0.05, -40.0, 16.0, 1.0, 0.0, 1.5]
+
+# ╔═╡ 3d77658d-b6cd-4519-a5ca-7ca944929e5a
+exp(5.97/18.3)
+
+# ╔═╡ d91ec9d0-d9db-47b4-973f-c9565825dc71
+md"""
+``T_{init}``: $(@bind show_i_Tinit_mv Slider(1:length(Tinit)))
+
+``r_T``: $(@bind show_i_rT_mv Slider(1:length(rT)))
+"""
+
+# ╔═╡ ec7bb02e-b4cd-47aa-a694-07c14c0b5e86
+md"""
+### 1b) model\_mv\_7
+"""
+
+# ╔═╡ bd88682c-a94d-431b-a5dc-dbc7638a3e48
+@. model_mv_7(x,p) = 1/p[1] * log(exp(p[1]*(p[2] + p[3]*log(x[:,2]) + p[4]*x[:,1])) + exp(p[1]*(p[5] + p[6]*x[:,3] + p[7]*x[:,2])))
+
+# ╔═╡ 47bf2c03-bfa0-4ecc-ace3-a64959c558d1
+p0_7 = [0.05, -40.0, 16.0, 1.0, 0.0, 1.5, 1.5]
+
+# ╔═╡ 5c8678b9-d0f3-4db3-8f0d-42ff43cd511c
+md"""
+``T_{init}``: $(@bind show_i_Tinit_mv_7 Slider(1:length(Tinit)))
+
+``r_T``: $(@bind show_i_rT_mv_7 Slider(1:length(rT)))
+"""
+
+# ╔═╡ 40805b6a-c69b-48b8-aefd-49a731c06de7
+md"""
+### 2a) model\_mv\_2a
+
+Use of all heating rates.
+"""
+
+# ╔═╡ 3676b513-c1b6-46e9-b069-b14be86a78eb
+@. model_mv_2a(x,p) = 1/p[1] * log(exp(p[1]*(p[2] + p[3]*log(x[:,2]) + p[4]*x[:,2] + p[5]*x[:,1])) + exp(p[1]*(p[6] + p[7]*x[:,3])))
+
+# ╔═╡ 3793b682-2b9f-410a-86af-53791b42979d
+p0_2a = [0.05, -40.0, 16.0, 20.0, 1.0, 0.0, 1.5]
+
+# ╔═╡ add56d31-d978-4e14-9981-eff6a1fabb59
+md"""
+``T_{init}``: $(@bind show_i_Tinit_mv_2a Slider(1:length(Tinit)))
+
+``r_T``: $(@bind show_i_rT_mv_2a Slider(1:length(rT)))
+"""
+
+# ╔═╡ 78935736-f4b1-41c5-bd43-328e41eb53e8
+md"""
+### 2b) model\_mv\_2b
+"""
+
+# ╔═╡ fb0c53bd-7e57-417f-a2eb-584896eaf6b3
+@. model_mv_2b(x,p) = 1/p[1] * log(exp(p[1]*(p[2] + p[3]*log(x[:,2]) + p[4]*x[:,2] + p[5]*x[:,1])) + exp(p[1]*(p[6] + p[7]*x[:,3] + p[8]*x[:,2])))
+
+# ╔═╡ 01cd2d11-2e63-4bba-b7e5-84404cb55f0f
+p0_2b = [0.05, -40.0, 16.0, 20.0, 1.0, 0.0, 1.5, 1.0]
+
+# ╔═╡ e9f02fe0-aa5d-4ed5-a913-19bccfe0ae7f
+md"""
+``T_{init}``: $(@bind show_i_Tinit_mv_2b Slider(1:length(Tinit)))
+
+``r_T``: $(@bind show_i_rT_mv_2b Slider(1:length(rT)))
+"""
+
+# ╔═╡ 983dfe18-83fb-4eff-9da6-e6e4ca79d506
+md"""
+### 2b1) model\_mv\_2b1, ``m=1``, ``m_1=1``, ``a_1=273.15``
+"""
+
+# ╔═╡ 445c8480-19dd-4a5a-a022-97a758341a48
+@. model_mv_2b1(x,p) = 1/p[1] * log(exp(p[1]*(p[2] + p[3]*log(x[:,2]) + p[4]*x[:,2] + 1.0*x[:,1])) + exp(p[1]*(273.15 + 1.0*x[:,3] + p[5]*x[:,2])))
+
+# ╔═╡ 9eb0565c-b76f-4cdc-952d-c6139e4e6f63
+p0_2b1 = [0.05, -40.0, 16.0, 20.0, 1.0]
+
+# ╔═╡ f945bc65-1b64-4157-bb0c-d96127f1d49a
+md"""
+``T_{init}``: $(@bind show_i_Tinit_mv_2b1 Slider(1:length(Tinit)))
+
+``r_T``: $(@bind show_i_rT_mv_2b1 Slider(1:length(rT)))
+"""
+
 # ╔═╡ 2e224d8b-6fb1-4b0b-aacb-28294f8e7b8d
 md"""
 # End
 """
 
-# ╔═╡ 365ae9ff-9b94-457a-a687-d1c8581fc5ab
-model(1.0,1.0)
+# ╔═╡ 2c28f8ad-ab76-4131-8856-55a43b31fde6
+function plot_fit_mv(TeluTchar, fit, model, i_Tinit, i_rT) 
+	Tinit = unique(TeluTchar.Tinit)
+	rT = unique(TeluTchar.rT)
+	TeluTchar_f = filter([:Tinit, :rT] => (x,y) -> x == Tinit[i_Tinit] && y == rT[i_rT], TeluTchar)
+	#param_f = filter([:Tinit, :rT] => (x,y) -> x == Tinit[i_Tinit] && y == rT[i_rT], param)
+	p_fit = scatter(TeluTchar_f.Tchar, TeluTchar_f.Telu, label="sim", title=string("fit Tinit=", Tinit[i_Tinit], "°C, rT=", round(rT[i_rT];sigdigits=3)))
+	plot!(p_fit, TeluTchar_f.Tchar, model([TeluTchar_f.Tchar TeluTchar_f.rT TeluTchar_f.Tinit], fit.param), label="mv_fit")
+	#T₀ = param.T₀[1]
+	#T₁ = param.T₁[1]
+	#b = param.b[1]
+	#m = param.m[1]
+	return p_fit#, T₀, T₁, b, m  
+end
 
-# ╔═╡ 78e4ed32-9943-458a-aff8-3a9d0397e400
-mm = model
-
-# ╔═╡ 78941ab1-25bf-4b10-935b-4deff67fe5dc
-mm==model_m1
+# ╔═╡ 030af251-fe5b-46c8-b6d1-1b2efb7cd6c3
+function plot_fit(TeluTchar, param, fit, model, i_Tinit, i_rT) 
+	Tinit = unique(TeluTchar.Tinit)
+	rT = unique(TeluTchar.rT)
+	TeluTchar_f = filter([:Tinit, :rT] => (x,y) -> x == Tinit[i_Tinit] && y == rT[i_rT], TeluTchar)
+	param_f = filter([:Tinit, :rT] => (x,y) -> x == Tinit[i_Tinit] && y == rT[i_rT], param)
+	p_fit = scatter(TeluTchar_f.Tchar, TeluTchar_f.Telu, label="sim", title=string("fit Tinit=", Tinit[i_Tinit], "°C, rT=", round(rT[i_rT];sigdigits=3)))
+	plot!(p_fit, TeluTchar_f.Tchar, model(TeluTchar_f.Tchar, fit[i_Tinit, i_rT].param), label="R²=$(round(param_f.R²[1]; digits=4))")
+	T₀ = param_f.T₀[1]
+	T₁ = param_f.T₁[1]
+	b = param_f.b[1]
+	m = param_f.m[1]
+	return p_fit, T₀, T₁, b, m  
+end
 
 # ╔═╡ 4fe853a2-100b-4c25-8559-1ea008c0cad2
 function Rsquare(fit, y)
@@ -451,7 +666,7 @@ function fitting_rT(TeluTchar, model)
 	R²s = Float64[]
 	converged = Bool[] 
 	for i=1:length(Tinit)
-		for j=1:length(RT)
+		for j=1:length(rT)
 			TeluTchar_f = filter([:Tinit, :rT] => (x,y) -> x == Tinit[i] && y == rT[j], TeluTchar)
 			xdata = TeluTchar_f.Tchar
 			ydata = TeluTchar_f.Telu
@@ -718,7 +933,7 @@ plot_parameters_Tinit(filter([:pin] => x -> x == select_pin,param_RT_pin))
 
 # ╔═╡ f54b0681-3a3e-45cf-b274-4962989821dc
 begin
-	p_fit_RT_pin = plot_fit(Telu_Tchar, param_RT_pin, fit_RT_pin, model4, show_i_Tinit, show_i_RT, show_i_pin) 
+	p_fit_RT_pin = plot_fit(Telu_Tchar, param_RT_pin, fit_RT_pin, select_model, show_i_Tinit, show_i_RT, show_i_pin) 
 	md"""
 	#### Fit result
 	
@@ -733,9 +948,6 @@ begin
 	$(embed_display(p_fit_RT_pin[1]))
 	"""
 end
-
-# ╔═╡ 7290ff57-ead8-4518-8506-0f845cf14d0f
-"RT" in names(Telu_Tchar)
 
 # ╔═╡ 2a0e8394-076a-4d0f-8458-b2f838c9bd77
 function TeluTchar_dimless_rate(data)
@@ -833,9 +1045,12 @@ plot_parameters_i(filter([:converged] => x -> x == true, param_rT))
 # ╔═╡ b373c92c-d465-4a0f-a925-ae50360c277e
 plot_parameters_Tinit(filter([:converged] => x -> x == true, param_rT))
 
+# ╔═╡ 0fd2139b-3e50-48ad-9d76-6166b91d4a5b
+plot_parameters_rT(filter([:converged] => x -> x == true, param_rT))
+
 # ╔═╡ 7c07e06f-5c31-4453-8d0a-d89842ebe7d2
 begin
-	p_fit_rT = plot_fit(Telu_Tchar_rT, param_rT, fit_rT, model4, show_i_Tinit_, show_i_rT_) 
+	p_fit_rT = plot_fit(Telu_Tchar_rT, param_rT, fit_rT, select_model_, show_i_Tinit_, show_i_rT_) 
 	md"""
 	#### Fit result
 	
@@ -956,96 +1171,48 @@ end
 # ╔═╡ aa34de2c-dbf1-4551-aac7-94f361fa9b6a
 begin
 	Telu_Tchar_rT_data_excluded = filter([:ann, :Name] => (x,y) -> (x == "Brehmer2022" &&  !occursin("PCB", y)) && x != "Duong2022" && x != "Stultz2020", Telu_Tchar_rT)
+	filter!([:Name] => (x) -> !occursin("Pentanol",x) && !occursin("2,3-Butanediol",x) && !occursin("2-Hexanone",x) && !occursin("Heptanol",x), Telu_Tchar_rT_data_excluded)
+	filter!([:rT] => x -> x > 0.1 && x < 1.0, Telu_Tchar_rT_data_excluded)
+	filter!([:Tinit] => x -> x < 201.0, Telu_Tchar_rT_data_excluded)
 end
 
 # ╔═╡ 43d45ad1-0289-4992-a089-22c6b299931d
-param_rT_data_excluded, fit_rT_data_excluded = fitting_rT(Telu_Tchar_rT_data_excluded);
+param_rT_data_excluded, fit_rT_data_excluded = fitting_rT(Telu_Tchar_rT_data_excluded, model4);
 
 # ╔═╡ f6677948-c480-4557-ac40-e38a76470daf
 param_rT_data_excluded
 
-# ╔═╡ fc86ff7a-bbab-4278-a1dd-5dfe3da87adf
-fit_rT_data_excluded[1,6]
+# ╔═╡ 58e58468-ee89-4f00-bed9-bbfd2f494be1
+plot_parameters_Tinit(filter([:converged] => x -> x == true, param_rT_data_excluded))
 
-# ╔═╡ 7d5fdf32-1619-4835-976c-8d0513efb24c
-begin
-	p_b_rT_data_excluded = plot(xlabel="Tinit in K", ylabel="b")
-	for i=1:length(rT)
-		param_f = filter([:rT] => x -> x == rT[i], param_rT_data_excluded)
-		plot!(p_b_rT_data_excluded, param_f.Tinit.+273.15, Measurements.value.(param_f.b), label=round(rT[i];sigdigits=3), m=:circle)
-	end
-	p_T₀_rT_data_excluded = plot(xlabel="Tinit in °C", ylabel="T₀")
-	for i=1:length(rT)
-		param_f = filter([:rT] => (x) -> x == rT[i], param_rT_data_excluded)
-		plot!(p_T₀_rT_data_excluded, param_f.Tinit, Measurements.value.(param_f.T₀), label=round(rT[i];sigdigits=3), m=:circle)
-	end
-	p_m_rT_data_excluded = plot(xlabel="Tinit in K", ylabel="m")
-	for i=1:length(rT)
-		param_f = filter([:rT] => (x) -> x == rT[i], param_rT_data_excluded)
-		plot!(p_m_rT_data_excluded, param_f.Tinit.+273.15, Measurements.value.(param_f.m), label=round(rT[i];sigdigits=3), m=:circle)
-	end
-	p_T₁_rT_data_excluded = plot(xlabel="Tinit in K", ylabel="T₁")
-	for i=1:length(rT)
-		param_f = filter([:rT] => (x) -> x == rT[i], param_rT_data_excluded)
-		plot!(p_T₁_rT_data_excluded, param_f.Tinit.+273.15, Measurements.value.(param_f.T₁), label=round(rT[i];sigdigits=3), m=:circle)
-	end
-	plot(p_b_rT_data_excluded, p_T₀_rT_data_excluded, p_m_rT_data_excluded, p_T₁_rT_data_excluded)
-end
+# ╔═╡ b552ac0c-7f39-4fd6-bd37-13aae5a81d99
+plot_parameters_rT(filter([:converged] => x -> x == true, param_rT_data_excluded))
 
 # ╔═╡ 10266ff0-7e64-41c9-b420-d6c15257ceef
 begin
-	TeluTchar_rT_f1 = filter([:Tinit, :rT] => (x,y) -> x == Tinit[show_i_Tinit_1] && y == rT[show_i_rT_1], Telu_Tchar_rT_data_excluded)
-	param_rT_f1 = filter([:Tinit, :rT] => (x,y) -> x == Tinit[show_i_Tinit_1] && y == rT[show_i_rT_1], param_rT_data_excluded)
-	p_fit_rT_1 = scatter(title=string("fit Tinit=", Tinit[show_i_Tinit_1], "°C, rT=", round(rT[show_i_rT_1];sigdigits=3)), xlabel="Tchar in K", ylabel="Telu in K")
-	#Ann = unique(Telu_Tchar.ann)
-	for i=1:length(Ann)
-		TeluTchar_rT_ff = filter([:ann] => (z) -> z == Ann[i], TeluTchar_rT_f1)
-		scatter!(p_fit_rT_1, TeluTchar_rT_ff.Tchar, TeluTchar_rT_ff.Telu, label=Ann[i])
-	end
-	plot!(p_fit_rT_1, TeluTchar_rT_f1.Tchar, model(TeluTchar_rT_f1.Tchar, fit_rT_data_excluded[show_i_Tinit_1, show_i_rT_1].param), label="R²=$(round(param_rT_f1.R²[1]; digits=4))")
+	p_fit_rT_1 = plot_fit(Telu_Tchar_rT_data_excluded, param_rT_data_excluded, fit_rT_data_excluded, model4, show_i_Tinit_1, show_i_rT_1) 
 	md"""
 	#### Fit result
-	``b =`` $(param_rT_f1.b[1])
+	``b =`` $(p_fit_rT_1[2])
 	
-	``T_0 =`` $(param_rT_f1.T₀[1]) K
+	``T_0 =`` $(p_fit_rT_1[3]) K
 	
-	``m =`` $(param_rT_f1.m[1]) K⁻¹
+	``m =`` $(p_fit_rT_1[4]) K⁻¹
 	
-	``T_1 =`` $(param_rT_f1.T₁[1]) K
+	``T_1 =`` $(p_fit_rT_1[5]) K
 
-	``R^2 =`` $(round(param_rT_f1.R²[1];sigdigits=4)) 
-
-	$(embed_display(p_fit_rT_1))
+	$(embed_display(p_fit_rT_1[1]))
 	"""
 end
 
 # ╔═╡ f917c1c9-8bb8-4e35-bb92-24df9e2945a1
-param_rT_data_excluded_m1, fit_rT_data_excluded_m1 = fitting_rT_m1(Telu_Tchar_rT_data_excluded);
+param_rT_data_excluded_m1, fit_rT_data_excluded_m1 = fitting_rT(Telu_Tchar_rT_data_excluded, model_m1);
 
-# ╔═╡ 9392b89e-6a64-4a7c-80dd-c6124820bdb3
-begin
-	p_b_rT_data_excluded_m1 = plot(xlabel="Tinit in K", ylabel="b")
-	for i=1:length(rT)
-		param_f = filter([:rT] => x -> x == rT[i], param_rT_data_excluded_m1)
-		plot!(p_b_rT_data_excluded_m1, param_f.Tinit.+273.15, Measurements.value.(param_f.b), label=round(rT[i];sigdigits=3), m=:circle)
-	end
-	p_T₀_rT_data_excluded_m1 = plot(xlabel="Tinit in °C", ylabel="T₀")
-	for i=1:length(rT)
-		param_f = filter([:rT] => (x) -> x == rT[i], param_rT_data_excluded_m1)
-		plot!(p_T₀_rT_data_excluded_m1, param_f.Tinit, Measurements.value.(param_f.T₀), label=round(rT[i];sigdigits=3), m=:circle)
-	end
-	p_m_rT_data_excluded_m1 = plot(xlabel="Tinit in K", ylabel="m")
-	for i=1:length(rT)
-		param_f = filter([:rT] => (x) -> x == rT[i], param_rT_data_excluded_m1)
-		plot!(p_m_rT_data_excluded_m1, param_f.Tinit.+273.15, ones(length(param_f.Tinit)), label=round(rT[i];sigdigits=3), m=:circle)
-	end
-	p_T₁_rT_data_excluded_m1 = plot(xlabel="Tinit in K", ylabel="T₁")
-	for i=1:length(rT)
-		param_f = filter([:rT] => (x) -> x == rT[i], param_rT_data_excluded_m1)
-		plot!(p_T₁_rT_data_excluded_m1, param_f.Tinit.+273.15, Measurements.value.(param_f.T₁), label=round(rT[i];sigdigits=3), m=:circle)
-	end
-	plot(p_b_rT_data_excluded_m1, p_T₀_rT_data_excluded_m1, p_m_rT_data_excluded_m1, p_T₁_rT_data_excluded_m1)
-end
+# ╔═╡ 03121d84-5b1b-41b7-befa-c629b08e6f52
+plot_parameters_Tinit(filter([:converged] => x -> x == true, param_rT_data_excluded_m1))
+
+# ╔═╡ 101ffb81-ada0-48fa-9df8-272800af2565
+plot_parameters_rT(filter([:converged] => x -> x == true, param_rT_data_excluded_m1))
 
 # ╔═╡ f518d526-34ca-4c15-8255-4ee79c8581dd
 begin
@@ -1060,11 +1227,248 @@ begin
 	plot(p3D_b, p3D_T₀, p3D_T₁)
 end
 
-# ╔═╡ 2869dce2-0151-4ead-9ba4-39ac12876c95
-isnan.(param_rT_data_excluded_m1.b).==false
+# ╔═╡ c5d95d97-8903-4dbf-ad12-359d2a235e6c
+begin
+	p_fit_rT_2 = plot_fit(Telu_Tchar_rT_data_excluded, param_rT_data_excluded_m1, fit_rT_data_excluded_m1, model_m1, show_i_Tinit_2, show_i_rT_2) 
+	md"""
+	#### Fit result
+	``b =`` $(p_fit_rT_2[2])
+	
+	``T_0 =`` $(p_fit_rT_2[3]) K
+	
+	``m =`` $(p_fit_rT_2[4]) K⁻¹
+	
+	``T_1 =`` $(p_fit_rT_2[5]) K
 
-# ╔═╡ 512a39c1-1fd0-4d6b-9d45-e45457dfabfb
-fit_rT_data_excluded_m1[5,6]
+	$(embed_display(p_fit_rT_2[1]))
+	"""
+end
+
+# ╔═╡ 4071fa66-095c-49e7-adfe-44c1fce9c59a
+param_rT_data_excluded_b, fit_rT_data_excluded_b = fitting_rT(Telu_Tchar_rT_data_excluded, model_b);
+
+# ╔═╡ a6b9948f-7364-4294-a744-fd13550a4796
+param_rT_data_excluded_b
+
+# ╔═╡ 69c0a9bc-4606-4e90-aed1-6ea8dbc6f039
+plot_parameters_Tinit(filter([:converged] => x -> x == true, param_rT_data_excluded_b))
+
+# ╔═╡ ca7c60d2-04ad-4980-b26f-c02c70ef84a8
+plot_parameters_rT(filter([:converged] => x -> x == true, param_rT_data_excluded_b))
+
+# ╔═╡ 23ccbdb4-2c7c-499f-af74-a093304d60cd
+begin
+	p_fit_rT_3 = plot_fit(Telu_Tchar_rT_data_excluded, param_rT_data_excluded_b, fit_rT_data_excluded_b, model_b, show_i_Tinit_3, show_i_rT_3) 
+	md"""
+	#### Fit result
+	``b =`` $(p_fit_rT_3[2])
+	
+	``T_0 =`` $(p_fit_rT_3[3]) K
+	
+	``m =`` $(p_fit_rT_3[4]) K⁻¹
+	
+	``T_1 =`` $(p_fit_rT_3[5]) K
+
+	$(embed_display(p_fit_rT_3[1]))
+	"""
+end
+
+# ╔═╡ 388a86d4-766f-4937-9a7a-4bd583b1c1b5
+param_rT_data_excluded_b_m1, fit_rT_data_excluded_b_m1 = fitting_rT(Telu_Tchar_rT_data_excluded, model_b_m1);
+
+# ╔═╡ 85696436-f843-4a2a-a582-a3d27c29d951
+param_rT_data_excluded_b_m1
+
+# ╔═╡ 59e7835e-e9f2-4888-b862-28ba1a019ab6
+plot_parameters_Tinit(filter([:converged] => x -> x == true, param_rT_data_excluded_b_m1))
+
+# ╔═╡ ed71d956-bc13-407c-8aab-02d700b711b7
+plot_parameters_rT(filter([:converged] => x -> x == true, param_rT_data_excluded_b_m1))
+
+# ╔═╡ 1a8865f8-db21-423f-8591-033f41197d2e
+plot_parameters_rT(filter([:converged] => x -> x == true, param_rT_data_excluded_b_m1), logrT=false)
+
+# ╔═╡ 997409e6-1292-4bc0-94f7-b1439d9beeaa
+begin
+	p_fit_rT_4 = plot_fit(Telu_Tchar_rT_data_excluded, param_rT_data_excluded_b_m1, fit_rT_data_excluded_b_m1, model_b_m1, show_i_Tinit_4, show_i_rT_4) 
+	md"""
+	#### Fit result
+	``b =`` $(p_fit_rT_4[2])
+	
+	``T_0 =`` $(p_fit_rT_4[3]) K
+	
+	``m =`` $(p_fit_rT_4[4]) K⁻¹
+	
+	``T_1 =`` $(p_fit_rT_4[5]) K
+
+	$(embed_display(p_fit_rT_4[1]))
+	"""
+end
+
+# ╔═╡ 42411a67-69f4-4088-8b01-2815f223e4f9
+xdata = [Telu_Tchar_rT_data_excluded.Tchar Telu_Tchar_rT_data_excluded.rT Telu_Tchar_rT_data_excluded.Tinit]
+
+# ╔═╡ 76873708-0cd3-4048-a33b-29297fb58813
+ydata = Telu_Tchar_rT_data_excluded.Telu
+
+# ╔═╡ 8c9a6c3a-78ac-4a60-af68-7306dbb79b7b
+par_mv, R2_mv, fit_mv = fit_data(model_mv, xdata, ydata, p0)
+
+# ╔═╡ 137174bf-fde5-436a-ab76-92168bca291f
+par_mv
+
+# ╔═╡ 5fe03d15-d5cc-4c3b-af2a-4ed35b40bfad
+R2_mv
+
+# ╔═╡ 0c741a3f-5f76-4c86-be39-e5a02c2fe7e1
+par_mv_7, R2_mv_7, fit_mv_7 = fit_data(model_mv_7, xdata, ydata, p0_7)
+
+# ╔═╡ 1d3474df-ede5-427b-8bf8-c50ecdfaedb5
+par_mv_7
+
+# ╔═╡ 073912f2-5dcd-4c70-810d-9196709ee2d5
+R2_mv_7
+
+# ╔═╡ ef742f31-4a9c-4d49-ad12-e3a81fa881cb
+p_fit_mv = plot_fit_mv(Telu_Tchar_rT_data_excluded, fit_mv, model_mv, show_i_Tinit_mv, show_i_rT_mv)
+
+# ╔═╡ bee6bac9-c137-4979-83e2-23462660d9bf
+begin
+	plotly()
+	p_mv_Tinit = plot(xlabel="Tchar", ylabel="Tinit", zlabel="Telu")
+	Telu_Tchar_f = filter([:rT] => x -> x == rT[show_i_rT_mv], Telu_Tchar_rT_data_excluded)
+	scatter!(p_mv_Tinit, Telu_Tchar_f.Tchar, Telu_Tchar_f.Tinit, Telu_Tchar_f.Telu, label=round(rT[show_i_rT_mv];sigdigits=3))
+	xTchar = sort!(unique(Telu_Tchar_f.Tchar))
+	yTinit = sort!(unique(Telu_Tchar_f.Tinit))
+	zdata = Array{Float64}(undef, length(xTchar), length(yTinit))
+	for i=1:length(xTchar)
+		for j=1:length(yTinit)
+			zdata[i,j] = model_mv([xTchar[i] rT[show_i_rT_mv] yTinit[j]], fit_mv.param)[1]
+		end
+	end
+	plot!(p_mv_Tinit, xTchar, yTinit, zdata', st=:surface)
+end
+
+# ╔═╡ bf37a7dc-2870-489c-9ff9-3b2423f4870c
+p_fit_mv_7 = plot_fit_mv(Telu_Tchar_rT_data_excluded, fit_mv_7, model_mv_7, show_i_Tinit_mv_7, show_i_rT_mv_7)
+
+# ╔═╡ d5d09e6d-667c-4d5d-aaf3-0f4841c49ca1
+begin
+	plotly()
+	p_mv_7_Tinit = plot(xlabel="Tchar", ylabel="Tinit", zlabel="Telu")
+	Telu_Tchar_ff = filter([:rT] => x -> x == rT[show_i_rT_mv_7], Telu_Tchar_rT_data_excluded)
+	scatter!(p_mv_7_Tinit, Telu_Tchar_ff.Tchar, Telu_Tchar_ff.Tinit, Telu_Tchar_ff.Telu, label=round(rT[show_i_rT_mv_7];sigdigits=3))
+	xTchar_7 = sort!(unique(Telu_Tchar_ff.Tchar))
+	yTinit_7 = sort!(unique(Telu_Tchar_ff.Tinit))
+	zdata_7 = Array{Float64}(undef, length(xTchar_7), length(yTinit_7))
+	for i=1:length(xTchar_7)
+		for j=1:length(yTinit_7)
+			zdata_7[i,j] = model_mv_7([xTchar_7[i] rT[show_i_rT_mv_7] yTinit_7[j]], fit_mv_7.param)[1]
+		end
+	end
+	plot!(p_mv_7_Tinit, xTchar_7, yTinit_7, zdata_7', st=:surface)
+end
+
+# ╔═╡ 5a501229-fe26-42c5-85ad-366baddfbaee
+xdata_2a = [Telu_Tchar_rT_data_excluded.Tchar Telu_Tchar_rT_data_excluded.rT Telu_Tchar_rT_data_excluded.Tinit]
+
+# ╔═╡ 26706952-0716-42c7-804a-738801be929e
+ydata_2a = Telu_Tchar_rT_data_excluded.Telu
+
+# ╔═╡ 5630427e-22b4-4437-963c-a8c49ee76d57
+par_mv_2a, R2_mv_2a, fit_mv_2a = fit_data(model_mv_2a, xdata_2a, ydata_2a, p0_2a)
+
+# ╔═╡ 3c61bc26-c4cd-4cad-b405-272b0a962e49
+par_mv_2a
+
+# ╔═╡ 69a69280-f3b9-49ea-98fd-b439b495428a
+R2_mv_2a
+
+# ╔═╡ 96222088-76e8-4c36-9a04-fce4ee4a6c94
+par_mv_2b, R2_mv_2b, fit_mv_2b = fit_data(model_mv_2b, xdata_2a, ydata_2a, p0_2b)
+
+# ╔═╡ ddcfb67c-3bcf-4320-8603-5db5e42cccf1
+par_mv_2b
+
+# ╔═╡ d1a18fb3-2114-401c-91df-d2ce348aa1e1
+R2_mv_2b
+
+# ╔═╡ 146a2948-5a80-4e49-a3b0-615e7bd52769
+par_mv_2b1, R2_mv_2b1, fit_mv_2b1 = fit_data(model_mv_2b1, xdata_2a, ydata_2a, p0_2b1)
+
+# ╔═╡ c123731b-f488-485c-bf5f-d46ba56a9f9e
+par_mv_2b1
+
+# ╔═╡ 1c23b58a-4f4f-426c-ba4e-21e04858fdfb
+R2_mv_2b1
+
+# ╔═╡ 25743005-bb19-43de-9077-4f12b60d6136
+p_fit_mv_2a = plot_fit_mv(Telu_Tchar_rT_data_excluded, fit_mv_2a, model_mv_2a, show_i_Tinit_mv_2a, show_i_rT_mv_2a)
+
+# ╔═╡ cea827e6-b1ae-4e50-85ae-d3e8566100ca
+begin
+	plotly()
+	p_mv_2a_Tinit = plot(xlabel="Tchar", ylabel="Tinit", zlabel="Telu")
+	Telu_Tchar_2a = filter([:rT] => x -> x == rT[show_i_rT_mv_2a], Telu_Tchar_rT_data_excluded)
+	scatter!(p_mv_2a_Tinit, Telu_Tchar_2a.Tchar, Telu_Tchar_2a.Tinit, Telu_Tchar_2a.Telu, label=round(rT[show_i_rT_mv_2a];sigdigits=3))
+	xTchar_2a = sort!(unique(Telu_Tchar_2a.Tchar))
+	yTinit_2a = sort!(unique(Telu_Tchar_2a.Tinit))
+	zdata_2a = Array{Float64}(undef, length(xTchar_2a), length(yTinit_2a))
+	for i=1:length(xTchar_2a)
+		for j=1:length(yTinit_2a)
+			zdata_2a[i,j] = model_mv_2a([xTchar_2a[i] rT[show_i_rT_mv_2a] yTinit_2a[j]], fit_mv_2a.param)[1]
+		end
+	end
+	plot!(p_mv_2a_Tinit, xTchar_2a, yTinit_2a, zdata_2a', st=:surface)
+end
+
+# ╔═╡ 574ffed2-05ab-4ca9-8922-0dce17bd547d
+p_fit_mv_2b = plot_fit_mv(Telu_Tchar_rT_data_excluded, fit_mv_2b, model_mv_2b, show_i_Tinit_mv_2b, show_i_rT_mv_2b)
+
+# ╔═╡ 3820b600-cfd2-4a7f-a2d3-fc7accc7d7f5
+begin
+	plotly()
+	p_mv_2b_Tinit = plot(xlabel="Tchar", ylabel="Tinit", zlabel="Telu")
+	Telu_Tchar_2b = filter([:rT] => x -> x == rT[show_i_rT_mv_2b], Telu_Tchar_rT_data_excluded)
+	scatter!(p_mv_2b_Tinit, Telu_Tchar_2b.Tchar, Telu_Tchar_2b.Tinit, Telu_Tchar_2b.Telu, label=round(rT[show_i_rT_mv_2b];sigdigits=3))
+	xTchar_2b = sort!(unique(Telu_Tchar_2b.Tchar))
+	yTinit_2b = sort!(unique(Telu_Tchar_2b.Tinit))
+	zdata_2b = Array{Float64}(undef, length(xTchar_2b), length(yTinit_2b))
+	for i=1:length(xTchar_2b)
+		for j=1:length(yTinit_2b)
+			zdata_2b[i,j] = model_mv_2b([xTchar_2b[i] rT[show_i_rT_mv_2b] yTinit_2b[j]], fit_mv_2b.param)[1]
+		end
+	end
+	plot!(p_mv_2b_Tinit, xTchar_2b, yTinit_2b, zdata_2b', st=:surface)
+end
+
+# ╔═╡ 7f7d17ff-84ec-490a-a90f-f53bea8d8172
+p_fit_mv_2b1 = plot_fit_mv(Telu_Tchar_rT_data_excluded, fit_mv_2b1, model_mv_2b1, show_i_Tinit_mv_2b1, show_i_rT_mv_2b1)
+
+# ╔═╡ ac9f8221-7258-4017-926c-fd8ecd4b9553
+begin
+	plotly()
+	p_mv_2b1_Tinit = plot(xlabel="Tchar", ylabel="Tinit", zlabel="Telu")
+	Telu_Tchar_2b1 = filter([:rT] => x -> x == rT[show_i_rT_mv_2b1], Telu_Tchar_rT_data_excluded)
+	scatter!(p_mv_2b1_Tinit, Telu_Tchar_2b1.Tchar, Telu_Tchar_2b1.Tinit, Telu_Tchar_2b1.Telu, label=round(rT[show_i_rT_mv_2b1];sigdigits=3))
+	xTchar_2b1 = sort!(unique(Telu_Tchar_2b1.Tchar))
+	yTinit_2b1 = sort!(unique(Telu_Tchar_2b1.Tinit))
+	zdata_2b1 = Array{Float64}(undef, length(xTchar_2b1), length(yTinit_2b1))
+	residuen_2b1 = Array{Float64}(undef, length(xTchar_2b1), length(yTinit_2b1))
+	for i=1:length(xTchar_2b1)
+		for j=1:length(yTinit_2b1)
+			zdata_2b1[i,j] = model_mv_2b1([xTchar_2b1[i] rT[show_i_rT_mv_2b1] yTinit_2b1[j]], fit_mv_2b1.param)[1]
+			Telu = filter([:Tchar, :Tinit] => (x,y) -> x == xTchar_2b1[i] && y == yTinit_2b1[j], Telu_Tchar_2b1)
+			residuen_2b1[i,j] = Telu.Telu[1] - zdata_2b1[i,j]
+		end
+	end
+	plot!(p_mv_2b1_Tinit, xTchar_2b1, yTinit_2b1, zdata_2b1', st=:surface)
+	p_mv_2b1_residuen = plot(xTchar_2b1, yTinit_2b1, residuen_2b1', st=:surface, xlabel="Tchar", ylabel="Tinit", zlabel="residuen(Telu)")
+	p_mv_2b1_Tinit, p_mv_2b1_residuen
+end
+
+# ╔═╡ 637a3ec5-dab7-4fc0-b78f-2da6edec5547
+Telu_ = filter([:Tchar, :Tinit] => (x,y) -> x == xTchar_2b1[2] && y == yTinit_2b1[5], Telu_Tchar_2b1)
 
 # ╔═╡ Cell order:
 # ╠═f8ad60a7-d51c-40b0-8f82-1fc78dcd4b54
@@ -1110,48 +1514,118 @@ fit_rT_data_excluded_m1[5,6]
 # ╠═1c37e89a-6a90-4926-bb37-c4f7f445c9f8
 # ╠═599d46f2-c2e5-415f-9a05-60696ae57a52
 # ╠═c13c9d9c-7b81-4a16-90dd-f56c69e15f23
+# ╠═eb37f6b4-23b8-4163-8ec4-67324aba214a
 # ╠═b373c92c-d465-4a0f-a925-ae50360c277e
+# ╠═0fd2139b-3e50-48ad-9d76-6166b91d4a5b
+# ╠═b5d6fb34-00ba-42c1-9d57-518bead48f4b
 # ╠═4eac8fc5-3d30-44b6-828e-e40f17bd1d7e
-# ╠═668bfd06-7308-4cc8-83e2-34d51f9730fd
+# ╟─668bfd06-7308-4cc8-83e2-34d51f9730fd
 # ╠═f54b0681-3a3e-45cf-b274-4962989821dc
 # ╠═789f8085-76c9-4fba-95d2-b6b6b603f868
-# ╠═030af251-fe5b-46c8-b6d1-1b2efb7cd6c3
-# ╠═65c91137-034b-43c5-a7d1-c25cc694b1d4
+# ╟─65c91137-034b-43c5-a7d1-c25cc694b1d4
 # ╟─7c07e06f-5c31-4453-8d0a-d89842ebe7d2
 # ╟─e97005f1-f165-4dfb-8be0-4d078eb27930
 # ╟─c6143a16-c8d9-48ec-8588-7f430851576b
 # ╟─bd87d080-07fc-4c99-9e6c-1df8229cb46c
 # ╟─c3e32361-b417-4305-acf3-5862813d2d0c
-# ╟─19f116ba-bfd3-4579-9e45-b1afb61a9cbd
 # ╟─5bc9a02e-62b1-48de-8287-33be309402fe
 # ╟─e950d80d-8b1a-427c-a4f0-361d62f9a450
 # ╟─600773b7-8b3b-4e30-91ca-3ce0407dae68
 # ╠═6bef1367-bc12-40cd-8c6d-2d5934cdb9d6
 # ╠═aa34de2c-dbf1-4551-aac7-94f361fa9b6a
+# ╠═8a730b2f-a51f-40ac-a3a9-054f0c903031
 # ╠═43d45ad1-0289-4992-a089-22c6b299931d
 # ╠═f6677948-c480-4557-ac40-e38a76470daf
-# ╠═fc86ff7a-bbab-4278-a1dd-5dfe3da87adf
-# ╠═7d5fdf32-1619-4835-976c-8d0513efb24c
+# ╠═58e58468-ee89-4f00-bed9-bbfd2f494be1
+# ╠═b552ac0c-7f39-4fd6-bd37-13aae5a81d99
 # ╠═0e504ae7-4165-4261-a02d-85141e2f5b5f
-# ╠═10266ff0-7e64-41c9-b420-d6c15257ceef
+# ╟─10266ff0-7e64-41c9-b420-d6c15257ceef
 # ╠═16991c8c-b7c3-495b-93ce-70b949017b3c
 # ╠═f917c1c9-8bb8-4e35-bb92-24df9e2945a1
-# ╠═9392b89e-6a64-4a7c-80dd-c6124820bdb3
+# ╠═03121d84-5b1b-41b7-befa-c629b08e6f52
+# ╠═101ffb81-ada0-48fa-9df8-272800af2565
+# ╠═be2237d4-be73-4368-9f38-88280732f225
+# ╠═c5d95d97-8903-4dbf-ad12-359d2a235e6c
 # ╠═f518d526-34ca-4c15-8255-4ee79c8581dd
-# ╠═2869dce2-0151-4ead-9ba4-39ac12876c95
+# ╠═3844df54-1622-4313-92ee-36c6599f80d0
+# ╠═4071fa66-095c-49e7-adfe-44c1fce9c59a
+# ╠═a6b9948f-7364-4294-a744-fd13550a4796
+# ╠═69c0a9bc-4606-4e90-aed1-6ea8dbc6f039
+# ╠═ca7c60d2-04ad-4980-b26f-c02c70ef84a8
+# ╠═fbde7fa1-c584-4732-ba60-05837ee62d8f
+# ╠═23ccbdb4-2c7c-499f-af74-a093304d60cd
+# ╠═69113eb5-cca4-40e7-8a5e-96e196a99fc0
+# ╠═388a86d4-766f-4937-9a7a-4bd583b1c1b5
+# ╠═85696436-f843-4a2a-a582-a3d27c29d951
+# ╠═59e7835e-e9f2-4888-b862-28ba1a019ab6
+# ╠═aec7dae9-c73a-4cce-a440-2724799085e1
+# ╠═ed71d956-bc13-407c-8aab-02d700b711b7
+# ╠═1a8865f8-db21-423f-8591-033f41197d2e
+# ╠═32782159-a1ee-4570-bdbc-31a4506ad902
+# ╠═997409e6-1292-4bc0-94f7-b1439d9beeaa
+# ╠═e8e0b85f-286e-4665-a992-3f26f8eb016e
+# ╠═34b5b40f-3be2-4b9f-ad4c-f4d99dac1299
+# ╠═78c48193-7021-4803-bf4b-bf4e03406c47
+# ╠═494c2b8c-04b3-46ff-9c28-cc9b79f9a7d4
+# ╠═ac33cbec-938b-472c-863f-97b8c3d6093d
+# ╠═42411a67-69f4-4088-8b01-2815f223e4f9
+# ╠═76873708-0cd3-4048-a33b-29297fb58813
+# ╠═8c9a6c3a-78ac-4a60-af68-7306dbb79b7b
+# ╠═137174bf-fde5-436a-ab76-92168bca291f
+# ╠═3d77658d-b6cd-4519-a5ca-7ca944929e5a
+# ╠═5fe03d15-d5cc-4c3b-af2a-4ed35b40bfad
+# ╠═d91ec9d0-d9db-47b4-973f-c9565825dc71
+# ╠═ef742f31-4a9c-4d49-ad12-e3a81fa881cb
+# ╠═bee6bac9-c137-4979-83e2-23462660d9bf
+# ╠═ec7bb02e-b4cd-47aa-a694-07c14c0b5e86
+# ╠═bd88682c-a94d-431b-a5dc-dbc7638a3e48
+# ╠═47bf2c03-bfa0-4ecc-ace3-a64959c558d1
+# ╠═0c741a3f-5f76-4c86-be39-e5a02c2fe7e1
+# ╠═1d3474df-ede5-427b-8bf8-c50ecdfaedb5
+# ╠═073912f2-5dcd-4c70-810d-9196709ee2d5
+# ╠═5c8678b9-d0f3-4db3-8f0d-42ff43cd511c
+# ╠═bf37a7dc-2870-489c-9ff9-3b2423f4870c
+# ╠═d5d09e6d-667c-4d5d-aaf3-0f4841c49ca1
+# ╠═40805b6a-c69b-48b8-aefd-49a731c06de7
+# ╠═3676b513-c1b6-46e9-b069-b14be86a78eb
+# ╠═3793b682-2b9f-410a-86af-53791b42979d
+# ╠═5a501229-fe26-42c5-85ad-366baddfbaee
+# ╠═26706952-0716-42c7-804a-738801be929e
+# ╠═5630427e-22b4-4437-963c-a8c49ee76d57
+# ╠═3c61bc26-c4cd-4cad-b405-272b0a962e49
+# ╠═69a69280-f3b9-49ea-98fd-b439b495428a
+# ╠═add56d31-d978-4e14-9981-eff6a1fabb59
+# ╠═25743005-bb19-43de-9077-4f12b60d6136
+# ╠═cea827e6-b1ae-4e50-85ae-d3e8566100ca
+# ╠═78935736-f4b1-41c5-bd43-328e41eb53e8
+# ╠═fb0c53bd-7e57-417f-a2eb-584896eaf6b3
+# ╠═01cd2d11-2e63-4bba-b7e5-84404cb55f0f
+# ╠═96222088-76e8-4c36-9a04-fce4ee4a6c94
+# ╠═ddcfb67c-3bcf-4320-8603-5db5e42cccf1
+# ╠═d1a18fb3-2114-401c-91df-d2ce348aa1e1
+# ╠═e9f02fe0-aa5d-4ed5-a913-19bccfe0ae7f
+# ╠═574ffed2-05ab-4ca9-8922-0dce17bd547d
+# ╠═3820b600-cfd2-4a7f-a2d3-fc7accc7d7f5
+# ╠═983dfe18-83fb-4eff-9da6-e6e4ca79d506
+# ╠═445c8480-19dd-4a5a-a022-97a758341a48
+# ╠═9eb0565c-b76f-4cdc-952d-c6139e4e6f63
+# ╠═146a2948-5a80-4e49-a3b0-615e7bd52769
+# ╠═c123731b-f488-485c-bf5f-d46ba56a9f9e
+# ╠═1c23b58a-4f4f-426c-ba4e-21e04858fdfb
+# ╠═f945bc65-1b64-4157-bb0c-d96127f1d49a
+# ╠═7f7d17ff-84ec-490a-a90f-f53bea8d8172
+# ╠═ac9f8221-7258-4017-926c-fd8ecd4b9553
+# ╠═637a3ec5-dab7-4fc0-b78f-2da6edec5547
 # ╠═2e224d8b-6fb1-4b0b-aacb-28294f8e7b8d
-# ╠═7290ff57-ead8-4518-8506-0f845cf14d0f
-# ╠═365ae9ff-9b94-457a-a687-d1c8581fc5ab
-# ╠═78e4ed32-9943-458a-aff8-3a9d0397e400
-# ╠═78941ab1-25bf-4b10-935b-4deff67fe5dc
-# ╠═512a39c1-1fd0-4d6b-9d45-e45457dfabfb
 # ╠═fd778a85-b7f5-4d87-b671-4ac3efee4b79
 # ╠═1739ae21-a60d-413e-832d-cb12fad0ca34
 # ╠═7bc0108e-6842-4850-92a5-0cae5d7d4706
-# ╠═2f750d6e-461f-4e6a-bc92-2939dbb55421
+# ╟─2f750d6e-461f-4e6a-bc92-2939dbb55421
 # ╠═5e26e413-612c-4728-9c08-15f45aa10e1f
+# ╠═2c28f8ad-ab76-4131-8856-55a43b31fde6
 # ╠═804fd07b-b4f0-4119-a708-60d4973e84eb
 # ╠═59e2f85f-acdd-4ca5-a91c-78b9bb42364e
+# ╠═030af251-fe5b-46c8-b6d1-1b2efb7cd6c3
 # ╠═4fe853a2-100b-4c25-8559-1ea008c0cad2
 # ╠═3f7dad44-11bc-4535-b7cb-db5938f5d2d4
 # ╠═98df485c-de5b-4ea9-ba12-7d0677a4e7dc
