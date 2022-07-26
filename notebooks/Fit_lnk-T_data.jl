@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.17.7
+# v0.19.10
 
 using Markdown
 using InteractiveUtils
@@ -162,6 +162,9 @@ begin
 	For n=3 the results of ABC-model and K-centric model are different (but similar). For n>3 the results of both models are identical.
 	"""
 end
+
+# ╔═╡ fe359675-8279-40dc-b4c2-a0b9021c746a
+data
 
 # ╔═╡ 02a29dc5-e3c2-450f-b052-289b90e43d4f
 B = data.parameters[select_dataset].B[select_substance]
@@ -1540,7 +1543,8 @@ version = "0.9.1+5"
 # ╟─363ee826-14d1-4e1c-a4b9-a2d00e8d48cc
 # ╟─ae6986cd-33f3-48b1-9f8b-71535670bf27
 # ╟─3bac9f60-8749-425b-8e87-ba1d7442ca93
-# ╟─cd5d0b6c-6e76-4293-80a0-b07ea94a05d8
+# ╠═cd5d0b6c-6e76-4293-80a0-b07ea94a05d8
+# ╠═fe359675-8279-40dc-b4c2-a0b9021c746a
 # ╟─9ba32dff-3be6-493a-b9b4-abe025bb1dad
 # ╟─d1ef794d-dd55-4cf4-8fde-f0a03ea2e2cd
 # ╟─6c250c7e-c95a-4bc1-a523-299b96e43584
@@ -1550,7 +1554,7 @@ version = "0.9.1+5"
 # ╟─8587abf6-b962-4e9c-a8b4-2d9ba5a25e51
 # ╟─ca984e5b-2e1f-40ce-ad65-453171b402dc
 # ╟─6493101e-d266-4cff-a72b-7e2829d158ce
-# ╟─c037a761-f192-4a3b-a617-b6024ac6cd61
+# ╠═c037a761-f192-4a3b-a617-b6024ac6cd61
 # ╠═2d7ed692-9524-428c-92cf-d4ecabe8278e
 # ╠═faa843f7-ef50-47ab-a5a4-9d32265b7e5a
 # ╠═dbf47c68-709f-45b5-9ae1-b75fe2e76c5f
