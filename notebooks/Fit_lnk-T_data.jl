@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.10
+# v0.19.9
 
 using Markdown
 using InteractiveUtils
@@ -151,6 +151,9 @@ md"""
 Select substance: $(@bind select_substance Slider(1:length(data.fitting[select_dataset].Name); show_value=true))
 """
 
+# ╔═╡ b8cb55b5-c40d-4f9b-96fe-580c41cbf3d6
+data.filename[select_dataset]
+
 # ╔═╡ cd5d0b6c-6e76-4293-80a0-b07ea94a05d8
 begin
 	plnk = ThermodynamicData.plot_lnk_fit(data.fitting, select_dataset, select_substance)
@@ -167,22 +170,16 @@ end
 data
 
 # ╔═╡ 02a29dc5-e3c2-450f-b052-289b90e43d4f
-B = data.parameters[select_dataset].B[select_substance]
-
-# ╔═╡ cd26abc7-244c-4535-9db9-8530053471dd
-C = data.parameters[select_dataset].C[select_substance]
+begin
+	B = data.parameters[select_dataset].B[select_substance];
+	C = data.parameters[select_dataset].C[select_substance];
+	Tchar = data.parameters[select_dataset].Tchar[select_substance];
+	θchar = data.parameters[select_dataset].thetachar[select_substance];
+	ΔCp = data.parameters[select_dataset].DeltaCp[select_substance];
+end;
 
 # ╔═╡ 9ba32dff-3be6-493a-b9b4-abe025bb1dad
 mini_ABC = B/C - 273.15
-
-# ╔═╡ 8587abf6-b962-4e9c-a8b4-2d9ba5a25e51
-Tchar = data.parameters[select_dataset].Tchar[select_substance]
-
-# ╔═╡ ca984e5b-2e1f-40ce-ad65-453171b402dc
-θchar = data.parameters[select_dataset].thetachar[select_substance]
-
-# ╔═╡ 6493101e-d266-4cff-a72b-7e2829d158ce
-ΔCp = data.parameters[select_dataset].DeltaCp[select_substance]
 
 # ╔═╡ d1ef794d-dd55-4cf4-8fde-f0a03ea2e2cd
 mini_Kcentric = Tchar + (Tchar+273.15)^2/(θchar*ΔCp/8.31446261815324)
@@ -192,6 +189,21 @@ mini_lnk_Kcentric = (ΔCp/8.31446261815324+(Tchar+273.15)/θchar)*((Tchar+273.15
 
 # ╔═╡ d7a5f461-33e1-4602-b803-0223ef9a4484
 maxi_μ_Kcentric = 1/(1+exp(mini_lnk_Kcentric))
+
+# ╔═╡ 388801a7-2ebb-44cf-8154-320e514ceb2d
+B
+
+# ╔═╡ cd26abc7-244c-4535-9db9-8530053471dd
+C
+
+# ╔═╡ 8587abf6-b962-4e9c-a8b4-2d9ba5a25e51
+Tchar
+
+# ╔═╡ ca984e5b-2e1f-40ce-ad65-453171b402dc
+θchar
+
+# ╔═╡ 6493101e-d266-4cff-a72b-7e2829d158ce
+ΔCp
 
 # ╔═╡ 2d7ed692-9524-428c-92cf-d4ecabe8278e
 test = ["name", "60", "70", "Cat", "Cat_b"]
@@ -1543,13 +1555,15 @@ version = "0.9.1+5"
 # ╟─363ee826-14d1-4e1c-a4b9-a2d00e8d48cc
 # ╟─ae6986cd-33f3-48b1-9f8b-71535670bf27
 # ╟─3bac9f60-8749-425b-8e87-ba1d7442ca93
+# ╟─b8cb55b5-c40d-4f9b-96fe-580c41cbf3d6
 # ╠═cd5d0b6c-6e76-4293-80a0-b07ea94a05d8
 # ╠═fe359675-8279-40dc-b4c2-a0b9021c746a
+# ╠═02a29dc5-e3c2-450f-b052-289b90e43d4f
 # ╟─9ba32dff-3be6-493a-b9b4-abe025bb1dad
 # ╟─d1ef794d-dd55-4cf4-8fde-f0a03ea2e2cd
 # ╟─6c250c7e-c95a-4bc1-a523-299b96e43584
 # ╟─d7a5f461-33e1-4602-b803-0223ef9a4484
-# ╟─02a29dc5-e3c2-450f-b052-289b90e43d4f
+# ╠═388801a7-2ebb-44cf-8154-320e514ceb2d
 # ╟─cd26abc7-244c-4535-9db9-8530053471dd
 # ╟─8587abf6-b962-4e9c-a8b4-2d9ba5a25e51
 # ╟─ca984e5b-2e1f-40ce-ad65-453171b402dc
