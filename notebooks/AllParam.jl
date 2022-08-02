@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.0
+# v0.19.9
 
 using Markdown
 using InteractiveUtils
@@ -172,7 +172,7 @@ filter([:CAS] => x -> ismissing(x), CI)
 alldata[!, "CAS"] = CI.CAS
 
 # ╔═╡ 4000c057-c75a-4bd8-93fd-dcfce907101c
-search_chemical("Fluoren")
+search_chemical("555-44-2")
 
 # ╔═╡ aa7bd88a-4722-493b-9c1d-2e69cf4333f3
 md"""
@@ -437,7 +437,10 @@ end
 hs = unique(homologous_series[!,3])
 
 # ╔═╡ 5356fd33-c959-40b0-bdf8-d1363a0726c9
-filter_Cat(newdata, hs[5])
+filter_Cat(newdata, hs[3])
+
+# ╔═╡ 3ebdebe8-ad66-4721-b9ff-92da125bcf7c
+sort(filter_Cat(newdata, "Grob"), [:Phase])
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1245,9 +1248,9 @@ uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 
 [[deps.Qt5Base_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Fontconfig_jll", "Glib_jll", "JLLWrappers", "Libdl", "Libglvnd_jll", "OpenSSL_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libxcb_jll", "Xorg_xcb_util_image_jll", "Xorg_xcb_util_keysyms_jll", "Xorg_xcb_util_renderutil_jll", "Xorg_xcb_util_wm_jll", "Zlib_jll", "xkbcommon_jll"]
-git-tree-sha1 = "ad368663a5e20dbb8d6dc2fddeefe4dae0781ae8"
+git-tree-sha1 = "c6c0f690d0cc7caddb74cef7aa847b824a16b256"
 uuid = "ea2cea3b-5b76-57ae-a6ef-0a8af62496e1"
-version = "5.15.3+0"
+version = "5.15.3+1"
 
 [[deps.QuadGK]]
 deps = ["DataStructures", "LinearAlgebra"]
@@ -1748,5 +1751,6 @@ version = "0.9.1+5"
 # ╠═ef0c1872-da54-48b5-8212-634d7d91e9ac
 # ╠═8d1c0954-ace2-4621-99aa-ce692936247b
 # ╠═5356fd33-c959-40b0-bdf8-d1363a0726c9
+# ╠═3ebdebe8-ad66-4721-b9ff-92da125bcf7c
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
