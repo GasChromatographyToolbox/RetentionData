@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.10
+# v0.19.9
 
 using Markdown
 using InteractiveUtils
@@ -41,6 +41,8 @@ TableOfContents()
 # ╔═╡ 562d78f0-6e8d-4b44-9cb3-70acd226f439
 md"""
 # Evaluation ``T_{elu}(T_{char})``
+
+Load simulation results from the folder `/data/sims/Telu_Tchar/` (results from the script `/scripts/Telu_Tchar.jl`) and evaluate these for the correlation of ``T_{elu}`` with ``T_{char}`` and temperature program parameters ``T_{init}`` and ``r_T`` (resp. ``R_T`` and ``p_{in}``).
 """
 
 # ╔═╡ 2a8dd6b6-dc9c-453b-9652-2226fc1f39ff
@@ -334,7 +336,7 @@ Tinit: $(@bind select_i_Tinit__ Slider(1:length(Tinit)))
 # ╔═╡ 6bef1367-bc12-40cd-8c6d-2d5934cdb9d6
 md"""
 ## Fit ``r_T`` with filtered data
-**For now: exclude Brehmer_PCB, Duong_FAME, Stultz_Dioxins from the data**
+**For now: exclude Brehmer\_PCB, Duong\_FAME, Stultz\_Dioxins from the data**
 
 **Also filter out following substances:**
 
@@ -353,35 +355,14 @@ md"""
 ### Fit model4
 """
 
-# ╔═╡ 0e504ae7-4165-4261-a02d-85141e2f5b5f
-md"""
-``T_{init}``: $(@bind show_i_Tinit_1 Slider(1:length(Tinit)))
-
-``r_T``: $(@bind show_i_rT_1 Slider(1:length(rT)))
-"""
-
 # ╔═╡ 16991c8c-b7c3-495b-93ce-70b949017b3c
 md"""
 ### Fit ``m=1``
 """
 
-# ╔═╡ be2237d4-be73-4368-9f38-88280732f225
-md"""
-``T_{init}``: $(@bind show_i_Tinit_2 Slider(1:length(Tinit)))
-
-``r_T``: $(@bind show_i_rT_2 Slider(1:length(rT)))
-"""
-
 # ╔═╡ 3844df54-1622-4313-92ee-36c6599f80d0
 md"""
 ### Fit ``b=0.06``
-"""
-
-# ╔═╡ fbde7fa1-c584-4732-ba60-05837ee62d8f
-md"""
-``T_{init}``: $(@bind show_i_Tinit_3 Slider(1:length(Tinit)))
-
-``r_T``: $(@bind show_i_rT_3 Slider(1:length(rT)))
 """
 
 # ╔═╡ 69113eb5-cca4-40e7-8a5e-96e196a99fc0
@@ -391,13 +372,6 @@ md"""
 
 # ╔═╡ aec7dae9-c73a-4cce-a440-2724799085e1
 log(0.6)
-
-# ╔═╡ 32782159-a1ee-4570-bdbc-31a4506ad902
-md"""
-``T_{init}``: $(@bind show_i_Tinit_4 Slider(1:length(Tinit)))
-
-``r_T``: $(@bind show_i_rT_4 Slider(1:length(rT)))
-"""
 
 # ╔═╡ e8e0b85f-286e-4665-a992-3f26f8eb016e
 md"""
@@ -419,6 +393,8 @@ Assumption:
 
 2) ``T_0 = a_0 + m_0 log(r_T) + n_0 r_T``
 
+3) ``T_0 = a_0 + n_0 r_T``
+
 """
 
 # ╔═╡ 34b5b40f-3be2-4b9f-ad4c-f4d99dac1299
@@ -428,42 +404,47 @@ md"""
 
 # ╔═╡ 78c48193-7021-4803-bf4b-bf4e03406c47
 md"""
-### 1a) model\_mv
+### 1a) model\_mv\_1a
 """
 
 # ╔═╡ 494c2b8c-04b3-46ff-9c28-cc9b79f9a7d4
-@. model_mv(x,p) = 1/p[1] * log(exp(p[1]*(p[2] + p[3]*log(x[:,2]) + p[4]*x[:,1])) + exp(p[1]*(p[5] + p[6]*x[:,3])))
+@. model_mv_1a(x,p) = 1/p[1] * log(exp(p[1]*(p[2] + p[3]*log(x[:,2]) + p[4]*x[:,1])) + exp(p[1]*(p[5] + p[6]*x[:,3])))
 
 # ╔═╡ ac33cbec-938b-472c-863f-97b8c3d6093d
-p0 = [0.05, -40.0, 16.0, 1.0, 0.0, 1.5]
-
-# ╔═╡ 3d77658d-b6cd-4519-a5ca-7ca944929e5a
-exp(5.97/18.3)
-
-# ╔═╡ d91ec9d0-d9db-47b4-973f-c9565825dc71
-md"""
-``T_{init}``: $(@bind show_i_Tinit_mv Slider(1:length(Tinit)))
-
-``r_T``: $(@bind show_i_rT_mv Slider(1:length(rT)))
-"""
+p0_1a = [0.05, -40.0, 16.0, 1.0, 0.0, 1.5]
 
 # ╔═╡ ec7bb02e-b4cd-47aa-a694-07c14c0b5e86
 md"""
-### 1b) model\_mv\_7
+### 1b) model\_mv\_1b 👍
 """
 
 # ╔═╡ bd88682c-a94d-431b-a5dc-dbc7638a3e48
-@. model_mv_7(x,p) = 1/p[1] * log(exp(p[1]*(p[2] + p[3]*log(x[:,2]) + p[4]*x[:,1])) + exp(p[1]*(p[5] + p[6]*x[:,3] + p[7]*x[:,2])))
+@. model_mv_1b(x,p) = 1/p[1] * log(exp(p[1]*(p[2] + p[3]*log(x[:,2]) + p[4]*x[:,1])) + exp(p[1]*(p[5] + p[6]*x[:,3] + p[7]*x[:,2])))
 
 # ╔═╡ 47bf2c03-bfa0-4ecc-ace3-a64959c558d1
-p0_7 = [0.05, -40.0, 16.0, 1.0, 0.0, 1.5, 1.5]
+p0_1b = [0.05, -40.0, 16.0, 1.0, 0.0, 1.5, 1.5]
 
-# ╔═╡ 5c8678b9-d0f3-4db3-8f0d-42ff43cd511c
+# ╔═╡ e0a8ba27-65c0-4425-a1f2-1f30fe768c30
 md"""
-``T_{init}``: $(@bind show_i_Tinit_mv_7 Slider(1:length(Tinit)))
-
-``r_T``: $(@bind show_i_rT_mv_7 Slider(1:length(rT)))
+### 1b0) model\_mv\_1b0, ``m=1``, ``m_1=1``, ``a_1=273.15``, ``a_0=0``
 """
+
+# ╔═╡ 241a52ee-c094-4198-b964-67847ec313ec
+@. model_mv_1b0(x,p) = 1/p[1] * log(exp(p[1]*(p[2]*log(x[:,2]) + x[:,1])) + exp(p[1]*(273.15 + x[:,3] + p[3]*x[:,2])))
+
+# ╔═╡ 13e14de4-09d0-4013-8176-ac96c678a0a6
+p0_1b0 = [0.05, 16.0, 1.5]
+
+# ╔═╡ 59ae1c1b-a047-4bcb-b1a1-9f6e59d36695
+md"""
+### 1b1) model\_mv\_1b 👍, ``m=1``, ``m_1=1``, ``a_1=273.15``
+"""
+
+# ╔═╡ e0196c9b-ce1f-4417-b8e7-f1c9a942efb2
+@. model_mv_1b1(x,p) = 1/p[1] * log(exp(p[1]*(p[2] + p[3]*log(x[:,2]) + x[:,1])) + exp(p[1]*(273.15 + x[:,3] + p[4]*x[:,2])))
+
+# ╔═╡ 33efc8a9-b2ad-4cb9-8d90-245e3463c393
+p0_1b1 = [0.05, -40.0, 16.0, 1.5]
 
 # ╔═╡ 40805b6a-c69b-48b8-aefd-49a731c06de7
 md"""
@@ -478,16 +459,9 @@ Use of all heating rates.
 # ╔═╡ 3793b682-2b9f-410a-86af-53791b42979d
 p0_2a = [0.05, -40.0, 16.0, 20.0, 1.0, 0.0, 1.5]
 
-# ╔═╡ add56d31-d978-4e14-9981-eff6a1fabb59
-md"""
-``T_{init}``: $(@bind show_i_Tinit_mv_2a Slider(1:length(Tinit)))
-
-``r_T``: $(@bind show_i_rT_mv_2a Slider(1:length(rT)))
-"""
-
 # ╔═╡ 78935736-f4b1-41c5-bd43-328e41eb53e8
 md"""
-### 2b) model\_mv\_2b
+### 2b) model\_mv\_2b 👍
 """
 
 # ╔═╡ fb0c53bd-7e57-417f-a2eb-584896eaf6b3
@@ -496,16 +470,31 @@ md"""
 # ╔═╡ 01cd2d11-2e63-4bba-b7e5-84404cb55f0f
 p0_2b = [0.05, -40.0, 16.0, 20.0, 1.0, 0.0, 1.5, 1.0]
 
-# ╔═╡ e9f02fe0-aa5d-4ed5-a913-19bccfe0ae7f
+# ╔═╡ d111ec3e-62d3-4737-bf56-c62eb3d034ac
 md"""
-``T_{init}``: $(@bind show_i_Tinit_mv_2b Slider(1:length(Tinit)))
-
-``r_T``: $(@bind show_i_rT_mv_2b Slider(1:length(rT)))
+### 2bmod) model\_mv\_2bmod
 """
+
+# ╔═╡ d9668965-1e6f-4088-a686-2657922aa76e
+@. model_mv_2bmod(x,p) = 1/p[1] * log(x[:,2]^p[3]*exp(p[1]*(p[2] + p[4]*x[:,2] + p[5]*x[:,1])) + exp(p[1]*(p[6] + p[7]*x[:,3] + p[8]*x[:,2])))
+
+# ╔═╡ deba9143-50fa-4bf3-b7c7-a7a93c404f4c
+p0_2bmod = [0.05, -40.0, 1.0, 20.0, 1.0, 0.0, 1.5, 1.0]
+
+# ╔═╡ 40d8b557-65cf-4397-b429-2d020ba2c8c8
+md"""
+### 2b0) model\_mv\_2b0, ``m=1``, ``m_1=1``, ``a_1=273.15``, ``a_0=0.0``
+"""
+
+# ╔═╡ 62663709-8eed-4777-a121-61f5ca5c9973
+@. model_mv_2b0(x,p) = 1/p[1] * log(exp(p[1]*(p[2]*log(x[:,2]) + p[3]*x[:,2] + 1.0*x[:,1])) + exp(p[1]*(273.15 + 1.0*x[:,3] + p[4]*x[:,2])))
+
+# ╔═╡ ed9d99ee-01f3-4f59-9d26-5fe0841e0a40
+p0_2b0 = [0.05, 16.0, 20.0, 1.0]
 
 # ╔═╡ 983dfe18-83fb-4eff-9da6-e6e4ca79d506
 md"""
-### 2b1) model\_mv\_2b1, ``m=1``, ``m_1=1``, ``a_1=273.15``
+### 2b1) model\_mv\_2b1 👍, ``m=1``, ``m_1=1``, ``a_1=273.15``
 """
 
 # ╔═╡ 445c8480-19dd-4a5a-a022-97a758341a48
@@ -514,12 +503,104 @@ md"""
 # ╔═╡ 9eb0565c-b76f-4cdc-952d-c6139e4e6f63
 p0_2b1 = [0.05, -40.0, 16.0, 20.0, 1.0]
 
-# ╔═╡ f945bc65-1b64-4157-bb0c-d96127f1d49a
+# ╔═╡ 3286b6ee-2deb-4c2b-b1aa-3284b9697139
 md"""
-``T_{init}``: $(@bind show_i_Tinit_mv_2b1 Slider(1:length(Tinit)))
-
-``r_T``: $(@bind show_i_rT_mv_2b1 Slider(1:length(rT)))
+### 3a) model\_mv\_3a
 """
+
+# ╔═╡ e36fbd07-42d2-44a3-8bcd-a80e19df18b1
+@. model_mv_3a(x,p) = 1/p[1] * log(exp(p[1]*(p[2] + p[3]*x[:,2] + p[4]*x[:,1])) + exp(p[1]*(p[5] + p[6]*x[:,3])))
+
+# ╔═╡ 840ec2d9-5389-4ba2-9a7b-9346763f93dc
+p0_3a = [0.05, -40.0, 20.0, 1.0, 273.15, 1.0]
+
+# ╔═╡ dd1670fe-9968-42a5-8f7a-3fb8c72c197e
+md"""
+### 3b) model\_mv\_3b
+"""
+
+# ╔═╡ f60a676a-3458-4681-9634-dabaede63383
+@. model_mv_3b(x,p) = 1/p[1] * log(exp(p[1]*(p[2] + p[3]*x[:,2] + p[4]*x[:,1])) + exp(p[1]*(p[5] + p[6]*x[:,3] + p[7]*x[:,2])))
+
+# ╔═╡ 2f6bfa25-acd7-41cf-8429-29c9df694a8d
+p0_3b = [0.05, -40.0, 20.0, 1.0, 273.15, 1.0, 1.0]
+
+# ╔═╡ 084f8e7f-ca98-4727-9346-2315b5f51fc2
+md"""
+### 3b1) model\_mv\_3b1, ``m=1``, ``m_1=1``, ``a_1=273.15``
+"""
+
+# ╔═╡ f00ff9f1-bb8a-4e66-a842-479a9b68e4e2
+@. model_mv_3b1(x,p) = 1/p[1] * log(exp(p[1]*(p[2] + p[3]*x[:,2] + 1.0*x[:,1])) + exp(p[1]*(273.15 + 1.0*x[:,3] + p[4]*x[:,2])))
+
+# ╔═╡ e66578f9-c40e-448f-aba7-12ff5e7738d8
+p0_3b1 = [0.05, -40.0, 20.0, 1.0]
+
+# ╔═╡ 7871ce05-73de-4b88-9b00-9a8a735ef3da
+md"""
+## Comparison
+"""
+
+# ╔═╡ 8e1c640d-75bd-46d1-a5cf-ec63f493cf10
+md"""
+Best models:
+
+Model 1b:
+
+``
+\frac{1}{b}\left(\exp{\left(b\left(a_0 + m_0 log(r_T) + m T_{char}\right)\right)} + \exp{\left(b\left(a_1 + m_1 T_{init} + n_1 r_T\right)\right)}\right)
+``
+
+Model 2b:
+
+``
+\frac{1}{b}\left(\exp{\left(b\left(a_0 + m_0 log(r_T) + n_0 r_T + m T_{char}\right)\right)} + \exp{\left(b\left(a_1 + m_1 T_{init} + n_1 r_T\right)\right)}\right)
+``
+
+Some Parameters could be fixed:
+
+``m=1``
+
+``a_1=273.15`` (or ``a_1=0`` and ``T_{init}`` in K)
+
+``m_1=1``
+
+-> model 1b1 and 2b1 (3b1)
+
+It would make sense to set 
+
+``a_0 = 0``
+
+-> models 1b0 and 2b0
+
+Model 1b0 not good
+
+**Model 2b0 looks good**.
+"""
+
+# ╔═╡ c31eee97-b94d-463a-bb91-41f18cd83742
+ff(x) = 1 + 2*x
+
+# ╔═╡ 6bbe03d7-cb42-4ff5-92a8-6441515ba8cc
+gg(x) = 10 -0.6x
+
+# ╔═╡ 4a14a4ba-162d-46bf-98c0-46107fff0b45
+cc(x,k) = 1/k*log(exp(k*ff(x))+exp(k*gg(x))) 
+
+# ╔═╡ 98eb4f63-c4fc-465f-928c-f7f805d49839
+dd(x,k) = 1/k*log(exp(k*ff(x))-exp(k*gg(x))) 
+
+# ╔═╡ b86e3b4d-b216-49b9-9e5d-73d57f24c72e
+x_ = 3.5:0.1:9
+
+# ╔═╡ ffb0843d-dcaf-4207-bd76-e1e21ebdc2cd
+begin
+	plot(x_, ff.(x_))
+	plot!(x_, gg.(x_))
+	plot!(x_, cc.(x_, -0.5))
+	plot!(x_, cc.(x_, 0.5))
+	plot!(x_, dd.(x_, +0.5))
+end
 
 # ╔═╡ 2e224d8b-6fb1-4b0b-aacb-28294f8e7b8d
 md"""
@@ -1030,9 +1111,7 @@ begin
 
 	$(embed_display(p__))
 
-	For extreme high dimensionless heating rates, ``r_T>100``, certain solutes on certain stationary phases (Rxi17SilMS, Rxi5ms, SPB50) show a to high ``T_{elu}`` value compared to other solutes, especially in the region, where the solutes should elute with nearly ``T_{init}``.
-
-	-> exclude the simulations with ``r_T>100``.
+	For high dimensionless heating rates, ``r_T>2``, certain solutes on certain stationary phases (Rxi17SilMS, Rxi5ms, SPB50) show a to high ``T_{elu}`` value compared to other solutes, especially in the region, where the solutes should elute with nearly ``T_{init}``..
 	"""
 end
 
@@ -1174,6 +1253,8 @@ begin
 	filter!([:Name] => (x) -> !occursin("Pentanol",x) && !occursin("2,3-Butanediol",x) && !occursin("2-Hexanone",x) && !occursin("Heptanol",x), Telu_Tchar_rT_data_excluded)
 	filter!([:rT] => x -> x > 0.1 && x < 1.0, Telu_Tchar_rT_data_excluded)
 	filter!([:Tinit] => x -> x < 201.0, Telu_Tchar_rT_data_excluded)
+	rT_f = sort!(unique(Telu_Tchar_rT_data_excluded.rT))
+	Tinit_f = sort!(unique(Telu_Tchar_rT_data_excluded.Tinit))
 end
 
 # ╔═╡ 43d45ad1-0289-4992-a089-22c6b299931d
@@ -1187,6 +1268,13 @@ plot_parameters_Tinit(filter([:converged] => x -> x == true, param_rT_data_exclu
 
 # ╔═╡ b552ac0c-7f39-4fd6-bd37-13aae5a81d99
 plot_parameters_rT(filter([:converged] => x -> x == true, param_rT_data_excluded))
+
+# ╔═╡ 0e504ae7-4165-4261-a02d-85141e2f5b5f
+md"""
+``T_{init}``: $(@bind show_i_Tinit_1 Slider(1:length(Tinit_f)))
+
+``r_T``: $(@bind show_i_rT_1 Slider(1:length(rT_f)))
+"""
 
 # ╔═╡ 10266ff0-7e64-41c9-b420-d6c15257ceef
 begin
@@ -1227,6 +1315,13 @@ begin
 	plot(p3D_b, p3D_T₀, p3D_T₁)
 end
 
+# ╔═╡ be2237d4-be73-4368-9f38-88280732f225
+md"""
+``T_{init}``: $(@bind show_i_Tinit_2 Slider(1:length(Tinit_f)))
+
+``r_T``: $(@bind show_i_rT_2 Slider(1:length(rT_f)))
+"""
+
 # ╔═╡ c5d95d97-8903-4dbf-ad12-359d2a235e6c
 begin
 	p_fit_rT_2 = plot_fit(Telu_Tchar_rT_data_excluded, param_rT_data_excluded_m1, fit_rT_data_excluded_m1, model_m1, show_i_Tinit_2, show_i_rT_2) 
@@ -1255,6 +1350,13 @@ plot_parameters_Tinit(filter([:converged] => x -> x == true, param_rT_data_exclu
 
 # ╔═╡ ca7c60d2-04ad-4980-b26f-c02c70ef84a8
 plot_parameters_rT(filter([:converged] => x -> x == true, param_rT_data_excluded_b))
+
+# ╔═╡ fbde7fa1-c584-4732-ba60-05837ee62d8f
+md"""
+``T_{init}``: $(@bind show_i_Tinit_3 Slider(1:length(Tinit_f)))
+
+``r_T``: $(@bind show_i_rT_3 Slider(1:length(rT_f)))
+"""
 
 # ╔═╡ 23ccbdb4-2c7c-499f-af74-a093304d60cd
 begin
@@ -1288,6 +1390,13 @@ plot_parameters_rT(filter([:converged] => x -> x == true, param_rT_data_excluded
 # ╔═╡ 1a8865f8-db21-423f-8591-033f41197d2e
 plot_parameters_rT(filter([:converged] => x -> x == true, param_rT_data_excluded_b_m1), logrT=false)
 
+# ╔═╡ 32782159-a1ee-4570-bdbc-31a4506ad902
+md"""
+``T_{init}``: $(@bind show_i_Tinit_4 Slider(1:length(Tinit_f)))
+
+``r_T``: $(@bind show_i_rT_4 Slider(1:length(rT_f)))
+"""
+
 # ╔═╡ 997409e6-1292-4bc0-94f7-b1439d9beeaa
 begin
 	p_fit_rT_4 = plot_fit(Telu_Tchar_rT_data_excluded, param_rT_data_excluded_b_m1, fit_rT_data_excluded_b_m1, model_b_m1, show_i_Tinit_4, show_i_rT_4) 
@@ -1312,62 +1421,114 @@ xdata = [Telu_Tchar_rT_data_excluded.Tchar Telu_Tchar_rT_data_excluded.rT Telu_T
 ydata = Telu_Tchar_rT_data_excluded.Telu
 
 # ╔═╡ 8c9a6c3a-78ac-4a60-af68-7306dbb79b7b
-par_mv, R2_mv, fit_mv = fit_data(model_mv, xdata, ydata, p0)
+par_mv_1a, R2_mv_1a, fit_mv_1a = fit_data(model_mv_1a, xdata, ydata, p0_1a)
 
 # ╔═╡ 137174bf-fde5-436a-ab76-92168bca291f
-par_mv
+par_mv_1a
 
 # ╔═╡ 5fe03d15-d5cc-4c3b-af2a-4ed35b40bfad
-R2_mv
+R2_mv_1a
 
 # ╔═╡ 0c741a3f-5f76-4c86-be39-e5a02c2fe7e1
-par_mv_7, R2_mv_7, fit_mv_7 = fit_data(model_mv_7, xdata, ydata, p0_7)
+par_mv_1b, R2_mv_1b, fit_mv_1b = fit_data(model_mv_1b, xdata, ydata, p0_1b)
 
 # ╔═╡ 1d3474df-ede5-427b-8bf8-c50ecdfaedb5
-par_mv_7
+par_mv_1b
 
 # ╔═╡ 073912f2-5dcd-4c70-810d-9196709ee2d5
-R2_mv_7
+R2_mv_1b
+
+# ╔═╡ e809c0f8-b939-413d-b6b8-1c76524c7d89
+par_mv_1b0, R2_mv_1b0, fit_mv_1b0 = fit_data(model_mv_1b0, xdata, ydata, p0_1b0)
+
+# ╔═╡ 7c3d5c74-3710-4671-891a-f2f75d23ee7e
+par_mv_1b0
+
+# ╔═╡ e0edb329-ba6b-4338-9386-6a0d34ff7c61
+R2_mv_1b0
+
+# ╔═╡ 5eab4c51-789d-4f78-825b-9514f948cde5
+par_mv_1b1, R2_mv_1b1, fit_mv_1b1 = fit_data(model_mv_1b1, xdata, ydata, p0_1b1)
+
+# ╔═╡ accf6e87-0b2c-4251-bff0-941d84053733
+par_mv_1b1
+
+# ╔═╡ 86e15050-d13f-4c6f-99d0-5ad2fc011937
+R2_mv_1b1
+
+# ╔═╡ d91ec9d0-d9db-47b4-973f-c9565825dc71
+md"""
+``T_{init}``: $(@bind show_i_Tinit_mv_1a Slider(1:length(Tinit_f)))
+
+``r_T``: $(@bind show_i_rT_mv_1a Slider(1:length(rT_f)))
+"""
 
 # ╔═╡ ef742f31-4a9c-4d49-ad12-e3a81fa881cb
-p_fit_mv = plot_fit_mv(Telu_Tchar_rT_data_excluded, fit_mv, model_mv, show_i_Tinit_mv, show_i_rT_mv)
+p_fit_mv_1a = plot_fit_mv(Telu_Tchar_rT_data_excluded, fit_mv_1a, model_mv_1a, show_i_Tinit_mv_1a, show_i_rT_mv_1a)
 
 # ╔═╡ bee6bac9-c137-4979-83e2-23462660d9bf
 begin
 	plotly()
-	p_mv_Tinit = plot(xlabel="Tchar", ylabel="Tinit", zlabel="Telu")
-	Telu_Tchar_f = filter([:rT] => x -> x == rT[show_i_rT_mv], Telu_Tchar_rT_data_excluded)
-	scatter!(p_mv_Tinit, Telu_Tchar_f.Tchar, Telu_Tchar_f.Tinit, Telu_Tchar_f.Telu, label=round(rT[show_i_rT_mv];sigdigits=3))
+	p_mv_1a_Tinit = plot(xlabel="Tchar", ylabel="Tinit", zlabel="Telu")
+	Telu_Tchar_f = filter([:rT] => x -> x == rT[show_i_rT_mv_1a], Telu_Tchar_rT_data_excluded)
+	scatter!(p_mv_1a_Tinit, Telu_Tchar_f.Tchar, Telu_Tchar_f.Tinit, Telu_Tchar_f.Telu, label=round(rT[show_i_rT_mv_1a];sigdigits=3))
 	xTchar = sort!(unique(Telu_Tchar_f.Tchar))
 	yTinit = sort!(unique(Telu_Tchar_f.Tinit))
 	zdata = Array{Float64}(undef, length(xTchar), length(yTinit))
 	for i=1:length(xTchar)
 		for j=1:length(yTinit)
-			zdata[i,j] = model_mv([xTchar[i] rT[show_i_rT_mv] yTinit[j]], fit_mv.param)[1]
+			zdata[i,j] = model_mv_1a([xTchar[i] rT[show_i_rT_mv_1a] yTinit[j]], fit_mv_1a.param)[1]
 		end
 	end
-	plot!(p_mv_Tinit, xTchar, yTinit, zdata', st=:surface)
+	plot!(p_mv_1a_Tinit, xTchar, yTinit, zdata', st=:surface)
 end
 
+# ╔═╡ 5c8678b9-d0f3-4db3-8f0d-42ff43cd511c
+md"""
+``T_{init}``: $(@bind show_i_Tinit_mv_1b Slider(1:length(Tinit_f)))
+
+``r_T``: $(@bind show_i_rT_mv_1b Slider(1:length(rT_f)))
+"""
+
 # ╔═╡ bf37a7dc-2870-489c-9ff9-3b2423f4870c
-p_fit_mv_7 = plot_fit_mv(Telu_Tchar_rT_data_excluded, fit_mv_7, model_mv_7, show_i_Tinit_mv_7, show_i_rT_mv_7)
+p_fit_mv_1b = plot_fit_mv(Telu_Tchar_rT_data_excluded, fit_mv_1b, model_mv_1b, show_i_Tinit_mv_1b, show_i_rT_mv_1b)
 
 # ╔═╡ d5d09e6d-667c-4d5d-aaf3-0f4841c49ca1
 begin
 	plotly()
-	p_mv_7_Tinit = plot(xlabel="Tchar", ylabel="Tinit", zlabel="Telu")
-	Telu_Tchar_ff = filter([:rT] => x -> x == rT[show_i_rT_mv_7], Telu_Tchar_rT_data_excluded)
-	scatter!(p_mv_7_Tinit, Telu_Tchar_ff.Tchar, Telu_Tchar_ff.Tinit, Telu_Tchar_ff.Telu, label=round(rT[show_i_rT_mv_7];sigdigits=3))
-	xTchar_7 = sort!(unique(Telu_Tchar_ff.Tchar))
-	yTinit_7 = sort!(unique(Telu_Tchar_ff.Tinit))
-	zdata_7 = Array{Float64}(undef, length(xTchar_7), length(yTinit_7))
-	for i=1:length(xTchar_7)
-		for j=1:length(yTinit_7)
-			zdata_7[i,j] = model_mv_7([xTchar_7[i] rT[show_i_rT_mv_7] yTinit_7[j]], fit_mv_7.param)[1]
+	p_mv_1b_Tinit = plot(xlabel="Tchar", ylabel="Tinit", zlabel="Telu")
+	Telu_Tchar_ff = filter([:rT] => x -> x == rT[show_i_rT_mv_1b], Telu_Tchar_rT_data_excluded)
+	scatter!(p_mv_1b_Tinit, Telu_Tchar_ff.Tchar, Telu_Tchar_ff.Tinit, Telu_Tchar_ff.Telu, label=round(rT[show_i_rT_mv_1b];sigdigits=3))
+	xTchar_1b = sort!(unique(Telu_Tchar_ff.Tchar))
+	yTinit_1b = sort!(unique(Telu_Tchar_ff.Tinit))
+	zdata_1b = Array{Float64}(undef, length(xTchar_1b), length(yTinit_1b))
+	for i=1:length(xTchar_1b)
+		for j=1:length(yTinit_1b)
+			zdata_1b[i,j] = model_mv_1b([xTchar_1b[i] rT[show_i_rT_mv_1b] yTinit_1b[j]], fit_mv_1b.param)[1]
 		end
 	end
-	plot!(p_mv_7_Tinit, xTchar_7, yTinit_7, zdata_7', st=:surface)
+	plot!(p_mv_1b_Tinit, xTchar_1b, yTinit_1b, zdata_1b', st=:surface)
 end
+
+# ╔═╡ 4b6b6c34-d103-4483-a483-00162a5f2583
+md"""
+``T_{init}``: $(@bind show_i_Tinit_mv_1b0 Slider(1:length(Tinit_f)))
+
+``r_T``: $(@bind show_i_rT_mv_1b0 Slider(1:length(rT_f)))
+"""
+
+# ╔═╡ f7f053fa-f0d9-4a40-bf31-3edc12f1f9df
+p_fit_mv_1b0 = plot_fit_mv(Telu_Tchar_rT_data_excluded, fit_mv_1b0, model_mv_1b0, show_i_Tinit_mv_1b0, show_i_rT_mv_1b0)
+
+# ╔═╡ 351892bd-40ff-4162-b6be-222188f15eab
+md"""
+``T_{init}``: $(@bind show_i_Tinit_mv_1b1 Slider(1:length(Tinit_f)))
+
+``r_T``: $(@bind show_i_rT_mv_1b1 Slider(1:length(rT_f)))
+"""
+
+# ╔═╡ 4ebe8f12-c38e-48cc-9efb-562763684dc0
+p_fit_mv_1b1 = plot_fit_mv(Telu_Tchar_rT_data_excluded, fit_mv_1b1, model_mv_1b1, show_i_Tinit_mv_1b1, show_i_rT_mv_1b1)
 
 # ╔═╡ 5a501229-fe26-42c5-85ad-366baddfbaee
 xdata_2a = [Telu_Tchar_rT_data_excluded.Tchar Telu_Tchar_rT_data_excluded.rT Telu_Tchar_rT_data_excluded.Tinit]
@@ -1393,6 +1554,30 @@ par_mv_2b
 # ╔═╡ d1a18fb3-2114-401c-91df-d2ce348aa1e1
 R2_mv_2b
 
+# ╔═╡ 19d9940d-7b58-4f22-9e28-55a51cc3dc56
+par_mv_2b
+
+# ╔═╡ 8b89812b-de28-4a4a-8d66-4979bfb41e27
+R2_mv_2b
+
+# ╔═╡ 5c239244-fdae-4b17-b6af-09054c3c26d1
+par_mv_2bmod, R2_mv_2bmod, fit_mv_2bmod = fit_data(model_mv_2bmod, xdata_2a, ydata_2a, p0_2bmod)
+
+# ╔═╡ b0bc5c1f-c8d7-4b72-b302-226c83b1001f
+par_mv_2bmod
+
+# ╔═╡ bbf1b7de-8d8f-49ba-8c88-3cd85d403560
+R2_mv_2bmod
+
+# ╔═╡ 525a9093-ce35-4f43-95fb-c2729cdb02b4
+par_mv_2b0, R2_mv_2b0, fit_mv_2b0 = fit_data(model_mv_2b0, xdata_2a, ydata_2a, p0_2b0)
+
+# ╔═╡ cbf3837e-dbda-4c20-83d5-74b936877a14
+par_mv_2b0
+
+# ╔═╡ 3a4c953f-a881-4d0d-b12a-015c39faf0bb
+R2_mv_2b0
+
 # ╔═╡ 146a2948-5a80-4e49-a3b0-615e7bd52769
 par_mv_2b1, R2_mv_2b1, fit_mv_2b1 = fit_data(model_mv_2b1, xdata_2a, ydata_2a, p0_2b1)
 
@@ -1401,6 +1586,64 @@ par_mv_2b1
 
 # ╔═╡ 1c23b58a-4f4f-426c-ba4e-21e04858fdfb
 R2_mv_2b1
+
+# ╔═╡ 05a1c3cb-c778-4d9d-be80-88c1136320d9
+DataFrame(model = ["mv_1b", "mv_1b0", "mv_1b1", "mv_2b", "mv_2b0", "mv_2b1"], 
+	R2 = [R2_mv_1b, R2_mv_1b0, R2_mv_1b1, R2_mv_2b, R2_mv_2b0, R2_mv_2b1], 
+	b = [par_mv_1b[1], par_mv_1b0[1], par_mv_1b1[1], par_mv_2b[1], par_mv_2b0[1], par_mv_2b1[1]], 
+	a₀ = [par_mv_1b[2], 0.0, par_mv_1b1[2], par_mv_2b[2], 0.0, par_mv_2b1[2]], 
+	m₀ = [par_mv_1b[3], par_mv_1b0[2], par_mv_1b1[3], par_mv_2b[3], par_mv_2b0[2], par_mv_2b1[3]], 
+	n₀ = [0.0, 0.0, 0.0, par_mv_2b[4], par_mv_2b0[3], par_mv_2b1[4]],
+	m = [par_mv_1b[4], 1.0, 1.0, par_mv_2b[5], 1.0, 1.0],
+	a₁ = [par_mv_1b[5], 273.15, 273.15, par_mv_2b[6], 273.15, 273.15],
+	m₁ = [par_mv_1b[6], 1.0, 1.0, par_mv_2b[7], 1.0, 1.0],
+	n₁ = [par_mv_1b[7], par_mv_1b0[3], par_mv_1b1[4], par_mv_2b[8], par_mv_2b0[4], par_mv_2b1[5]])
+
+# ╔═╡ 5a16fa66-5ddf-4f18-b398-5b47c881e3b3
+par_mv_3a, R2_mv_3a, fit_mv_3a = fit_data(model_mv_3a, xdata_2a, ydata_2a, p0_3a)
+
+# ╔═╡ 5f89244c-45f8-4115-bee7-2cc9ee8ef903
+par_mv_3a
+
+# ╔═╡ caa4e339-87c8-4ffa-94ae-1617f562ce0b
+R2_mv_3a
+
+# ╔═╡ 13f1725c-9355-410c-aa25-5f4de21e0bf4
+par_mv_3b, R2_mv_3b, fit_mv_3b = fit_data(model_mv_3b, xdata_2a, ydata_2a, p0_3b)
+
+# ╔═╡ 0013f6f5-f547-49a0-917b-89ee473f9439
+par_mv_3b
+
+# ╔═╡ f6b370b5-4944-44e3-a9a7-31e10798399e
+R2_mv_3b
+
+# ╔═╡ 1381f354-84ab-4496-9200-d99b10d98ef3
+DataFrame(model = ["mv_1a", "mv_1b", "mv_2a", "mv_2b", "mv_3a", "mv_3b"], 
+	R2 = [R2_mv_1a, R2_mv_1b, R2_mv_2a, R2_mv_2b, R2_mv_3a, R2_mv_3b], 
+	b = [par_mv_1a[1], par_mv_1b[1], par_mv_2a[1], par_mv_2b[1], par_mv_3a[1], par_mv_3b[1]], 
+	a₀ = [par_mv_1a[2], par_mv_1b[2], par_mv_2a[2], par_mv_2b[2], par_mv_3a[2], par_mv_3b[2]], 
+	m₀ = [par_mv_1a[3], par_mv_1b[3], par_mv_2a[3], par_mv_2b[3], NaN, NaN], 
+	n₀ = [NaN, NaN, par_mv_2a[4], par_mv_2b[4], par_mv_3a[3], par_mv_3b[3]],
+	m = [par_mv_1a[4], par_mv_1b[4], par_mv_2a[5], par_mv_2b[5], par_mv_3a[4], par_mv_3b[4]],
+	a₁ = [par_mv_1a[5], par_mv_1b[5], par_mv_2a[6], par_mv_2b[6], par_mv_3a[5], par_mv_3b[5]],
+	m₁ = [par_mv_1a[6], par_mv_1b[6], par_mv_2a[7], par_mv_2b[7], par_mv_3a[6], par_mv_3b[6]],
+	n₁ = [NaN, par_mv_1b[7], NaN, par_mv_2b[8], NaN, par_mv_3b[7]])
+
+# ╔═╡ 7239b6aa-86fc-42c2-ad54-2fcee51f3d81
+par_mv_3b1, R2_mv_3b1, fit_mv_3b1 = fit_data(model_mv_3b1, xdata_2a, ydata_2a, p0_3b1)
+
+# ╔═╡ c1c961e9-41ea-43aa-bde5-0d94ba277f90
+par_mv_3b1
+
+# ╔═╡ 7b8e57db-5893-45da-83d2-bdd2c58b4650
+R2_mv_3b1
+
+# ╔═╡ add56d31-d978-4e14-9981-eff6a1fabb59
+md"""
+``T_{init}``: $(@bind show_i_Tinit_mv_2a Slider(1:length(Tinit_f)))
+
+``r_T``: $(@bind show_i_rT_mv_2a Slider(1:length(rT_f)))
+"""
 
 # ╔═╡ 25743005-bb19-43de-9077-4f12b60d6136
 p_fit_mv_2a = plot_fit_mv(Telu_Tchar_rT_data_excluded, fit_mv_2a, model_mv_2a, show_i_Tinit_mv_2a, show_i_rT_mv_2a)
@@ -1422,6 +1665,13 @@ begin
 	plot!(p_mv_2a_Tinit, xTchar_2a, yTinit_2a, zdata_2a', st=:surface)
 end
 
+# ╔═╡ e9f02fe0-aa5d-4ed5-a913-19bccfe0ae7f
+md"""
+``T_{init}``: $(@bind show_i_Tinit_mv_2b Slider(1:length(Tinit_f)))
+
+``r_T``: $(@bind show_i_rT_mv_2b Slider(1:length(rT_f)))
+"""
+
 # ╔═╡ 574ffed2-05ab-4ca9-8922-0dce17bd547d
 p_fit_mv_2b = plot_fit_mv(Telu_Tchar_rT_data_excluded, fit_mv_2b, model_mv_2b, show_i_Tinit_mv_2b, show_i_rT_mv_2b)
 
@@ -1441,6 +1691,23 @@ begin
 	end
 	plot!(p_mv_2b_Tinit, xTchar_2b, yTinit_2b, zdata_2b', st=:surface)
 end
+
+# ╔═╡ ddee026d-df9c-4cf0-b50d-9c8993973a45
+md"""
+``T_{init}``: $(@bind show_i_Tinit_mv_2b0 Slider(1:length(Tinit_f)))
+
+``r_T``: $(@bind show_i_rT_mv_2b0 Slider(1:length(rT_f)))
+"""
+
+# ╔═╡ 381f6f06-cbcc-475b-982e-f67b479b486d
+p_fit_mv_2b0 = plot_fit_mv(Telu_Tchar_rT_data_excluded, fit_mv_2b0, model_mv_2b0, show_i_Tinit_mv_2b0, show_i_rT_mv_2b0)
+
+# ╔═╡ f945bc65-1b64-4157-bb0c-d96127f1d49a
+md"""
+``T_{init}``: $(@bind show_i_Tinit_mv_2b1 Slider(1:length(Tinit_f)))
+
+``r_T``: $(@bind show_i_rT_mv_2b1 Slider(1:length(rT_f)))
+"""
 
 # ╔═╡ 7f7d17ff-84ec-490a-a90f-f53bea8d8172
 p_fit_mv_2b1 = plot_fit_mv(Telu_Tchar_rT_data_excluded, fit_mv_2b1, model_mv_2b1, show_i_Tinit_mv_2b1, show_i_rT_mv_2b1)
@@ -1470,6 +1737,58 @@ end
 # ╔═╡ 637a3ec5-dab7-4fc0-b78f-2da6edec5547
 Telu_ = filter([:Tchar, :Tinit] => (x,y) -> x == xTchar_2b1[2] && y == yTinit_2b1[5], Telu_Tchar_2b1)
 
+# ╔═╡ d11cb6a8-6786-467b-a5f5-4ea2e163e199
+md"""
+``T_{init}``: $(@bind show_i_Tinit_mv_3a Slider(1:length(Tinit_f)))
+
+``r_T``: $(@bind show_i_rT_mv_3a Slider(1:length(rT_f)))
+"""
+
+# ╔═╡ 4e75368a-2a81-4c43-aa48-21bc208ee66b
+p_fit_mv_3a = plot_fit_mv(Telu_Tchar_rT_data_excluded, fit_mv_3a, model_mv_3a, show_i_Tinit_mv_3a, show_i_rT_mv_3a)
+
+# ╔═╡ 64ae3896-8b83-472c-9113-7ed879e751c0
+md"""
+``T_{init}``: $(@bind show_i_Tinit_mv_3b Slider(1:length(Tinit_f)))
+
+``r_T``: $(@bind show_i_rT_mv_3b Slider(1:length(rT_f)))
+"""
+
+# ╔═╡ c9cdc785-5415-44de-9223-d817f6948553
+p_fit_mv_3b = plot_fit_mv(Telu_Tchar_rT_data_excluded, fit_mv_3b, model_mv_3b, show_i_Tinit_mv_3b, show_i_rT_mv_3b)
+
+# ╔═╡ f0e1e4dd-140f-4bc9-80d2-5dcfe87f385e
+md"""
+``T_{init}``: $(@bind show_i_Tinit_mv_3b1 Slider(1:length(Tinit_f)))
+
+``r_T``: $(@bind show_i_rT_mv_3b1 Slider(1:length(rT_f)))
+"""
+
+# ╔═╡ 81af5cb4-a41b-407f-8578-317aef73f41d
+p_fit_mv_3b1 = plot_fit_mv(Telu_Tchar_rT_data_excluded, fit_mv_3b1, model_mv_3b1, show_i_Tinit_mv_3b1, show_i_rT_mv_3b1)
+
+# ╔═╡ 90193caa-5e71-469c-8cd0-51ea21b034e6
+begin
+	plotly()
+	p_mv_3b1_Tinit = plot(xlabel="Tchar", ylabel="Tinit", zlabel="Telu")
+	Telu_Tchar_3b1 = filter([:rT] => x -> x == rT[show_i_rT_mv_3b1], Telu_Tchar_rT_data_excluded)
+	scatter!(p_mv_3b1_Tinit, Telu_Tchar_3b1.Tchar, Telu_Tchar_3b1.Tinit, Telu_Tchar_3b1.Telu, label=round(rT[show_i_rT_mv_3b1];sigdigits=3))
+	xTchar_3b1 = sort!(unique(Telu_Tchar_3b1.Tchar))
+	yTinit_3b1 = sort!(unique(Telu_Tchar_3b1.Tinit))
+	zdata_3b1 = Array{Float64}(undef, length(xTchar_3b1), length(yTinit_3b1))
+	residuen_3b1 = Array{Float64}(undef, length(xTchar_3b1), length(yTinit_3b1))
+	for i=1:length(xTchar_3b1)
+		for j=1:length(yTinit_3b1)
+			zdata_3b1[i,j] = model_mv_3b1([xTchar_3b1[i] rT[show_i_rT_mv_3b1] yTinit_3b1[j]], fit_mv_3b1.param)[1]
+			Telu = filter([:Tchar, :Tinit] => (x,y) -> x == xTchar_3b1[i] && y == yTinit_3b1[j], Telu_Tchar_3b1)
+			residuen_3b1[i,j] = Telu.Telu[1] - zdata_3b1[i,j]
+		end
+	end
+	plot!(p_mv_3b1_Tinit, xTchar_3b1, yTinit_3b1, zdata_3b1', st=:surface)
+	p_mv_3b1_residuen = plot(xTchar_3b1, yTinit_3b1, residuen_3b1', st=:surface, xlabel="Tchar", ylabel="Tinit", zlabel="residuen(Telu)")
+	p_mv_3b1_Tinit, p_mv_3b1_residuen
+end
+
 # ╔═╡ Cell order:
 # ╠═f8ad60a7-d51c-40b0-8f82-1fc78dcd4b54
 # ╠═562d78f0-6e8d-4b44-9cb3-70acd226f439
@@ -1488,7 +1807,7 @@ Telu_ = filter([:Tchar, :Tinit] => (x,y) -> x == xTchar_2b1[2] && y == yTinit_2b
 # ╠═4d669db9-1661-4aa6-87f4-2977ae11e989
 # ╠═39655593-9b8c-444e-8f7d-48cd92d7b9d8
 # ╠═686250d4-235d-4699-88cc-5aaf1273b319
-# ╟─4e46e5eb-74ca-400b-bca2-7329af1879ac
+# ╠═4e46e5eb-74ca-400b-bca2-7329af1879ac
 # ╠═8f5bed6b-726e-4b19-bd20-ec41151ce83d
 # ╠═dac5f3f5-1327-4b65-be25-46764829e5b4
 # ╠═7d0b670d-03de-40e3-9eef-6f38289d3230
@@ -1572,7 +1891,6 @@ Telu_ = filter([:Tchar, :Tinit] => (x,y) -> x == xTchar_2b1[2] && y == yTinit_2b
 # ╠═76873708-0cd3-4048-a33b-29297fb58813
 # ╠═8c9a6c3a-78ac-4a60-af68-7306dbb79b7b
 # ╠═137174bf-fde5-436a-ab76-92168bca291f
-# ╠═3d77658d-b6cd-4519-a5ca-7ca944929e5a
 # ╠═5fe03d15-d5cc-4c3b-af2a-4ed35b40bfad
 # ╠═d91ec9d0-d9db-47b4-973f-c9565825dc71
 # ╠═ef742f31-4a9c-4d49-ad12-e3a81fa881cb
@@ -1586,6 +1904,22 @@ Telu_ = filter([:Tchar, :Tinit] => (x,y) -> x == xTchar_2b1[2] && y == yTinit_2b
 # ╠═5c8678b9-d0f3-4db3-8f0d-42ff43cd511c
 # ╠═bf37a7dc-2870-489c-9ff9-3b2423f4870c
 # ╠═d5d09e6d-667c-4d5d-aaf3-0f4841c49ca1
+# ╠═e0a8ba27-65c0-4425-a1f2-1f30fe768c30
+# ╠═241a52ee-c094-4198-b964-67847ec313ec
+# ╠═13e14de4-09d0-4013-8176-ac96c678a0a6
+# ╠═e809c0f8-b939-413d-b6b8-1c76524c7d89
+# ╠═7c3d5c74-3710-4671-891a-f2f75d23ee7e
+# ╠═e0edb329-ba6b-4338-9386-6a0d34ff7c61
+# ╠═4b6b6c34-d103-4483-a483-00162a5f2583
+# ╠═f7f053fa-f0d9-4a40-bf31-3edc12f1f9df
+# ╠═59ae1c1b-a047-4bcb-b1a1-9f6e59d36695
+# ╠═e0196c9b-ce1f-4417-b8e7-f1c9a942efb2
+# ╠═33efc8a9-b2ad-4cb9-8d90-245e3463c393
+# ╠═5eab4c51-789d-4f78-825b-9514f948cde5
+# ╠═accf6e87-0b2c-4251-bff0-941d84053733
+# ╠═86e15050-d13f-4c6f-99d0-5ad2fc011937
+# ╠═351892bd-40ff-4162-b6be-222188f15eab
+# ╠═4ebe8f12-c38e-48cc-9efb-562763684dc0
 # ╠═40805b6a-c69b-48b8-aefd-49a731c06de7
 # ╠═3676b513-c1b6-46e9-b069-b14be86a78eb
 # ╠═3793b682-2b9f-410a-86af-53791b42979d
@@ -1606,6 +1940,22 @@ Telu_ = filter([:Tchar, :Tinit] => (x,y) -> x == xTchar_2b1[2] && y == yTinit_2b
 # ╠═e9f02fe0-aa5d-4ed5-a913-19bccfe0ae7f
 # ╠═574ffed2-05ab-4ca9-8922-0dce17bd547d
 # ╠═3820b600-cfd2-4a7f-a2d3-fc7accc7d7f5
+# ╠═d111ec3e-62d3-4737-bf56-c62eb3d034ac
+# ╠═d9668965-1e6f-4088-a686-2657922aa76e
+# ╠═deba9143-50fa-4bf3-b7c7-a7a93c404f4c
+# ╠═5c239244-fdae-4b17-b6af-09054c3c26d1
+# ╠═19d9940d-7b58-4f22-9e28-55a51cc3dc56
+# ╠═b0bc5c1f-c8d7-4b72-b302-226c83b1001f
+# ╠═8b89812b-de28-4a4a-8d66-4979bfb41e27
+# ╠═bbf1b7de-8d8f-49ba-8c88-3cd85d403560
+# ╠═40d8b557-65cf-4397-b429-2d020ba2c8c8
+# ╠═62663709-8eed-4777-a121-61f5ca5c9973
+# ╠═ed9d99ee-01f3-4f59-9d26-5fe0841e0a40
+# ╠═525a9093-ce35-4f43-95fb-c2729cdb02b4
+# ╠═cbf3837e-dbda-4c20-83d5-74b936877a14
+# ╠═3a4c953f-a881-4d0d-b12a-015c39faf0bb
+# ╠═ddee026d-df9c-4cf0-b50d-9c8993973a45
+# ╠═381f6f06-cbcc-475b-982e-f67b479b486d
 # ╠═983dfe18-83fb-4eff-9da6-e6e4ca79d506
 # ╠═445c8480-19dd-4a5a-a022-97a758341a48
 # ╠═9eb0565c-b76f-4cdc-952d-c6139e4e6f63
@@ -1616,6 +1966,41 @@ Telu_ = filter([:Tchar, :Tinit] => (x,y) -> x == xTchar_2b1[2] && y == yTinit_2b
 # ╠═7f7d17ff-84ec-490a-a90f-f53bea8d8172
 # ╠═ac9f8221-7258-4017-926c-fd8ecd4b9553
 # ╠═637a3ec5-dab7-4fc0-b78f-2da6edec5547
+# ╠═3286b6ee-2deb-4c2b-b1aa-3284b9697139
+# ╠═e36fbd07-42d2-44a3-8bcd-a80e19df18b1
+# ╠═840ec2d9-5389-4ba2-9a7b-9346763f93dc
+# ╠═5a16fa66-5ddf-4f18-b398-5b47c881e3b3
+# ╠═5f89244c-45f8-4115-bee7-2cc9ee8ef903
+# ╠═caa4e339-87c8-4ffa-94ae-1617f562ce0b
+# ╠═d11cb6a8-6786-467b-a5f5-4ea2e163e199
+# ╠═4e75368a-2a81-4c43-aa48-21bc208ee66b
+# ╠═dd1670fe-9968-42a5-8f7a-3fb8c72c197e
+# ╠═f60a676a-3458-4681-9634-dabaede63383
+# ╠═2f6bfa25-acd7-41cf-8429-29c9df694a8d
+# ╠═13f1725c-9355-410c-aa25-5f4de21e0bf4
+# ╠═0013f6f5-f547-49a0-917b-89ee473f9439
+# ╠═f6b370b5-4944-44e3-a9a7-31e10798399e
+# ╠═64ae3896-8b83-472c-9113-7ed879e751c0
+# ╠═c9cdc785-5415-44de-9223-d817f6948553
+# ╠═084f8e7f-ca98-4727-9346-2315b5f51fc2
+# ╠═f00ff9f1-bb8a-4e66-a842-479a9b68e4e2
+# ╠═e66578f9-c40e-448f-aba7-12ff5e7738d8
+# ╠═7239b6aa-86fc-42c2-ad54-2fcee51f3d81
+# ╠═c1c961e9-41ea-43aa-bde5-0d94ba277f90
+# ╠═7b8e57db-5893-45da-83d2-bdd2c58b4650
+# ╠═f0e1e4dd-140f-4bc9-80d2-5dcfe87f385e
+# ╠═81af5cb4-a41b-407f-8578-317aef73f41d
+# ╠═90193caa-5e71-469c-8cd0-51ea21b034e6
+# ╠═7871ce05-73de-4b88-9b00-9a8a735ef3da
+# ╠═1381f354-84ab-4496-9200-d99b10d98ef3
+# ╠═8e1c640d-75bd-46d1-a5cf-ec63f493cf10
+# ╠═05a1c3cb-c778-4d9d-be80-88c1136320d9
+# ╠═c31eee97-b94d-463a-bb91-41f18cd83742
+# ╠═6bbe03d7-cb42-4ff5-92a8-6441515ba8cc
+# ╠═4a14a4ba-162d-46bf-98c0-46107fff0b45
+# ╠═98eb4f63-c4fc-465f-928c-f7f805d49839
+# ╠═b86e3b4d-b216-49b9-9e5d-73d57f24c72e
+# ╠═ffb0843d-dcaf-4207-bd76-e1e21ebdc2cd
 # ╠═2e224d8b-6fb1-4b0b-aacb-28294f8e7b8d
 # ╠═fd778a85-b7f5-4d87-b671-4ac3efee4b79
 # ╠═1739ae21-a60d-413e-832d-cb12fad0ca34
