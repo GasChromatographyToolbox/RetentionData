@@ -1,12 +1,12 @@
-name = "ThermodynamicData"
-uuid = "be58575b-2c47-4cab-afa6-1d39577bd7b9"
-authors = ["Jan Leppert <jleppert@uni-bonn.de>"]
+name = "ThermodynamicRetentionData"
+uuid = "ddd298da-9911-45dd-b841-f54be313a310"
+authors = ["Jan Leppert <68964801+JanLeppert@users.noreply.github.com>"]
+version = "0.1.0"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 ChemicalIdentifiers = "fa4ea961-1416-484e-bda2-883ee1634ba5"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
-DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
 GasChromatographySimulator = "dd82b6e2-56ef-419d-b271-0be268cb65f5"
 Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
 LambertW = "984bce1d-4616-540c-a9ee-88d1112d94c9"
@@ -16,7 +16,3 @@ Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Pluto = "c3e4b0f8-55cb-11ea-2926-15256bba5781"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
-
-[compat]
-DrWatson = "2.7.3"
-julia = "1.5.3"
