@@ -1,0 +1,7 @@
+Name,A,B,C,Tchar,thetachar,DeltaCp,DeltaHref,DeltaSref,beta0,Tref,R²_ABC,R²_Kcentric,χ²_ABC,χ²_Kcentric,χ̄²_ABC,χ̄²_Kcentric,n_ABC,n_Kcentric,approx_equal,WLS,Cat_1
+Ebanol A,-91.994,11324.0,11.834,175.01,33.36,98.393,-58420.0,-86.481,250.0,90.0,1.0,1.0,4.3082e-6,4.3082e-6,8.6165e-7,8.6165e-7,8,8,true,false,allergenic fragrances
+Ebanol B,-94.658,11545.0,12.196,176.36,33.328,101.4,-59166.0,-87.867,250.0,90.0,0.99999,0.99999,7.1694e-5,7.1694e-5,1.4339e-5,1.4339e-5,8,8,true,false,allergenic fragrances
+Iso E Super A,-94.965,12303.0,12.154,213.41,37.053,101.05,-65595.0,-92.836,250.0,90.0,1.0,1.0,2.7114e-5,2.7114e-5,3.8735e-6,3.8735e-6,10,10,true,false,allergenic fragrances
+Iso E Super B,-96.736,12420.0,12.407,214.72,37.385,103.16,-65801.0,-93.049,250.0,90.0,1.0,1.0,4.5734e-6,4.5734e-6,1.1434e-6,1.1434e-6,7,7,true,false,allergenic fragrances
+Iso E Super C,-96.021,12334.0,12.331,217.2,38.245,102.52,-65315.0,-91.485,250.0,90.0,1.0,1.0,1.0752e-5,1.0752e-5,2.6879e-6,2.6879e-6,7,7,true,false,allergenic fragrances
+Iso E Super D,-101.18,12802.0,13.014,218.27,37.694,108.2,-67148.0,-95.219,250.0,90.0,1.0,1.0,1.0279e-5,1.0279e-5,2.5697e-6,2.5697e-6,7,7,true,false,allergenic fragrances
