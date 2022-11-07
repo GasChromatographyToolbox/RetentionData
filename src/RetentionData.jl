@@ -1,4 +1,4 @@
-module ThermodynamicData
+module RetentionData
 
 using CSV
 using DataFrames
@@ -14,7 +14,6 @@ const Tst = 273.15
 const T0 = 90.0
 
 
-# --- ThermodynamicData_reading_parameter_files.jl --- #
 """
 	collect_csv_paths(folder)
 
@@ -527,13 +526,13 @@ function save_all_parameter_data(meta_data::DataFrame; rounding=true, sigdigits=
 	for i=1:length(meta_data.data)
 		tablename = split(meta_data.filename[i], "_")[3]
 		if ismissing(meta_data.d[i]) && ismissing(meta_data.gas[i])
-			new_filename = string(meta_data.source[i], "_AllParam_", tablename, "_", meta_data.phase[i], ".csv")
+			new_filename = string(meta_data.source[i], "_AllParam_", tablename, "_", meta_data.phase[i], "_", meta_data.beta0[i], ".csv")
 		elseif ismissing(meta_data.d[i])
-			new_filename = string(meta_data.source[i], "_AllParam_", tablename, "_", meta_data.phase[i], "_gas", meta_data.gas[i], ".csv")
+			new_filename = string(meta_data.source[i], "_AllParam_", tablename, "_", meta_data.phase[i], "_", meta_data.beta0[i], "_gas", meta_data.gas[i], ".csv")
 		elseif ismissing(meta_data.gas[i])
-			new_filename = string(meta_data.source[i], "_AllParam_", tablename, "_", meta_data.phase[i], "_d", meta_data.d[i], ".csv")
+			new_filename = string(meta_data.source[i], "_AllParam_", tablename, "_", meta_data.phase[i], "_", meta_data.beta0[i], "_d", meta_data.d[i], ".csv")
 		else
-			new_filename = string(meta_data.source[i], "_AllParam_", tablename, "_", meta_data.phase[i], "_d", meta_data.d[i], "_gas", meta_data.gas[i], ".csv")
+			new_filename = string(meta_data.source[i], "_AllParam_", tablename, "_", meta_data.phase[i], "_", meta_data.beta0[i], "_d", meta_data.d[i], "_gas", meta_data.gas[i], ".csv")
 		end
 		# add a round for significant digits
 		#if contains(meta_data.filename[i], "Parameters")
@@ -667,7 +666,7 @@ function flag(data)
 	flag = Array{Array{String,1}}(undef, length(data.Name))
 	for i=1:length(data.Name)
 		fl = String[]
-		x_lambertw = ThermodynamicData.lambertw_x.(data.A[i], data.B[i], data.C[i], data.beta0[i])
+		x_lambertw = lambertw_x.(data.A[i], data.B[i], data.C[i], data.beta0[i])
 		if x_lambertw < -1/exp(1)
 			push!(fl, "lambertw < -1/e")
 		end
@@ -715,8 +714,8 @@ end
 Look up the substance name from the `data` dataframe with ChemicalIdentifiers.jl to find the `CAS`-number, the `formula`, the molecular weight `MW` and the `smiles`-identifier. If the name is not found in the database of ChemicalIdentifiers.jl a list with alternative names (`shortnames.csv`) is used. If there are still no matches, `missing` is used.
 """
 function substance_identification(data::DataFrame)
-	shortnames = DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/ThermodynamicData/data/shortnames.csv"))
-	missing_subs = DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/ThermodynamicData/data/missing.csv"))
+	shortnames = DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/RetentionData/data/shortnames.csv"))
+	missing_subs = DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/RetentionData/data/missing.csv"))
 	
 	CAS = Array{Union{Missing,AbstractString}}(missing, length(data.Name))
 	formula = Array{Union{Missing,AbstractString}}(missing, length(data.Name))
@@ -833,9 +832,6 @@ function ring_number(smiles)
 	end
 	return rn
 end
-# --- ThermodynamicData_reading_parameter_files.jl --- #
-
-# --- ThermodynamicData_reading_lnk-T_files.jl --- #
 
 """
 	load_lnkT_data(db_path)
@@ -1135,7 +1131,7 @@ function extract_parameters_from_fit(fit, β0)
 			Tchar[j] = (fit[i].fitKcentric[j].param[1] ± stderror(fit[i].fitKcentric[j])[1]) - Tst
 			θchar[j] = fit[i].fitKcentric[j].param[2] ± stderror(fit[i].fitKcentric[j])[2]
 			ΔCp[j] = (fit[i].fitKcentric[j].param[3] ± stderror(fit[i].fitKcentric[j])[3]) * R
-			TD = ThermodynamicData.ABC_to_TD(A[j], B[j], C[j], T0)
+			TD = RetentionData.ABC_to_TD(A[j], B[j], C[j], T0)
 			ΔHref[j] = TD[1]
 			ΔSref[j] = TD[2]
 
@@ -1225,7 +1221,7 @@ end
 Add categories defined by the file `groups.csv` (group name and a list of CAS numbers)
 """
 function add_group_to_Cat!(newdata)
-	groups = DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/ThermodynamicData/data/groups.csv"))
+	groups = DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/RetentionData/data/groups.csv"))
 	CAS = Array{Array{String,1}}(undef, length(groups.CAS))
 	for i=1:length(groups.CAS)
 		CAS[i] = split(groups.CAS[i],',')
@@ -1271,13 +1267,13 @@ Export the data into the old database format with the columns:
 * Annotation
 """
 function old_database_format(data) 
-	CI = ThermodynamicData.substance_identification(data)
+	CI = substance_identification(data)
 	Cnumber = Array{Int}(undef, length(data.Name))
 	Hnumber = Array{Int}(undef, length(data.Name))
 	Onumber = Array{Int}(undef, length(data.Name))
 	Nnumber = Array{Int}(undef, length(data.Name))
 	for i=1:length(data.Name)
-		element_numbers = ThermodynamicData.formula_to_dict(CI.formula[i])
+		element_numbers = formula_to_dict(CI.formula[i])
 		Cnumber[i] = element_numbers["C"]
 		Hnumber[i] = element_numbers["H"]
 		if haskey(element_numbers, "O")
@@ -1297,7 +1293,7 @@ function old_database_format(data)
 							Hnumber=Hnumber,
 							Onumber=Onumber,
 							Nnumber=Nnumber,
-							Ringnumber=ThermodynamicData.ring_number.(CI.smiles),
+							Ringnumber=ring_number.(CI.smiles),
 							Molmass=CI.MW,
 							Phase=data.Phase,
 							Tchar=data.Tchar,
@@ -1353,7 +1349,5 @@ function new_database_format(data; ParSet="Kcentric")
 	end
 	return newformat
 end
-
-# --- ThermodynamicData_reading_lnk-T_files.jl --- #
 
 end # module

@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.10
+# v0.19.9
 
 using Markdown
 using InteractiveUtils
@@ -17,7 +17,7 @@ end
 # ╔═╡ 0b608842-5672-44cc-bd70-c168c537667e
 begin
 	using CSV, DataFrames, LambertW, Plots, LsqFit, Statistics, ChemicalIdentifiers, Measurements
-	include("/Users/janleppert/Documents/GitHub/ThermodynamicData/src/ThermodynamicData.jl")
+	include("/Users/janleppert/Documents/GitHub/RetentionData/src/RetentionData.jl")
 	using PlutoUI
 	TableOfContents()
 end
@@ -29,9 +29,10 @@ Fit the ABC-model and the K-centric model to the lnk(T) data loaded from the fol
 """
 
 # ╔═╡ c8f6712d-84d7-45eb-bdcc-d6a3a7504df3
-db_path = "/Users/janleppert/Documents/GitHub/ThermodynamicData/Databases"
+db_path = "/Users/janleppert/Documents/GitHub/RetentionData/Databases"
 
 # ╔═╡ 4cf9351d-b5d0-4469-a543-8d428094884e
+# kann weg
 md"""
 ## Settings
 
@@ -61,6 +62,7 @@ upper bounds ABC-model:
 """
 
 # ╔═╡ 363ee826-14d1-4e1c-a4b9-a2d00e8d48cc
+# kann weg
 begin
 	lb_ABC = [-Inf, -Inf, -Inf]
 	ub_ABC = [Inf, Inf, Inf]
@@ -136,8 +138,8 @@ end
 
 # ╔═╡ c037a761-f192-4a3b-a617-b6024ac6cd61
 begin
-	data = ThermodynamicData.load_lnkT_data(db_path)
-	ThermodynamicData.fit_models!(data; weighted=weight, threshold=th, lb_ABC=lb_ABC, ub_ABC=ub_ABC, lb_Kcentric=lb_Kcentric, ub_Kcentric=ub_Kcentric)
+	data = RetentionData.load_lnkT_data(db_path)
+	RetentionData.fit_models!(data; weighted=weight, threshold=th, lb_ABC=lb_ABC, ub_ABC=ub_ABC, lb_Kcentric=lb_Kcentric, ub_Kcentric=ub_Kcentric)
 end;
 
 # ╔═╡ ae6986cd-33f3-48b1-9f8b-71535670bf27
@@ -156,8 +158,8 @@ data.filename[select_dataset]
 
 # ╔═╡ cd5d0b6c-6e76-4293-80a0-b07ea94a05d8
 begin
-	plnk = ThermodynamicData.plot_lnk_fit(data.fitting, select_dataset, select_substance)
-	preslnk = ThermodynamicData.plot_res_lnk_fit(data.fitting, select_dataset, select_substance)
+	plnk = RetentionData.plot_lnk_fit(data.fitting, select_dataset, select_substance)
+	preslnk = RetentionData.plot_res_lnk_fit(data.fitting, select_dataset, select_substance)
 	pl = plot(plnk, preslnk)
 	md"""
 	$(embed_display(pl))
@@ -220,7 +222,7 @@ md"""
 """
 
 # ╔═╡ f57fc4ec-9522-401f-91de-9495ca50bbb9
-ThermodynamicData.extract_parameters_from_fit!(data);
+RetentionData.extract_parameters_from_fit!(data);
 
 # ╔═╡ a65c584d-a669-4dfe-8deb-03ce2fd3a0c0
 data.parameters[2]
@@ -306,7 +308,7 @@ begin
 end
 
 # ╔═╡ d57b2b89-9763-4998-8434-465de994ce54
-#ThermodynamicData.save_all_parameter_data(data)
+#RetentionData.save_all_parameter_data(data)
 
 # ╔═╡ 91c46525-43f9-4ef2-98f4-35fb3974d64f
 md"""

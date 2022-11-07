@@ -17,7 +17,7 @@ end
 # ╔═╡ fec530e6-d675-4bb9-8b5a-6aa607574a81
 begin
 	using CSV, DataFrames, LambertW, Plots, LsqFit, Statistics, ChemicalIdentifiers, Measurements
-	include("/Users/janleppert/Documents/GitHub/ThermodynamicData/src/ThermodynamicData.jl")
+	include("/Users/janleppert/Documents/GitHub/RetentionData/src/RetentionData.jl")
 	using PlutoUI
 	TableOfContents()
 end
@@ -34,19 +34,19 @@ md"""
 """
 
 # ╔═╡ 36beebc7-15e8-4b8e-93c0-088349de1487
-db_path = "/Users/janleppert/Documents/GitHub/ThermodynamicData/Databases"
+db_path = "/Users/janleppert/Documents/GitHub/RetentionData/Databases"
 
 # ╔═╡ 3757151c-2244-4e45-985c-2ef869abd23d
-data = ThermodynamicData.load_allparameter_data(db_path)
+data = RetentionData.load_allparameter_data(db_path)
 
 # ╔═╡ 3b9c6610-6839-4012-aa0b-219a347ca52f
 data.data[end]
 
 # ╔═╡ d26fc674-ace5-43ef-af1d-855dfc21eba5
 begin
-	alldata = ThermodynamicData.dataframe_of_all(data)
+	alldata = RetentionData.dataframe_of_all(data)
 	# add flags to alldata
-	alldata[!, "flag"] = ThermodynamicData.flag(alldata)
+	alldata[!, "flag"] = RetentionData.flag(alldata)
 	alldata
 end
 
@@ -56,7 +56,7 @@ md"""
 """
 
 # ╔═╡ 5d719450-b016-4cb5-b4a7-2f0e71eba5f3
-fl, nfl = ThermodynamicData.flagged_data(alldata)
+fl, nfl = RetentionData.flagged_data(alldata)
 
 # ╔═╡ 93a5ed9f-64ce-4ee8-bee0-ecd2ff2dcbb8
 md"""
@@ -162,7 +162,7 @@ md"""
 # [x] filter for not identified substances -> alternative names (save in `shortnames.csv`) or they are not in the database of ChemicalIdentifiers.jl (in this case add a separate database with name, CAS, formula, MW, Smiles -> missing.csv)
 
 # ╔═╡ 4129a813-51b6-4790-9f20-a0d5e188b5c7
-CI = ThermodynamicData.substance_identification(alldata)
+CI = RetentionData.substance_identification(alldata)
 
 # ╔═╡ 5cf8c59b-f927-4904-bc26-21048ae3d252
 filter([:CAS] => x -> ismissing(x), CI)  
@@ -180,10 +180,10 @@ md"""
 """
 
 # ╔═╡ b54b46bb-d420-42a7-acc4-000f2177860d
-ThermodynamicData.formula_to_dict(CI.formula[end])
+RetentionData.formula_to_dict(CI.formula[end])
 
 # ╔═╡ c28cca6a-fdf3-4edf-9534-5c4f677c2889
-element_numbers = ThermodynamicData.formula_to_dict.(CI.formula)
+element_numbers = RetentionData.formula_to_dict.(CI.formula)
 
 # ╔═╡ a39e1661-4765-411c-a062-233a64770391
 md""" 
@@ -191,7 +191,7 @@ md"""
 """
 
 # ╔═╡ e34c35f8-1ec8-47ba-af8e-77f10cf2c27b
-rimgnumbers = ThermodynamicData.ring_number.(CI.smiles)
+rimgnumbers = RetentionData.ring_number.(CI.smiles)
 
 # ╔═╡ 11de4e14-3b56-4238-bed8-c110f4de2d44
 md"""
@@ -211,7 +211,7 @@ md"""
 """
 
 # ╔═╡ 54a2712b-d696-4097-8522-f5e1a87ecbec
-alldata_f_ = ThermodynamicData.align_categories(alldata_f)
+alldata_f_ = RetentionData.align_categories(alldata_f)
 
 # ╔═╡ d5381c2d-1794-4af1-9ebb-5188334fc592
 md"""
@@ -219,7 +219,7 @@ md"""
 """
 
 # ╔═╡ 610d535a-2025-4419-b35b-8d28dbaa62b8
-ThermodynamicData.add_group_to_Cat!(alldata_f_)
+RetentionData.add_group_to_Cat!(alldata_f_)
 
 # ╔═╡ 917e88c6-cf5d-4d8f-93e5-f50ea2bb2cdc
 md"""
@@ -227,7 +227,7 @@ md"""
 """
 
 # ╔═╡ e5b49869-2763-4ec9-ae7f-7b70164c0c67
-dup_data, dup_entry = ThermodynamicData.duplicated_data(alldata_f_)
+dup_data, dup_entry = RetentionData.duplicated_data(alldata_f_)
 
 # ╔═╡ dd48df07-4bed-47ce-9799-05958e3adc7a
 count(dup_entry)
@@ -260,7 +260,7 @@ begin
 	for j=1:size(dup_data[select_dup])[1]
 		for i=1:length(T)
 			par = [dup_data[select_dup].Tchar[j]+Tst, dup_data[select_dup].thetachar[j], dup_data[select_dup].DeltaCp[j]/R]
-			lnk[i,j] = ThermodynamicData.Kcentric(T[i]+Tst, par)
+			lnk[i,j] = RetentionData.Kcentric(T[i]+Tst, par)
 		end
 		plot!(plnk_dup, T, lnk[:,j], title="duplicated data, $(dup_data[select_dup].Name[1]), $(dup_data[select_dup].Phase[1])", label=dup_data[select_dup].Source[j])
 	end
@@ -300,7 +300,7 @@ begin
 		if "Blumberg2017" in sources # use Blumberg2017 data
 			j = findfirst(dup_data[i].Source.=="Blumberg2017")
 			push!(selected_dup_data, dup_data[i][j,cols])
-		elseif ["Marquart2020"] == sources # use all data, if only duplicates from Marquart (different isomers)
+		elseif ["Marquart2020"] == sources || ["Brehmer2022"] == sources # use all data, if only duplicates from Marquart (different isomers) or from Brehemer (different df)
 			append!(selected_dup_data, dup_data[i][!,cols])
 		elseif ["McGinitie2011"] == sources # different gases, use "He"
 			j = findfirst(dup_data[i].gas.=="He")
@@ -324,7 +324,7 @@ begin
 end
 
 # ╔═╡ a50d4f05-0f4a-4ae0-ba5d-a27bad3869e0
-dup_data_1, dup_entry_1 = ThermodynamicData.duplicated_data(selected_dup_data)
+dup_data_1, dup_entry_1 = RetentionData.duplicated_data(selected_dup_data)
 # -> remaining cases of duplicates (some will stay, e.g. Marquart2020)
 
 # ╔═╡ 4a73771a-3adc-4fad-8d6a-148dcf9cc3c4
@@ -335,7 +335,7 @@ begin
 end
 
 # ╔═╡ baa7d024-ec90-4744-922d-830f40683abe
-dup_data_2, dup_entry_2 = ThermodynamicData.duplicated_data(newdata)
+dup_data_2, dup_entry_2 = RetentionData.duplicated_data(newdata)
 # only duplicated data from Marquart2020 remain
 
 # ╔═╡ 1b8f3f28-e612-40d0-9b09-136543cbb126
@@ -347,7 +347,7 @@ md"""
 # Name, CAS, Cnumber, Hnumber, Onumber, Nnumber, Ringnumber, Molmass, Phase, Tchar, thetachar, DeltaCp, phi0, Annotation
 
 # ╔═╡ 23e0cf31-1c67-48d1-b014-26c1b44e04a8
-old_db = ThermodynamicData.old_database_format(newdata)
+old_db = RetentionData.old_database_format(newdata)
 
 # ╔═╡ eaed9fdd-d4a2-41f7-8e05-588869e12780
 #CSV.write("../Databases/oldformat_$(string(Dates.now())).csv", old_db)
@@ -365,10 +365,16 @@ md"""
 parset = "Kcentric"
 
 # ╔═╡ 8397c671-c0d1-4632-ae9a-55a6dccd1002
-new_db = ThermodynamicData.new_database_format(newdata; ParSet=parset)
+new_db = RetentionData.new_database_format(newdata; ParSet=parset)
 
 # ╔═╡ 496b86c5-900e-4786-a254-082b8155c65b
 #CSV.write("../Databases/newformat_$(parset)_$(string(Dates.now())).csv", new_db)
+
+# ╔═╡ 1d23d9a9-996a-4c88-9bef-2fcc55fd5b44
+new_db_filter = filter([:Phase, :phi0] => (x, y) -> x == "Rxi5ms" && y == 0.002, new_db)
+
+# ╔═╡ 4d44c3bf-910d-411e-b3b8-99c1c60d43b1
+#CSV.write("../Databases/newformat_$(parset)_Rxi5ms_beta$(1/(4*0.002)).csv", new_db_filter)
 
 # ╔═╡ ccc85a17-690a-4fa4-9b14-9ca58a22e9c8
 md"""
@@ -376,7 +382,7 @@ md"""
 """
 
 # ╔═╡ 46e16092-d952-4c4f-a952-c5201797fcd1
-homologous_series = DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/ThermodynamicData/data/homologous.csv"))
+homologous_series = DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/RetentionData/data/homologous.csv"))
 
 # ╔═╡ f51eb4f5-3529-4c5a-8e2d-1902242ab7af
 names(homologous_series)
@@ -386,7 +392,7 @@ homologous_series."homologous series"
 
 # ╔═╡ e74f1990-5dd2-4062-a8d0-345a5005d0c2
 function add_homologous_to_Cat!(newdata)
-	hs = DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/ThermodynamicData/data/homologous.csv"))
+	hs = DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/RetentionData/data/homologous.csv"))
 	CAS = Array{Array{String,1}}(undef, length(hs.CAS))
 	for i=1:length(hs.CAS)
 		CAS[i] = split(hs.CAS[i],',')
@@ -1742,6 +1748,8 @@ version = "0.9.1+5"
 # ╠═8397c671-c0d1-4632-ae9a-55a6dccd1002
 # ╠═3eeea8dd-de5c-4c73-8d82-4bdb4979d2b0
 # ╠═496b86c5-900e-4786-a254-082b8155c65b
+# ╠═1d23d9a9-996a-4c88-9bef-2fcc55fd5b44
+# ╠═4d44c3bf-910d-411e-b3b8-99c1c60d43b1
 # ╠═ccc85a17-690a-4fa4-9b14-9ca58a22e9c8
 # ╠═46e16092-d952-4c4f-a952-c5201797fcd1
 # ╠═f51eb4f5-3529-4c5a-8e2d-1902242ab7af
