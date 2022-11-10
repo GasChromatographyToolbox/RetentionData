@@ -742,7 +742,11 @@ function substance_identification(data::DataFrame)
 				smiles[i] = missing
 			end
 		else
-			CAS[i] = string(ci.CAS[1], "-", ci.CAS[2], "-", ci.CAS[3])
+			if length(digits(ci.CAS[2])) == 1
+				CAS[i] = string(ci.CAS[1], "-0", ci.CAS[2], "-", ci.CAS[3])
+			else
+				CAS[i] = string(ci.CAS[1], "-", ci.CAS[2], "-", ci.CAS[3])
+			end
 			formula[i] = ci.formula
 			MW[i] = ci.MW
 			smiles[i] = ci.smiles

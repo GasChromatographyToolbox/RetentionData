@@ -22,9 +22,6 @@ begin
 	TableOfContents()
 end
 
-# ╔═╡ 819788d0-55c1-4244-b7f0-2e950cacd3a4
-using Dates
-
 # ╔═╡ 5861512e-a14b-11ec-3c6b-9bd2953bf909
 md"""
 # Load `AllParam` data
@@ -349,8 +346,11 @@ md"""
 # ╔═╡ 23e0cf31-1c67-48d1-b014-26c1b44e04a8
 old_db = RetentionData.old_database_format(newdata)
 
+# ╔═╡ 3eeea8dd-de5c-4c73-8d82-4bdb4979d2b0
+parset = "Kcentric"
+
 # ╔═╡ eaed9fdd-d4a2-41f7-8e05-588869e12780
-#CSV.write("../Databases/oldformat_$(string(Dates.now())).csv", old_db)
+#CSV.write("../Databases/oldformat_$(parset).csv", old_db)
 
 # ╔═╡ 9634b96c-18f1-479e-b28b-3d614893ce7c
 md"""
@@ -361,20 +361,28 @@ md"""
 # - Name, CAS, Phase, Tchar, thetachar, DeltaCp, phi0, Source, Cat_1, Cat_2, ...
 # - Name, CAS, Phase, A, B, C, phi0, Source, Cat_1, Cat_2, ...
 
-# ╔═╡ 3eeea8dd-de5c-4c73-8d82-4bdb4979d2b0
-parset = "Kcentric"
-
 # ╔═╡ 8397c671-c0d1-4632-ae9a-55a6dccd1002
 new_db = RetentionData.new_database_format(newdata; ParSet=parset)
 
 # ╔═╡ 496b86c5-900e-4786-a254-082b8155c65b
-#CSV.write("../Databases/newformat_$(parset)_$(string(Dates.now())).csv", new_db)
+#CSV.write("../Databases/newformat_$(parset).csv", new_db)
+
+# ╔═╡ fa394ad0-055e-4c8f-a3cf-931cd421cb7e
+md"""
+## Filter for stationary phase and phase ratio
+"""
+
+# ╔═╡ 897c8de6-c042-49aa-98ee-e5b3762756b8
+filter_sp = "Rxi5ms"
+
+# ╔═╡ abc5bab1-66c6-4ae8-95a8-3ba6d7eecbf5
+filter_φ = 0.002
 
 # ╔═╡ 1d23d9a9-996a-4c88-9bef-2fcc55fd5b44
-new_db_filter = filter([:Phase, :phi0] => (x, y) -> x == "Rxi5ms" && y == 0.002, new_db)
+new_db_filter = filter([:Phase, :phi0] => (x, y) -> x == filter_sp && y == filter_φ, new_db)
 
 # ╔═╡ 4d44c3bf-910d-411e-b3b8-99c1c60d43b1
-#CSV.write("../Databases/newformat_$(parset)_Rxi5ms_beta$(1/(4*0.002)).csv", new_db_filter)
+#CSV.write("../Databases/newformat_$(parset)_$(filter_sp)_beta$(1/(4*filter_φ)).csv", new_db_filter)
 
 # ╔═╡ ccc85a17-690a-4fa4-9b14-9ca58a22e9c8
 md"""
@@ -454,7 +462,6 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 ChemicalIdentifiers = "fa4ea961-1416-484e-bda2-883ee1634ba5"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
-Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 LambertW = "984bce1d-4616-540c-a9ee-88d1112d94c9"
 LsqFit = "2fda8390-95c7-5789-9bda-21331edee243"
 Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
@@ -1741,13 +1748,15 @@ version = "0.9.1+5"
 # ╠═1b8f3f28-e612-40d0-9b09-136543cbb126
 # ╠═390a66a8-e497-4a0f-b6c4-34487df787e9
 # ╠═23e0cf31-1c67-48d1-b014-26c1b44e04a8
-# ╠═819788d0-55c1-4244-b7f0-2e950cacd3a4
+# ╠═3eeea8dd-de5c-4c73-8d82-4bdb4979d2b0
 # ╠═eaed9fdd-d4a2-41f7-8e05-588869e12780
 # ╠═9634b96c-18f1-479e-b28b-3d614893ce7c
 # ╠═58c8bd1d-2e69-48ac-9cfc-bb525ebe79c8
 # ╠═8397c671-c0d1-4632-ae9a-55a6dccd1002
-# ╠═3eeea8dd-de5c-4c73-8d82-4bdb4979d2b0
 # ╠═496b86c5-900e-4786-a254-082b8155c65b
+# ╠═fa394ad0-055e-4c8f-a3cf-931cd421cb7e
+# ╠═897c8de6-c042-49aa-98ee-e5b3762756b8
+# ╠═abc5bab1-66c6-4ae8-95a8-3ba6d7eecbf5
 # ╠═1d23d9a9-996a-4c88-9bef-2fcc55fd5b44
 # ╠═4d44c3bf-910d-411e-b3b8-99c1c60d43b1
 # ╠═ccc85a17-690a-4fa4-9b14-9ca58a22e9c8
