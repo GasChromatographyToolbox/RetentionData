@@ -714,8 +714,10 @@ end
 Look up the substance name from the `data` dataframe with ChemicalIdentifiers.jl to find the `CAS`-number, the `formula`, the molecular weight `MW` and the `smiles`-identifier. If the name is not found in the database of ChemicalIdentifiers.jl a list with alternative names (`shortnames.csv`) is used. If there are still no matches, `missing` is used.
 """
 function substance_identification(data::DataFrame)
-	shortnames = DataFrame(CSV.File("../data/shortnames.csv"))#DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/RetentionData/data/shortnames.csv"))
-	missing_subs = DataFrame(CSV.File("../data/missing.csv"))#DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/RetentionData/data/missing.csv"))
+	root = dirname(@__FILE__)
+	project = dirname(root)
+	shortnames = DataFrame(CSV.File(joinpath(project, "data", "shortnames.csv")))#DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/RetentionData/data/shortnames.csv"))
+	missing_subs = DataFrame(CSV.File(joinpath(project, "data", "missing.csv")))#DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/RetentionData/data/missing.csv"))
 	
 	CAS = Array{Union{Missing,AbstractString}}(missing, length(data.Name))
 	formula = Array{Union{Missing,AbstractString}}(missing, length(data.Name))
@@ -1225,7 +1227,9 @@ end
 Add categories defined by the file `groups.csv` (group name and a list of CAS numbers)
 """
 function add_group_to_Cat!(newdata)
-	groups = DataFrame(CSV.File("../data/groups.csv"))#DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/RetentionData/data/groups.csv"))
+	root = dirname(@__FILE__)
+	project = dirname(root)
+	groups = DataFrame(CSV.File(joinpath(project, "data", "groups.csv")))#DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/RetentionData/data/groups.csv"))
 	CAS = Array{Array{String,1}}(undef, length(groups.CAS))
 	for i=1:length(groups.CAS)
 		CAS[i] = split(groups.CAS[i],',')
