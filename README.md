@@ -1,5 +1,7 @@
 # RetentionData
 
+[![DOI](https://zenodo.org/badge/426138381.svg)](https://zenodo.org/badge/latestdoi/426138381)
+
 This github is a compilation of retention data in gas chromatography (GC).
 
 **Short introduction to retention factor and the 3 models**
