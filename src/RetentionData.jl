@@ -1190,14 +1190,16 @@ function align_categories(newdata)
 	i_identicalCAS = Array{Array{Int64,1}}(undef, length(uniqueCAS))
 	union_catstrings = Array{Array{Union{Missing,Any},1}}(undef, length(uniqueCAS))
 	for i=1:length(uniqueCAS)
-		i_identicalCAS[i] = findall(newdata.CAS.==uniqueCAS[i])
-		union_catstring = Array{Union{Missing,Any}}(undef, length(i_identicalCAS[i]))
-		for j=1:length(i_identicalCAS[i])
-			union_catstrings[i] = unique(Matrix(newdata[i_identicalCAS[i],iCat]))
-			filter!(x -> ismissing(x).==false, union_catstrings[i])
-		end
+		#if !ismissing(findall(newdata.CAS.==uniqueCAS[i]))
+			i_identicalCAS[i] = findall(newdata.CAS.==uniqueCAS[i])
+			#union_catstring = Array{Union{Missing,Any}}(undef, length(i_identicalCAS[i]))
+			for j=1:length(i_identicalCAS[i])
+				union_catstrings[i] = unique(Matrix(newdata[i_identicalCAS[i],iCat]))
+				filter!(x -> ismissing(x).==false, union_catstrings[i])
+			end
+		#end
 	end
-	i_identicalCAS
+	#i_identicalCAS
 	# number of Cat columns needed
 	ncat = Array{Int64}(undef, length(union_catstrings))
 	for i=1:length(union_catstrings)
@@ -1243,11 +1245,14 @@ function add_group_to_Cat!(newdata)
 				if  ismissing(!(groups.Group[j] in newdata[i, iCat])) || !(groups.Group[j] in newdata[i, iCat])# group not allready in Cat
 					# find the first Cat column with missing entry
 					if isnothing(findfirst(ismissing.(collect(newdata[i,iCat]))))
-						ii = iCat[end] + 1
+						ii = iCat[end] + 4 - size(newdata)[2]
+						test = Array{Union{Missing,String}}(missing, length(newdata.Name))
+						test[i] = groups.Group[j]
+						newdata[!,"Cat_$(ii)"] = test
 					else
 						ii = iCat[findfirst(ismissing.(collect(newdata[i,iCat])))]
+						newdata[i,ii] = groups.Group[j]
 					end
-					newdata[i,ii] = groups.Group[j]
 				end
 			end
 		end
@@ -1328,7 +1333,7 @@ Export the data into the new database format with the columns:
 
 With the parameters `ParSet="ABC"` the ABC-parameters are exported, with `ParSet="Kcentric"` (default) the K-centric parameters are exported.
 """
-function new_database_format(data; ParSet="Kcentric")
+function new_database_format(data; ParSet="Kcentric", filter_flag=true)
 	if ParSet=="ABC"
 		newformat = DataFrame(Name=data.Name,
 								CAS=data.CAS,
@@ -1339,7 +1344,7 @@ function new_database_format(data; ParSet="Kcentric")
 								phi0=1.0./(4.0.*data.beta0),
 								Source=data.Source
 								)
-	else # ParSet="Kcentric", default
+	elseif ParSet=="Kcentric"
 		newformat = DataFrame(Name=data.Name,
 								CAS=data.CAS,
 								Phase=data.Phase,
@@ -1349,6 +1354,36 @@ function new_database_format(data; ParSet="Kcentric")
 								phi0=1.0./(4.0.*data.beta0),
 								Source=data.Source
 								)
+	elseif ParSet=="TD"
+		newformat = DataFrame(Name=data.Name,
+								CAS=data.CAS,
+								Phase=data.Phase,
+								DeltaHref=data.DeltaHref,
+								DeltaSref=data.DeltaSref,
+								DeltaCp=data.DeltaCp,
+								Tref=data.Tref,
+								phi0=1.0./(4.0.*data.beta0),
+								Source=data.Source
+								)
+	elseif ParSet=="all"
+		newformat = DataFrame(Name=data.Name,
+								CAS=data.CAS,
+								Phase=data.Phase,
+								A=data.A,
+								B=data.B,
+								C=data.C,
+								Tchar=data.Tchar,
+								thetachar=data.thetachar,
+								DeltaCp=data.DeltaCp,
+								DeltaHref=data.DeltaHref,
+								DeltaSref=data.DeltaSref,
+								Tref=data.Tref,
+								phi0=1.0./(4.0.*data.beta0),
+								Source=data.Source
+								)
+	end
+	if filter_flag == false
+		newformat[!, "flag"] = data.flag
 	end
 	# add columns with "Cat" in column name
 	i_cat = findall(occursin.("Cat", names(data)))
@@ -1356,6 +1391,73 @@ function new_database_format(data; ParSet="Kcentric")
 		newformat[!, "Cat_$(j)"] = data[!, i_cat[j]]
 	end
 	return newformat
+end
+
+function database(db_path; filter_CAS=true, filter_flag=true, db_format="all")
+	#filter_CAS = true
+	#filter_flag = true
+	#db_format = "Kcentric" # "ABC", "TD", "Kcentric", "all", "old_format"
+	data = RetentionData.load_allparameter_data(db_path)
+	alldata = unique(RetentionData.dataframe_of_all(data))
+	# add flags to alldata
+	alldata[!, "flag"] = RetentionData.flag(alldata)
+	#fl, nfl = RetentionData.flagged_data(alldata)
+
+	# add CAS number
+	CI = RetentionData.substance_identification(alldata)
+	alldata[!, "CAS"] = CI.CAS
+
+	# Filter
+	if filter_CAS == true 
+		alldata = filter!([:CAS] => x -> ismissing(x)==false, alldata)
+	end
+	if filter_flag == true
+		alldata = filter!([:flag] => y -> isempty(y), alldata)
+	end
+	# add categories
+	if filter_CAS == true
+		alldata = RetentionData.align_categories(alldata)
+		RetentionData.add_group_to_Cat!(alldata)
+	else
+		alldata_woCAS = filter([:CAS] => x -> ismissing(x)==true, alldata)
+		alldata_wCAS = filter([:CAS] => x -> ismissing(x)==false, alldata)
+		alldata_wCAS = RetentionData.align_categories(alldata_wCAS)
+		RetentionData.add_group_to_Cat!(alldata_wCAS)
+		#
+		alldata = outerjoin(alldata_wCAS, alldata_woCAS, on = intersect(names(alldata_wCAS), names(alldata_woCAS)), matchmissing=:equal)
+	end
+	
+	# format
+	if db_format == "old_format"
+		db = RetentionData.old_database_format(alldata)
+	else
+		db = RetentionData.new_database_format(alldata; ParSet=db_format, filter_flag=filter_flag)
+	end
+	return db
+end
+
+function filter_Cat(newdata, cat)
+	iCat = findall(occursin.("Cat", names(newdata)))
+	i_true = Int[]
+	for i=1:length(newdata.CAS)
+		for j=1:length(iCat)
+			if ismissing(newdata[!, iCat[j]][i]) == false
+				if cat == newdata[!, iCat[j]][i]
+					push!(i_true, i)
+				end
+			end
+		end
+	end
+	filtered_data = newdata[i_true,:]
+	return filtered_data
+end
+
+function filter_Cat(newdata, cat::Array{String,1})
+	f_data = DataFrame()
+	for i=1:length(cat)
+		append!(f_data, filter_Cat(newdata, cat[i]))
+	end
+	return unique(f_data)
 end
 
 end # module
