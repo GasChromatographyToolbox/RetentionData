@@ -4,49 +4,132 @@
 using Markdown
 using InteractiveUtils
 
-# ╔═╡ ff3195db-9f37-4968-bc0a-8f6a6211bb60
+# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
+macro bind(def, element)
+    quote
+        local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
+        local el = $(esc(element))
+        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
+        el
+    end
+end
+
+# ╔═╡ fec530e6-d675-4bb9-8b5a-6aa607574a81
 begin
-	using CSV, DataFrames, LambertW, Plots, ChemicalIdentifiers, LsqFit, Statistics, Measurements
-	include("/Users/janleppert/Documents/GitHub/RetentionData/src/RetentionData.jl")
+	root = dirname(@__FILE__)
+	project = dirname(root)
+	db_path = joinpath(project, "Databases")
+	
+	using CSV, DataFrames, LambertW, Plots, LsqFit, Statistics, ChemicalIdentifiers, Measurements#
+	include(joinpath(project, "src", "RetentionData.jl"))
 	using PlutoUI
 	TableOfContents()
 end
 
-# ╔═╡ 94fa8bda-954a-11ec-0fde-5113f2e208d1
+# ╔═╡ 5861512e-a14b-11ec-3c6b-9bd2953bf909
 md"""
-# Convert Parameters
-Convert given parameter set into other parameter set.
+# Database
+- Load all files with `AllParam`  from the folder `db_path = `$(db_path) (and its subfolders).
+- combine all data into one DataFrame/csv-file with options:
+
+only with CAS-number: $(@bind check_CAS CheckBox())
+
+filter out flagged substances: $(@bind check_flag CheckBox(true))
+
+database format: $(@bind select_format Select(["all", "ABC", "Kcentric", "TD", "old_format"]))
+
+- plots of the three parameters for all solutes 
+- export with filters
 """
-# add description
 
-# ╔═╡ 08170327-65c0-478e-8931-e47bf1c9739b
-html"""
-	<style>
-	  main {
-		max-width: 1000px;
-	  }
-	</style>
-	"""
+# ╔═╡ f4253f29-7268-42ae-a17a-25e860234b0b
+db = RetentionData.database(db_path; filter_CAS=check_CAS, filter_flag=check_flag, db_format=select_format)
 
-# ╔═╡ 4708475e-5e9c-4666-b094-f42dc8aa9ba2
-db_path = "/Users/janleppert/Documents/GitHub/RetentionData/Databases"
-
-# ╔═╡ a5a4507a-3553-46f9-bfe1-c25456c23423
-data = RetentionData.load_parameter_data(db_path)
-
-# ╔═╡ 89814556-78e3-463b-b235-ba95f6df3d9e
-data.parameters[1]
-
-# ╔═╡ ccb253b1-9805-43d6-b181-241b544fad8d
-data.data[35]
-
-# ╔═╡ 793dd685-660a-46f0-838a-b032cbf4c24d
-#ThermodynamicData.save_all_parameter_data(data)
-# add optional export using PlutoUI
-
-# ╔═╡ d080abf1-1b9e-4aec-900a-d6d219c11672
+# ╔═╡ 93a5ed9f-64ce-4ee8-bee0-ecd2ff2dcbb8
 md"""
-# End
+## Plot parameters A, B, C
+"""
+
+# ╔═╡ 560c76d6-9e50-461a-9815-66b40b59e580
+begin
+	plotly()
+	pABC = scatter(db.A, db.B, db.C, label="", xlabel="A", ylabel="B", zlabel="C")
+	#scatter!(pABC, fl.A, fl.B, fl.C, label="flagged", c=:red, m=:cross)
+	pABC
+end
+
+# ╔═╡ 49ddd8eb-a833-43b8-9f62-18f4d5afaf10
+md"""
+## Plot parameters Tchar, θchar, ΔCp
+"""
+
+# ╔═╡ c99ca5d6-7f7d-4462-afab-e11154370054
+begin
+	pKcentric = scatter(db.Tchar, db.thetachar, db.DeltaCp, label="", xlabel="Tchar", ylabel="thetachar", zlabel="DeltaCp")
+	pKcentric
+end
+
+# ╔═╡ b4044a75-03ad-4f75-a2ac-716b0c2c628f
+md"""
+## Plot parameters ΔHref, ΔSref, ΔCp
+"""
+
+# ╔═╡ 80c784b2-35a6-4fc9-a1fd-7b1d6d89462f
+begin
+	pTD = scatter(db.DeltaHref, db.DeltaSref, db.DeltaCp, label="", xlabel="DeltaHref", ylabel="DeltaSref", zlabel="DeltaCp")
+	pTD
+end
+
+# ╔═╡ 7c95815d-11e5-4de5-8d83-a7ef8518751c
+begin 
+	pTD_ = plot(xlabel="DeltaHref", ylabel="DeltaSref", zlabel="DeltaCp")
+	source = unique(db.Source)
+	for i=1:length(source)
+		db_filter = filter([:Source] => x -> x == source[i], db)
+		scatter!(pTD_, db_filter.DeltaHref, db_filter.DeltaSref, db_filter.DeltaCp, label=source[i])
+	end
+	pTD_
+end
+
+# ╔═╡ 5b1de655-4092-4a9c-b763-d3bdfae5f0e6
+begin
+	cats = Array{Union{Missing,String}}(undef, 0)#[missing, ""]
+	for i=1:length(findall(occursin.("Cat", names(db))))
+		append!(cats, db[!, "Cat_$i"])
+	end
+	md"""
+	## Additional Filters
+	
+	- stationary phase: 
+	
+	$(@bind select_phase confirm(MultiSelect(unique(db.Phase); default=unique(db.Phase))))
+	
+	- dimensionless film thickness: 
+	
+	$(@bind select_phi confirm(MultiSelect(unique(db.phi0); default=unique(db.phi0))))
+	
+	- source: 
+	
+	$(@bind select_source confirm(MultiSelect(unique(db.Source); default=unique(db.Source))))
+	
+	- categories: $(@bind check_cat confirm(CheckBox()))
+	
+	$(@bind select_cat confirm(MultiSelect(collect(skipmissing(unique(cats))); default=collect(skipmissing(unique(cats))))))
+	"""
+end
+
+# ╔═╡ fe328e54-adaa-409c-8de8-7ba8686354b3
+if check_cat == true
+	db_filter = filter_Cat(filter([:Phase, :phi0, :Source] => (x, y, z) -> x in select_phase && y in select_phi && z in select_source, db), select_cat)
+else
+	db_filter = filter([:Phase, :phi0, :Source] => (x, y, z) -> x in select_phase && y in select_phi && z in select_source, db)
+end
+
+# ╔═╡ c05ff77f-369c-4afa-8e25-d81939ed9dc2
+md"""
+## Save database
+
+$(DownloadButton(sprint(CSV.write, db_filter), "database.csv"))
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -63,14 +146,14 @@ PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
-CSV = "~0.10.2"
+CSV = "~0.10.3"
 ChemicalIdentifiers = "~0.1.5"
 DataFrames = "~1.3.2"
 LambertW = "~0.4.5"
 LsqFit = "~0.12.1"
 Measurements = "~2.7.1"
-Plots = "~1.25.11"
-PlutoUI = "~0.7.35"
+Plots = "~1.26.1"
+PlutoUI = "~0.7.37"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -79,7 +162,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.2"
 manifest_format = "2.0"
-project_hash = "bb7cc62d6ab223daf72c3a98d9fec672be24ae9f"
+project_hash = "5dde0e36654a62ca5c8920de19b1da97c9c1b6bc"
 
 [[deps.AbstractPlutoDingetjes]]
 deps = ["Pkg"]
@@ -99,9 +182,9 @@ version = "1.1.1"
 
 [[deps.ArrayInterface]]
 deps = ["Compat", "IfElse", "LinearAlgebra", "Requires", "SparseArrays", "Static"]
-git-tree-sha1 = "9f8186bc19cd1c129d367cb667215517cc03e144"
+git-tree-sha1 = "440d0e5dc0f1b229708dc8c0c348e606e1c153bb"
 uuid = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
-version = "5.0.1"
+version = "5.0.2"
 
 [[deps.Arrow]]
 deps = ["ArrowTypes", "BitIntegers", "CodecLz4", "CodecZstd", "DataAPI", "Dates", "Mmap", "PooledArrays", "SentinelArrays", "Tables", "TimeZones", "UUIDs"]
@@ -140,9 +223,9 @@ version = "0.4.1"
 
 [[deps.CSV]]
 deps = ["CodecZlib", "Dates", "FilePathsBase", "InlineStrings", "Mmap", "Parsers", "PooledArrays", "SentinelArrays", "Tables", "Unicode", "WeakRefStrings"]
-git-tree-sha1 = "9519274b50500b8029973d241d32cfbf0b127d97"
+git-tree-sha1 = "9310d9495c1eb2e4fa1955dd478660e2ecab1fbb"
 uuid = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
-version = "0.10.2"
+version = "0.10.3"
 
 [[deps.Cairo_jll]]
 deps = ["Artifacts", "Bzip2_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
@@ -353,9 +436,9 @@ uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 
 [[deps.FillArrays]]
 deps = ["LinearAlgebra", "Random", "SparseArrays", "Statistics"]
-git-tree-sha1 = "4c7d3757f3ecbcb9055870351078552b7d1dbd2d"
+git-tree-sha1 = "0dbc5b9683245f905993b51d2814202d75b34f1a"
 uuid = "1a297f60-69ca-5386-bcde-b61e274b549b"
-version = "0.13.0"
+version = "0.13.1"
 
 [[deps.FiniteDiff]]
 deps = ["ArrayInterface", "LinearAlgebra", "Requires", "SparseArrays", "StaticArrays"]
@@ -507,9 +590,9 @@ uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 
 [[deps.InverseFunctions]]
 deps = ["Test"]
-git-tree-sha1 = "a7254c0acd8e62f1ac75ad24d5db43f5f19f3c65"
+git-tree-sha1 = "91b5dcf362c5add98049e6c29ee756910b03051d"
 uuid = "3587e190-3f89-42d0-90ee-14403ec27112"
-version = "0.1.2"
+version = "0.1.3"
 
 [[deps.InvertedIndices]]
 git-tree-sha1 = "bee5f1ef5bf65df56bdd2e40447590b272a5471f"
@@ -835,16 +918,16 @@ uuid = "995b91a9-d308-5afd-9ec6-746e21dbc043"
 version = "1.1.3"
 
 [[deps.Plots]]
-deps = ["Base64", "Contour", "Dates", "Downloads", "FFMPEG", "FixedPointNumbers", "GR", "GeometryBasics", "JSON", "Latexify", "LinearAlgebra", "Measures", "NaNMath", "PlotThemes", "PlotUtils", "Printf", "REPL", "Random", "RecipesBase", "RecipesPipeline", "Reexport", "Requires", "Scratch", "Showoff", "SparseArrays", "Statistics", "StatsBase", "UUIDs", "UnicodeFun", "Unzip"]
-git-tree-sha1 = "5c907bdee5966a9adb8a106807b7c387e51e4d6c"
+deps = ["Base64", "Contour", "Dates", "Downloads", "FFMPEG", "FixedPointNumbers", "GR", "GeometryBasics", "JSON", "Latexify", "LinearAlgebra", "Measures", "NaNMath", "Pkg", "PlotThemes", "PlotUtils", "Printf", "REPL", "Random", "RecipesBase", "RecipesPipeline", "Reexport", "Requires", "Scratch", "Showoff", "SparseArrays", "Statistics", "StatsBase", "UUIDs", "UnicodeFun", "Unzip"]
+git-tree-sha1 = "2f041202ab4e47f4a3465e3993929538ea71bd48"
 uuid = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
-version = "1.25.11"
+version = "1.26.1"
 
 [[deps.PlutoUI]]
 deps = ["AbstractPlutoDingetjes", "Base64", "ColorTypes", "Dates", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "JSON", "Logging", "Markdown", "Random", "Reexport", "UUIDs"]
-git-tree-sha1 = "85bf3e4bd279e405f91489ce518dedb1e32119cb"
+git-tree-sha1 = "bf0a1121af131d9974241ba53f601211e9303a9e"
 uuid = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
-version = "0.7.35"
+version = "0.7.37"
 
 [[deps.PooledArrays]]
 deps = ["DataAPI", "Future"]
@@ -854,9 +937,9 @@ version = "1.4.0"
 
 [[deps.Preferences]]
 deps = ["TOML"]
-git-tree-sha1 = "de893592a221142f3db370f48290e3a2ef39998f"
+git-tree-sha1 = "d3538e7f8a790dc8903519090857ef8e1283eecd"
 uuid = "21216c6a-2e73-6563-6e65-726566657250"
-version = "1.2.4"
+version = "1.2.5"
 
 [[deps.PrettyTables]]
 deps = ["Crayons", "Formatting", "Markdown", "Reexport", "Tables"]
@@ -1307,14 +1390,18 @@ version = "0.9.1+5"
 """
 
 # ╔═╡ Cell order:
-# ╠═94fa8bda-954a-11ec-0fde-5113f2e208d1
-# ╠═ff3195db-9f37-4968-bc0a-8f6a6211bb60
-# ╟─08170327-65c0-478e-8931-e47bf1c9739b
-# ╠═4708475e-5e9c-4666-b094-f42dc8aa9ba2
-# ╠═a5a4507a-3553-46f9-bfe1-c25456c23423
-# ╠═89814556-78e3-463b-b235-ba95f6df3d9e
-# ╠═ccb253b1-9805-43d6-b181-241b544fad8d
-# ╠═793dd685-660a-46f0-838a-b032cbf4c24d
-# ╠═d080abf1-1b9e-4aec-900a-d6d219c11672
+# ╟─fec530e6-d675-4bb9-8b5a-6aa607574a81
+# ╠═5861512e-a14b-11ec-3c6b-9bd2953bf909
+# ╠═f4253f29-7268-42ae-a17a-25e860234b0b
+# ╟─93a5ed9f-64ce-4ee8-bee0-ecd2ff2dcbb8
+# ╟─560c76d6-9e50-461a-9815-66b40b59e580
+# ╟─49ddd8eb-a833-43b8-9f62-18f4d5afaf10
+# ╟─c99ca5d6-7f7d-4462-afab-e11154370054
+# ╟─b4044a75-03ad-4f75-a2ac-716b0c2c628f
+# ╟─80c784b2-35a6-4fc9-a1fd-7b1d6d89462f
+# ╟─7c95815d-11e5-4de5-8d83-a7ef8518751c
+# ╟─5b1de655-4092-4a9c-b763-d3bdfae5f0e6
+# ╟─fe328e54-adaa-409c-8de8-7ba8686354b3
+# ╟─c05ff77f-369c-4afa-8e25-d81939ed9dc2
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

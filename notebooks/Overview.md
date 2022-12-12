@@ -16,6 +16,19 @@ calculate the retention parameters from retention data (`Fit_lnk-T_data.jl`) or 
   - ToDo: if no column for `CAS` number exists in the data, add one with the `CAS`-numbers from ChemicalIdentifiers.jl (also by using the file `shortname.csv`) resp. from the file `missing.csv` (chemical substances, which are not found in the database of ChemicalIdentifiers.jl)
   - optional: save the data of all three parameter sets into a file with the keyword `AllParam`
 
+- `Database.jl`:
+  - Load all files with keyword `AllParam`
+  - combine the data of all these files in one dataframe
+  - using the options:
+    - filter for substances with a CAS number
+    - filter out flagged substances (according to different criteria the retention parameters are problematic)
+    - format (all parameter sets or only `ABC`, `Kcentric` or `TD` (thermodynamic) parameter sets)
+  - additional filter can be applied for
+    - stationary phases
+    - dimensionless film thickness
+    - source
+    - categories
+  - save/download option for the filtered database
 - `AllParam.jl`: 
   - Load all files with keyword `AllParam` from a folder
   - combine the data of all these files in one dataframe

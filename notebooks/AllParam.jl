@@ -40,6 +40,9 @@ begin
 	TableOfContents()
 end
 
+# ╔═╡ 91370172-405b-4204-b248-0330436f08e2
+abspath(joinpath(project, ".."))
+
 # ╔═╡ 3757151c-2244-4e45-985c-2ef869abd23d
 data = RetentionData.load_allparameter_data(db_path)
 
@@ -1775,10 +1778,18 @@ version = "1.4.1+0"
 """
 
 # ╔═╡ Cell order:
+<<<<<<< HEAD:notebooks/AllParamTB.jl
 # ╟─5861512e-a14b-11ec-3c6b-9bd2953bf909
 # ╟─a319c1af-33d4-443d-9270-5a0219e25c4c
 # ╟─fec530e6-d675-4bb9-8b5a-6aa607574a81
 # ╟─3757151c-2244-4e45-985c-2ef869abd23d
+=======
+# ╠═5861512e-a14b-11ec-3c6b-9bd2953bf909
+# ╠═a319c1af-33d4-443d-9270-5a0219e25c4c
+# ╠═91370172-405b-4204-b248-0330436f08e2
+# ╠═fec530e6-d675-4bb9-8b5a-6aa607574a81
+# ╠═3757151c-2244-4e45-985c-2ef869abd23d
+>>>>>>> ad58acdd86770d9ee3cd3aaa16f06348371a135c:notebooks/AllParam.jl
 # ╠═3b9c6610-6839-4012-aa0b-219a347ca52f
 # ╠═d26fc674-ace5-43ef-af1d-855dfc21eba5
 # ╠═070c0b3b-efa4-4f4d-a567-87ba4b7c936b
