@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.14
+# v0.19.17
 
 using Markdown
 using InteractiveUtils
@@ -16,8 +16,12 @@ end
 
 # ╔═╡ 0b608842-5672-44cc-bd70-c168c537667e
 begin
-	using CSV, DataFrames, LambertW, Plots, LsqFit, Statistics, ChemicalIdentifiers, Measurements
-	include("/Users/janleppert/Documents/GitHub/RetentionData/src/RetentionData.jl")
+	root = dirname(@__FILE__)
+	project = dirname(root)
+	db_path = joinpath(project, "Databases")
+	
+	using CSV, DataFrames, LambertW, Plots, LsqFit, Statistics, ChemicalIdentifiers, Measurements, RAFF
+	include(joinpath(project, "src", "RetentionData.jl"))
 	using PlutoUI
 	TableOfContents()
 end
@@ -28,118 +32,10 @@ md"""
 Fit the ABC-model and the K-centric model to the lnk(T) data loaded from the folder `db_path` (and its subfolders).
 """
 
-# ╔═╡ c8f6712d-84d7-45eb-bdcc-d6a3a7504df3
-db_path = "/Users/janleppert/Documents/GitHub/RetentionData/Databases"
-
-# ╔═╡ 4cf9351d-b5d0-4469-a543-8d428094884e
-# kann weg
-md"""
-## Settings
-
-- weighted: $(@bind weight CheckBox(default=false))
-
-- threshold: $(@bind bool_th CheckBox()) $(@bind threshold NumberField(0.0:0.01:10.0; default=0.025))
-
-lower bounds ABC-model:
-- `A-ln(β₀)`: $(@bind bool_lb_ABC1 CheckBox(default=false)) $(@bind lb_ABC1 NumberField(-1000:1:1000; default=-1000))
-- `B`: $(@bind bool_lb_ABC2 CheckBox(default=false)) $(@bind lb_ABC2 NumberField(-100000:1:100000; default=0))
-- `C`: $(@bind bool_lb_ABC3 CheckBox(default=false)) $(@bind lb_ABC3 NumberField(-1000:1:1000; default=0))
-
-upper bounds ABC-model:
-- `A-ln(β₀)`: $(@bind bool_ub_ABC1 CheckBox(default=false)) $(@bind ub_ABC1 NumberField(-1000:1:1000; default=0))
-- `B`: $(@bind bool_ub_ABC2 CheckBox(default=false)) $(@bind ub_ABC2 NumberField(-100000:1:100000; default=100000))
-- `C`: $(@bind bool_ub_ABC3 CheckBox(default=false)) $(@bind ub_ABC3 NumberField(-1000:1:1000; default=1000))
-
-lower bounds Kcentric-model:
-- `Tchar + Tst`: $(@bind bool_lb_Kc1 CheckBox(default=false)) $(@bind lb_Kc1 NumberField(0:1:10000; default=0))
-- `θchar`: $(@bind bool_lb_Kc2 CheckBox(default=false)) $(@bind lb_Kc2 NumberField(-1000:1:1000; default=0))
-- `C=ΔCp/R`: $(@bind bool_lb_Kc3 CheckBox(default=false)) $(@bind lb_Kc3 NumberField(-1000:1:1000; default=0))
-
-upper bounds ABC-model:
-- `Tchar + Tst`: $(@bind bool_ub_Kc1 CheckBox(default=false)) $(@bind ub_Kc1 NumberField(0:1:10000; default=10000))
-- `θchar`: $(@bind bool_ub_Kc2 CheckBox(default=false)) $(@bind ub_Kc2 NumberField(-1000:1:1000; default=1000))
-- `C=ΔCp/R`: $(@bind bool_ub_Kc3 CheckBox(default=false)) $(@bind ub_Kc3 NumberField(-1000:1:1000; default=500))
-"""
-
-# ╔═╡ 363ee826-14d1-4e1c-a4b9-a2d00e8d48cc
-# kann weg
-begin
-	lb_ABC = [-Inf, -Inf, -Inf]
-	ub_ABC = [Inf, Inf, Inf]
-	lb_Kcentric = [-Inf, -Inf, -Inf]
-	ub_Kcentric = [Inf, Inf, Inf]
-	if bool_th == true
-		th = threshold
-	else
-		th = NaN
-	end
-	if bool_lb_ABC1 == false
-		lb_ABC[1] = -Inf
-	else
-		lb_ABC[1] = lb_ABC1
-	end
-	if bool_lb_ABC2 == false
-		lb_ABC[2] = -Inf
-	else
-		lb_ABC[2] = lb_ABC2
-	end
-	if bool_lb_ABC3 == false
-		lb_ABC[3] = -Inf
-	else
-		lb_ABC[3] = lb_ABC3
-	end
-	if bool_ub_ABC1 == false
-		ub_ABC[1] = Inf
-	else
-		ub_ABC[1] = ub_ABC1
-	end
-	if bool_ub_ABC2 == false
-		ub_ABC[2] = Inf
-	else
-		ub_ABC[2] = ub_ABC2
-	end
-	if bool_ub_ABC3 == false
-		ub_ABC[3] = Inf
-	else
-		ub_ABC[3] = ub_ABC3
-	end
-	if bool_lb_Kc1 == false
-		lb_Kcentric[1] = -Inf
-	else
-		lb_Kcentric[1] = lb_Kc1
-	end
-	if bool_lb_Kc2 == false
-		lb_Kcentric[2] = -Inf
-	else
-		lb_Kcentric[2] = lb_Kc2
-	end
-	if bool_lb_Kc3 == false
-		lb_Kcentric[3] = -Inf
-	else
-		lb_Kcentric[3] = lb_Kc3
-	end
-	if bool_ub_Kc1 == false
-		ub_Kcentric[1] = Inf
-	else
-		ub_Kcentric[1] = ub_Kc1
-	end
-	if bool_ub_Kc2 == false
-		ub_Kcentric[2] = Inf
-	else
-		ub_Kcentric[2] = ub_Kc2
-	end
-	if bool_ub_Kc3 == false
-		ub_Kcentric[3] = Inf
-	else
-		ub_Kcentric[3] = ub_Kc3
-	end
-	weight, th, lb_ABC, ub_ABC, lb_Kcentric, ub_Kcentric
-end
-
 # ╔═╡ c037a761-f192-4a3b-a617-b6024ac6cd61
 begin
 	data = RetentionData.load_lnkT_data(db_path)
-	RetentionData.fit_models!(data; weighted=weight, threshold=th, lb_ABC=lb_ABC, ub_ABC=ub_ABC, lb_Kcentric=lb_Kcentric, ub_Kcentric=ub_Kcentric)
+	RetentionData.fit_models!(data; weighted=false, threshold=NaN, lb_ABC=[-Inf, -Inf, -Inf], ub_ABC=[Inf, Inf, Inf], lb_Kcentric=[-Inf, -Inf, -Inf], ub_Kcentric=[Inf, Inf, Inf])
 end;
 
 # ╔═╡ ae6986cd-33f3-48b1-9f8b-71535670bf27
@@ -156,6 +52,92 @@ Select substance: $(@bind select_substance Slider(1:length(data.fitting[select_d
 # ╔═╡ b8cb55b5-c40d-4f9b-96fe-580c41cbf3d6
 data.filename[select_dataset]
 
+# ╔═╡ c6d787a2-4aaa-4155-bae4-4235e8fc7ea1
+# include the R2 value of the lsq-fits
+# use the solution where R2 is better?
+# also add to both plots (lnk(T) and res(T)) the lsq-fit for all points, if outliers are detected
+
+# ╔═╡ fad7761b-84b8-4287-a08a-2ace85b1081e
+# put this function (as option) in the fit_models() function
+
+# ╔═╡ 7c800ec4-7194-4cb0-87c8-b3b196deeb16
+function fit_outlier_test(model, T, lnk; ftrusted=0.7)
+	# Kcentric model is prefered, using the ABC model the robust fit some times tends toward a nearly linear fit 
+	raffmodel(x, p) = if model == RetentionData.ABC
+		p[1] + p[2]/x[1] + p[3]*log(x[1])
+	elseif model == RetentionData.Kcentric
+		(p[3] + p[1]/p[2])*(p[1]/x[1] - 1) + p[3]*real(log(Complex(x[1]/p[1])))
+	end
+	if model == RetentionData.ABC
+		p0 = [-100.0, 10000.0, 10.0]
+	elseif model == RetentionData.Kcentric
+		Tchar0 = T[findfirst(minimum(abs.(lnk)).==abs.(lnk))] # estimator for Tchar -> Temperature with the smalles lnk-value
+		p0 = [Tchar0+273.15, 30.0, 10.0]
+	end
+	# first robust fitting with RAFF.jl
+	robust = raff(raffmodel, [collect(skipmissing(T)).+273.15 collect(skipmissing(lnk))], 3; initguess=p0, ftrusted=ftrusted)
+	# second least-square-fit with LsqFit.jl without the outliers
+	fit = curve_fit(model, T[Not(robust.outliers)].+273.15, lnk[Not(robust.outliers)], p0)
+	# residual of outliers to the lsq-result:
+	res_outliers = model(T[robust.outliers] .+ 273.15, fit.param) .- lnk[robust.outliers]
+	# - if this residual is below a threshold (e.g. the highest residual of the used data), than this outlier is not a outlier anymore -> cleared outlier
+	cleared_outliers = robust.outliers[findall(abs.(res_outliers).<maximum(abs.(fit.resid)))] # perhaps use here a more sufisticated methode -> test if this value belongs to the same distribution as the other values (normal distribution)
+	if !isempty(cleared_outliers)
+		# - re-run the lsq-fit now using the cleared outliers 
+		lsq = curve_fit(model, T[Not(robust.outliers[findall(!in(T[cleared_outliers]),T[robust.outliers])])].+273.15, lnk[Not(robust.outliers[findall(!in(T[cleared_outliers]),T[robust.outliers])])], fit.param)
+		return fit, robust, res_outliers, cleared_outliers, lsq
+	else
+		return fit, robust, res_outliers
+	end
+end
+
+# ╔═╡ 2d8d554b-adf3-4794-8079-5f6848dbc34a
+begin
+	m = RetentionData.Kcentric
+	xx = data.fitting[select_dataset].T[select_substance][findall(ismissing.(data.fitting[select_dataset].lnk[select_substance]).==false)]
+	yy = data.fitting[select_dataset].lnk[select_substance][findall(ismissing.(data.fitting[select_dataset].lnk[select_substance]).==false)]
+	fit_test = fit_outlier_test(m, xx, yy; ftrusted=0.7)#(0.8, 1.0))
+	xxx = 0.0:1.0:800.0	
+	pfit = scatter(xx,yy, xlabel="Temperature in °C", ylabel="ln(k)", label="data")
+	plot!(pfit, xxx, m(xxx.+273.15, fit_test[2].solution), label="robust")
+	scatter!(pfit, xx[fit_test[2].outliers], yy[fit_test[2].outliers], m=:diamond, markersize=5, c=:red, label="outliers")
+	plot!(pfit, xxx, m(xxx.+273.15, fit_test[1].param), label="lsq")
+	pres = scatter(xx[Not(fit_test[2].outliers)], fit_test[1].resid, label="used data", xlabel="Temperature in °C", ylabel="residual", c=5)
+	scatter!(pres, xx[fit_test[2].outliers], fit_test[3], label="outliers", c=:red)
+	if length(fit_test) == 5
+		scatter!(pfit, xx[fit_test[4]], yy[fit_test[4]], m=:rect, markersize=2, c=:green, label="cleared outliers")
+		plot!(pfit, xxx, m(xxx.+273.15, fit_test[5].param), label="lsq cleared outliers")
+		scatter!(pres, xx[Not(fit_test[2].outliers[findall(!in(xx[fit_test[4]]),xx[fit_test[2].outliers])])], fit_test[5].resid, label="included cleared outliers", c=:green)
+	end
+	
+	plot(pfit, pres, size=(700,400))
+end
+
+# ╔═╡ ae5a44de-e350-4340-aa1f-49afe8c51bc5
+begin
+	#m = RetentionData.Kcentric
+	#xx = data.fitting[select_dataset].T[select_substance][findall(ismissing.(data.fitting[select_dataset].lnk[select_substance]).==false)]
+	#yy = data.fitting[select_dataset].lnk[select_substance][findall(ismissing.(data.fitting[select_dataset].lnk[select_substance]).==false)]
+	fit_test_ = fit_outlier_test(m, xx, yy; ftrusted=(0.8, 1.0))
+	#xxx = 0.0:1.0:800.0	
+	pfit_ = scatter(xx,yy, xlabel="Temperature in °C", ylabel="ln(k)", label="data")
+	plot!(pfit_, xxx, m(xxx.+273.15, fit_test_[2].solution), label="robust")
+	scatter!(pfit_, xx[fit_test_[2].outliers], yy[fit_test_[2].outliers], m=:diamond, markersize=5, c=:red, label="outliers")
+	plot!(pfit_, xxx, m(xxx.+273.15, fit_test_[1].param), label="lsq")
+	pres_ = scatter(xx[Not(fit_test_[2].outliers)], fit_test_[1].resid, label="used data", xlabel="Temperature in °C", ylabel="residual", c=5)
+	scatter!(pres_, xx[fit_test_[2].outliers], fit_test_[3], label="outliers", c=:red)
+	if length(fit_test_) == 5
+		scatter!(pfit_, xx[fit_test_[4]], yy[fit_test_[4]], m=:rect, markersize=2, c=:green, label="cleared outliers")
+		plot!(pfit_, xxx, m(xxx.+273.15, fit_test_[5].param), label="lsq cleared outliers")
+		scatter!(pres_, xx[Not(fit_test_[2].outliers[findall(!in(xx[fit_test_[4]]),xx[fit_test_[2].outliers])])], fit_test_[5].resid, label="included cleared outliers", c=:green)
+	end
+	
+	plot(pfit_, pres_, size=(700,400))
+end
+
+# ╔═╡ 7c3ad847-3c87-44aa-87e3-acd8c618d56c
+fit_test[1].param, fit_test_[1].param
+
 # ╔═╡ cd5d0b6c-6e76-4293-80a0-b07ea94a05d8
 begin
 	plnk = RetentionData.plot_lnk_fit(data.fitting, select_dataset, select_substance)
@@ -169,7 +151,7 @@ begin
 end
 
 # ╔═╡ fe359675-8279-40dc-b4c2-a0b9021c746a
-data
+data.fitting[33]
 
 # ╔═╡ 02a29dc5-e3c2-450f-b052-289b90e43d4f
 begin
@@ -326,6 +308,7 @@ LsqFit = "2fda8390-95c7-5789-9bda-21331edee243"
 Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+RAFF = "4aa82a78-ed18-41f9-aee6-9d73ba3a0b42"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
@@ -337,6 +320,7 @@ LsqFit = "~0.12.1"
 Measurements = "~2.7.1"
 Plots = "~1.26.0"
 PlutoUI = "~0.7.35"
+RAFF = "~0.6.4"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -345,7 +329,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.2"
 manifest_format = "2.0"
-project_hash = "1e1f32992007934ea0909ba249bfb1abb6c3c0d3"
+project_hash = "2b1659f32ab573908b0840d2390058736b30f255"
 
 [[deps.AbstractPlutoDingetjes]]
 deps = ["Pkg"]
@@ -901,9 +885,9 @@ version = "1.42.0+0"
 
 [[deps.Libiconv_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "42b62845d70a619f063a7da093d995ec8e15e778"
+git-tree-sha1 = "c7cb1f5d892775ba13767a87c7ada0b980ea0a71"
 uuid = "94ce4f54-9a6c-5748-9c1c-f9c7231a4531"
-version = "1.16.1+1"
+version = "1.16.1+2"
 
 [[deps.Libmount_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1145,6 +1129,12 @@ deps = ["DataStructures", "LinearAlgebra"]
 git-tree-sha1 = "78aadffb3efd2155af139781b8a8df1ef279ea39"
 uuid = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
 version = "2.4.2"
+
+[[deps.RAFF]]
+deps = ["DelimitedFiles", "Distributed", "ForwardDiff", "LinearAlgebra", "Logging", "Printf", "Random", "SharedArrays", "Statistics", "Test"]
+git-tree-sha1 = "e716c75b85568625f4bd09aae9174e6f43aca981"
+uuid = "4aa82a78-ed18-41f9-aee6-9d73ba3a0b42"
+version = "0.6.4"
 
 [[deps.REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
@@ -1575,12 +1565,16 @@ version = "0.9.1+5"
 # ╔═╡ Cell order:
 # ╟─6f0ac0bc-9a3f-11ec-0866-9f56a0d489dd
 # ╠═0b608842-5672-44cc-bd70-c168c537667e
-# ╠═c8f6712d-84d7-45eb-bdcc-d6a3a7504df3
-# ╠═4cf9351d-b5d0-4469-a543-8d428094884e
-# ╠═363ee826-14d1-4e1c-a4b9-a2d00e8d48cc
+# ╠═c037a761-f192-4a3b-a617-b6024ac6cd61
 # ╠═ae6986cd-33f3-48b1-9f8b-71535670bf27
 # ╠═3bac9f60-8749-425b-8e87-ba1d7442ca93
 # ╠═b8cb55b5-c40d-4f9b-96fe-580c41cbf3d6
+# ╟─2d8d554b-adf3-4794-8079-5f6848dbc34a
+# ╟─7c3ad847-3c87-44aa-87e3-acd8c618d56c
+# ╟─ae5a44de-e350-4340-aa1f-49afe8c51bc5
+# ╠═c6d787a2-4aaa-4155-bae4-4235e8fc7ea1
+# ╠═fad7761b-84b8-4287-a08a-2ace85b1081e
+# ╠═7c800ec4-7194-4cb0-87c8-b3b196deeb16
 # ╠═cd5d0b6c-6e76-4293-80a0-b07ea94a05d8
 # ╠═fe359675-8279-40dc-b4c2-a0b9021c746a
 # ╠═02a29dc5-e3c2-450f-b052-289b90e43d4f
@@ -1593,7 +1587,6 @@ version = "0.9.1+5"
 # ╠═8587abf6-b962-4e9c-a8b4-2d9ba5a25e51
 # ╠═ca984e5b-2e1f-40ce-ad65-453171b402dc
 # ╠═6493101e-d266-4cff-a72b-7e2829d158ce
-# ╠═c037a761-f192-4a3b-a617-b6024ac6cd61
 # ╠═2d7ed692-9524-428c-92cf-d4ecabe8278e
 # ╠═faa843f7-ef50-47ab-a5a4-9d32265b7e5a
 # ╠═dbf47c68-709f-45b5-9ae1-b75fe2e76c5f

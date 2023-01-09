@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.14
+# v0.19.17
 
 using Markdown
 using InteractiveUtils
@@ -120,9 +120,24 @@ end
 
 # ╔═╡ fe328e54-adaa-409c-8de8-7ba8686354b3
 if check_cat == true
-	db_filter = filter_Cat(filter([:Phase, :phi0, :Source] => (x, y, z) -> x in select_phase && y in select_phi && z in select_source, db), select_cat)
+	db_filter = RetentionData.filter_Cat(filter([:Phase, :phi0, :Source] => (x, y, z) -> x in select_phase && y in select_phi && z in select_source, db), select_cat)
 else
 	db_filter = filter([:Phase, :phi0, :Source] => (x, y, z) -> x in select_phase && y in select_phi && z in select_source, db)
+end
+
+# ╔═╡ f090a29a-e69c-4c52-b7ae-fe92543b8564
+scatter(db.Tchar, db.DeltaCp)
+
+# ╔═╡ 16cbb035-e52d-4c43-8e70-8fc794053d92
+model_ΔCp_Tchar(x,p) = p[1] .+ p[2].*x
+
+# ╔═╡ e1f0837c-bb51-4ce1-8cae-bb4d241915a0
+fit_ΔCp_Tchar = curve_fit(model_ΔCp_Tchar, db.Tchar.+273.15, db.DeltaCp, [0.0, 1.0])
+
+# ╔═╡ e270769e-60d8-4690-b976-e003295a7d23
+begin
+	scatter(db.Tchar.+273.15, db.DeltaCp)
+	plot!(db.Tchar.+273.15, model_ΔCp_Tchar(db.Tchar.+273.15, fit_ΔCp_Tchar.param))
 end
 
 # ╔═╡ c05ff77f-369c-4afa-8e25-d81939ed9dc2
@@ -718,9 +733,9 @@ version = "1.42.0+0"
 
 [[deps.Libiconv_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "42b62845d70a619f063a7da093d995ec8e15e778"
+git-tree-sha1 = "c7cb1f5d892775ba13767a87c7ada0b980ea0a71"
 uuid = "94ce4f54-9a6c-5748-9c1c-f9c7231a4531"
-version = "1.16.1+1"
+version = "1.16.1+2"
 
 [[deps.Libmount_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1390,7 +1405,7 @@ version = "0.9.1+5"
 """
 
 # ╔═╡ Cell order:
-# ╟─fec530e6-d675-4bb9-8b5a-6aa607574a81
+# ╠═fec530e6-d675-4bb9-8b5a-6aa607574a81
 # ╠═5861512e-a14b-11ec-3c6b-9bd2953bf909
 # ╠═f4253f29-7268-42ae-a17a-25e860234b0b
 # ╟─93a5ed9f-64ce-4ee8-bee0-ecd2ff2dcbb8
@@ -1401,7 +1416,11 @@ version = "0.9.1+5"
 # ╟─80c784b2-35a6-4fc9-a1fd-7b1d6d89462f
 # ╟─7c95815d-11e5-4de5-8d83-a7ef8518751c
 # ╟─5b1de655-4092-4a9c-b763-d3bdfae5f0e6
-# ╟─fe328e54-adaa-409c-8de8-7ba8686354b3
+# ╠═fe328e54-adaa-409c-8de8-7ba8686354b3
+# ╠═f090a29a-e69c-4c52-b7ae-fe92543b8564
+# ╠═16cbb035-e52d-4c43-8e70-8fc794053d92
+# ╠═e1f0837c-bb51-4ce1-8cae-bb4d241915a0
+# ╠═e270769e-60d8-4690-b976-e003295a7d23
 # ╟─c05ff77f-369c-4afa-8e25-d81939ed9dc2
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
