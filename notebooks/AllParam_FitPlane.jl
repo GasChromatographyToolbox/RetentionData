@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.9
+# v0.19.14
 
 using Markdown
 using InteractiveUtils
@@ -7,7 +7,7 @@ using InteractiveUtils
 # ╔═╡ fec530e6-d675-4bb9-8b5a-6aa607574a81
 begin
 	using CSV, DataFrames, LambertW, Plots, LsqFit, Statistics, ChemicalIdentifiers, Measurements
-	include("/Users/janleppert/Documents/GitHub/ThermodynamicData/src/ThermodynamicData.jl")
+	include("/Users/janleppert/Documents/GitHub/RetentionData/src/RetentionData.jl")
 	using PlutoUI
 	TableOfContents()
 	
@@ -31,19 +31,19 @@ md"""
 plotly()
 
 # ╔═╡ 36beebc7-15e8-4b8e-93c0-088349de1487
-db_path = "/Users/janleppert/Documents/GitHub/ThermodynamicData/Databases"
+db_path = "/Users/janleppert/Documents/GitHub/RetentionData/Databases"
 
 # ╔═╡ 3757151c-2244-4e45-985c-2ef869abd23d
-data = ThermodynamicData.load_allparameter_data(db_path)
+data = RetentionData.load_allparameter_data(db_path)
 
 # ╔═╡ 3b9c6610-6839-4012-aa0b-219a347ca52f
 data.data[end]
 
 # ╔═╡ d26fc674-ace5-43ef-af1d-855dfc21eba5
 begin
-	alldata = ThermodynamicData.dataframe_of_all(data)
+	alldata = RetentionData.dataframe_of_all(data)
 	# add flags to alldata
-	alldata[!, "flag"] = ThermodynamicData.flag(alldata)
+	alldata[!, "flag"] = RetentionData.flag(alldata)
 	alldata
 end
 
@@ -53,7 +53,7 @@ md"""
 """
 
 # ╔═╡ 5d719450-b016-4cb5-b4a7-2f0e71eba5f3
-fl, nfl = ThermodynamicData.flagged_data(alldata)
+fl, nfl = RetentionData.flagged_data(alldata)
 
 # ╔═╡ 93a5ed9f-64ce-4ee8-bee0-ecd2ff2dcbb8
 md"""
@@ -109,7 +109,7 @@ md"""
 # ╔═╡ 9e241abd-3da8-43c7-b925-1b8fd1236fc3
 function fit_plane_xy_z(xydata, zdata, p0)
 	fit = curve_fit(model_plane, xydata, zdata, p0)
-	R² =  ThermodynamicData.coeff_of_determination(model_plane, fit, xydata, zdata)
+	R² =  RetentionData.coeff_of_determination(model_plane, fit, xydata, zdata)
 	edges = [[minimum(xydata[:,1]), maximum(xydata[:,1]), minimum(xydata[:,1]), maximum(xydata[:,1])] [minimum(xydata[:,2]), maximum(xydata[:,2]), maximum(xydata[:,2]), minimum(xydata[:,2])]]
 	z_fit = model_plane(edges, fit.param)
 	return fit, R², edges, z_fit
@@ -216,7 +216,7 @@ modification of ``ax+by+cz+d=0`` with arbritrary definition of ``d=-1``. The nor
 # ╔═╡ 860e50b7-b171-423c-8607-b42fea91742a
 function fit_plane_xyz(xyzdata, p0)
 	fit = curve_fit(model_plane_, xyzdata, ones(length(xyzdata[:,1])), p0)
-	R² =  ThermodynamicData.coeff_of_determination(model_plane_, fit, xyzdata, ones(length(xyzdata[:,1])))
+	R² =  RetentionData.coeff_of_determination(model_plane_, fit, xyzdata, ones(length(xyzdata[:,1])))
 	edges = [[minimum(xyzdata[:,1]), maximum(xyzdata[:,1]), minimum(xyzdata[:,1]), maximum(xyzdata[:,1])] [minimum(xyzdata[:,2]), maximum(xyzdata[:,2]), maximum(xyzdata[:,2]), minimum(xyzdata[:,2])]]
 	z_fit = (1.0.-fit.param[1].*edges[:,1].-fit.param[2].*edges[:,2])./fit.param[3]
 	return fit, R², edges, z_fit
@@ -237,6 +237,7 @@ begin
 	pABC_nfl2 = scatter(nfl.A, nfl.B, nfl.C, label="not flagged", xlabel="A", ylabel="B", zlabel="C")
 	plot!(pABC_nfl2, planeABC[3][:,1], planeABC[3][:,2], planeABC[4], c=:orange, label="planeABC, R²=$(round(planeABC[2];digits=5))", st=:mesh3d, α=0.5)
 	plot!(pABC_nfl2, [centroid_ABC[1],centroid_ABC[1]+10*n_ABC_[1]], [centroid_ABC[2],centroid_ABC[2]+10*n_ABC_[2]], [centroid_ABC[3],centroid_ABC[3]+10*n_ABC_[3]], c=:black, label="nvec")
+	scatter!(pABC_nfl2, fl.A, fl.B, fl.C, label="not flagged", c=:red)
 	pABC_nfl2
 end
 
@@ -694,8 +695,9 @@ PlutoUI = "~0.7.37"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.7.1"
+julia_version = "1.8.2"
 manifest_format = "2.0"
+project_hash = "e75c9f14f29744d0dc879b49c0e7ce41cc8dc8a4"
 
 [[deps.AbstractPlutoDingetjes]]
 deps = ["Pkg"]
@@ -711,6 +713,7 @@ version = "3.3.3"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
+version = "1.1.1"
 
 [[deps.Arpack]]
 deps = ["Arpack_jll", "Libdl", "LinearAlgebra", "Logging"]
@@ -852,6 +855,7 @@ version = "3.42.0"
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
+version = "0.5.2+0"
 
 [[deps.Contour]]
 deps = ["StaticArrays"]
@@ -929,8 +933,9 @@ uuid = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 version = "0.8.6"
 
 [[deps.Downloads]]
-deps = ["ArgTools", "LibCURL", "NetworkOptions"]
+deps = ["ArgTools", "FileWatching", "LibCURL", "NetworkOptions"]
 uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
+version = "1.6.0"
 
 [[deps.DualNumbers]]
 deps = ["Calculus", "NaNMath", "SpecialFunctions"]
@@ -972,6 +977,9 @@ deps = ["Compat", "Dates", "Mmap", "Printf", "Test", "UUIDs"]
 git-tree-sha1 = "04d13bfa8ef11720c24e4d840c0033d145537df7"
 uuid = "48062228-2e41-5def-b9a4-89aafe57970f"
 version = "0.9.17"
+
+[[deps.FileWatching]]
+uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 
 [[deps.FillArrays]]
 deps = ["LinearAlgebra", "Random", "SparseArrays", "Statistics"]
@@ -1212,10 +1220,12 @@ uuid = "4af54fe1-eca0-43a8-85a7-787d91b784e3"
 [[deps.LibCURL]]
 deps = ["LibCURL_jll", "MozillaCACerts_jll"]
 uuid = "b27032c2-a3e7-50c8-80cd-2d36dbcbfd21"
+version = "0.6.3"
 
 [[deps.LibCURL_jll]]
 deps = ["Artifacts", "LibSSH2_jll", "Libdl", "MbedTLS_jll", "Zlib_jll", "nghttp2_jll"]
 uuid = "deac9b47-8bc7-5906-a0fe-35ac56dc84c0"
+version = "7.84.0+0"
 
 [[deps.LibGit2]]
 deps = ["Base64", "NetworkOptions", "Printf", "SHA"]
@@ -1224,6 +1234,7 @@ uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
 [[deps.LibSSH2_jll]]
 deps = ["Artifacts", "Libdl", "MbedTLS_jll"]
 uuid = "29816b5a-b9ab-546f-933c-edad1886dfa8"
+version = "1.10.2+0"
 
 [[deps.Libdl]]
 uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
@@ -1254,9 +1265,9 @@ version = "1.42.0+0"
 
 [[deps.Libiconv_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "42b62845d70a619f063a7da093d995ec8e15e778"
+git-tree-sha1 = "c7cb1f5d892775ba13767a87c7ada0b980ea0a71"
 uuid = "94ce4f54-9a6c-5748-9c1c-f9c7231a4531"
-version = "1.16.1+1"
+version = "1.16.1+2"
 
 [[deps.Libmount_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1320,6 +1331,7 @@ version = "1.0.3"
 [[deps.MbedTLS_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "c8ffd9c3-330d-5841-b78e-0817d7145fa1"
+version = "2.28.0+0"
 
 [[deps.Measurements]]
 deps = ["Calculus", "LinearAlgebra", "Printf", "RecipesBase", "Requires"]
@@ -1349,6 +1361,7 @@ version = "0.7.3"
 
 [[deps.MozillaCACerts_jll]]
 uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
+version = "2022.2.1"
 
 [[deps.MultivariateStats]]
 deps = ["Arpack", "LinearAlgebra", "SparseArrays", "Statistics", "StatsAPI", "StatsBase"]
@@ -1369,6 +1382,7 @@ version = "0.3.7"
 
 [[deps.NetworkOptions]]
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
+version = "1.2.0"
 
 [[deps.Ogg_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1379,10 +1393,12 @@ version = "1.3.5+1"
 [[deps.OpenBLAS_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
 uuid = "4536629a-c528-5b80-bd46-f80d51c5b363"
+version = "0.3.20+0"
 
 [[deps.OpenLibm_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "05823500-19ac-5b8b-9628-191a04bc5112"
+version = "0.8.1+0"
 
 [[deps.OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1440,6 +1456,7 @@ version = "0.40.1+0"
 [[deps.Pkg]]
 deps = ["Artifacts", "Dates", "Downloads", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+version = "1.8.0"
 
 [[deps.PlotThemes]]
 deps = ["PlotUtils", "Requires", "Statistics"]
@@ -1489,9 +1506,9 @@ uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 
 [[deps.Qt5Base_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Fontconfig_jll", "Glib_jll", "JLLWrappers", "Libdl", "Libglvnd_jll", "OpenSSL_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libxcb_jll", "Xorg_xcb_util_image_jll", "Xorg_xcb_util_keysyms_jll", "Xorg_xcb_util_renderutil_jll", "Xorg_xcb_util_wm_jll", "Zlib_jll", "xkbcommon_jll"]
-git-tree-sha1 = "c6c0f690d0cc7caddb74cef7aa847b824a16b256"
+git-tree-sha1 = "0c03844e2231e12fda4d0086fd7cbe4098ee8dc5"
 uuid = "ea2cea3b-5b76-57ae-a6ef-0a8af62496e1"
-version = "5.15.3+1"
+version = "5.15.3+2"
 
 [[deps.QuadGK]]
 deps = ["DataStructures", "LinearAlgebra"]
@@ -1549,6 +1566,7 @@ version = "0.3.0+0"
 
 [[deps.SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
+version = "0.7.0"
 
 [[deps.Scratch]]
 deps = ["Dates"]
@@ -1641,6 +1659,7 @@ uuid = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
 [[deps.TOML]]
 deps = ["Dates"]
 uuid = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
+version = "1.0.0"
 
 [[deps.TableTraits]]
 deps = ["IteratorInterfaceExtensions"]
@@ -1657,6 +1676,7 @@ version = "1.7.0"
 [[deps.Tar]]
 deps = ["ArgTools", "SHA"]
 uuid = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
+version = "1.10.1"
 
 [[deps.Test]]
 deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
@@ -1856,6 +1876,7 @@ version = "1.4.0+3"
 [[deps.Zlib_jll]]
 deps = ["Libdl"]
 uuid = "83775a58-1f1d-513f-b197-d71354ab007a"
+version = "1.2.12+3"
 
 [[deps.Zstd_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1872,6 +1893,7 @@ version = "0.15.1+0"
 [[deps.libblastrampoline_jll]]
 deps = ["Artifacts", "Libdl", "OpenBLAS_jll"]
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
+version = "5.1.1+0"
 
 [[deps.libfdk_aac_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1894,10 +1916,12 @@ version = "1.3.7+1"
 [[deps.nghttp2_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "8e850ede-7688-5339-a07c-302acd2aaf8d"
+version = "1.48.0+0"
 
 [[deps.p7zip_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
+version = "17.4.0+0"
 
 [[deps.x264_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
