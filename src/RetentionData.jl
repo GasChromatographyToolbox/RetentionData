@@ -22,7 +22,7 @@ Collect the paths of all .csv-files in the `folder` and all its sub-folders in a
 function collect_csv_paths(folder)
 	csv_obj = String[]
 	
-	db_obj = filter(x -> isdir.(x) || endswith.(x, ".csv"), readdir(folder, join=true))
+	db_obj = filter(x -> isdir.(x) || endswith.(x, ".csv") || endswith.(x, ".CSV"), readdir(folder, join=true))
 	
 	for i=1:length(db_obj)
 		if endswith(db_obj[i], ".csv")
