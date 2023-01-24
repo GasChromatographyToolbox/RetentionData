@@ -32,6 +32,14 @@ Xte = Matrix(iris[2:2:end,1:4])'
 Xte_labels = Vector(iris[2:2:end,5])
 end	
 
+# ╔═╡ 5861512e-a14b-11ec-3c6b-9bd2953bf909
+md"""
+# Load `AllParam` data
+- Load all files with `AllParam`  from the folder `db_path` (and its subfolders).
+- use ChemicalIdentifiers.jl
+- combine all data into one DataFrame/csv-file
+"""
+
 # ╔═╡ abc5bab1-66c6-4ae8-95a8-3ba6d7eecbf5
 filter_φ = 0.002
 
@@ -487,25 +495,11 @@ filter_Cat(newdata, hs[3])
 # ╔═╡ 3ebdebe8-ad66-4721-b9ff-92da125bcf7c
 sort(filter_Cat(newdata, "Grob"), [:Phase])
 
-# ╔═╡ 5861512e-a14b-11ec-3c6b-9bd2953bf909
-md"""
-# Load `AllParam` data
-- Load all files with `AllParam`  from the folder `db_path` (and its subfolders).
-- use ChemicalIdentifiers.jl
-- combine all data into one DataFrame/csv-file
-"""
-
 # ╔═╡ 873b90e2-bc5d-4272-a90b-978bb4e1358d
-md"""# For Paper"""
+md"""# Supplemental Material For Paper"""
 
-# ╔═╡ 71f510e2-e79f-453d-b30b-757bbba8859b
-lambertw(-0.3, 0)
-
-# ╔═╡ 472aeb9e-2900-4bbc-abdb-a169cbd83d4c
-1/exp(1)
-
-# ╔═╡ bb9195be-606c-45f9-ba74-c569168bfb8f
-lambertw.(-1 ./exp.(1), -1)
+# ╔═╡ bc5f3e11-d5de-4343-b959-86431b8f04f1
+md"""## Lambert W function"""
 
 # ╔═╡ 23a8d4b2-dd8d-4a30-96ad-26de84f7c2a9
 begin 
@@ -514,20 +508,64 @@ Plots.plot(-1/exp(1):0.01:6, lambertw.(-1/exp(1):0.01:6, 0), label=L"W_{0}", xla
 	plot!(-1 ./exp.(1):0.01:0, lambertw.(-1 ./exp.(1):0.01:0, -1), label=L"W_{-1}", dpi=500)
 end
 
+# ╔═╡ b846be08-4850-4bbd-9366-b7e2207bb370
+md"""## Filter functions"""
+
 # ╔═╡ 7b39d781-b51c-4406-af76-ce9459b1cdb6
-md"""Literature"""
+md"""### Filter Data per Literature"""
+
+# ╔═╡ c365e82d-d5e5-4be0-81c9-c5a8097d4e8c
+function SourceFilter(alldata)
+SourceFilter=Array{Any}(undef, size(unique(alldata.Source))[1])
+	for i=1:size(unique(alldata.Source))[1]
+		try
+		SourceFilter[i] =filter([:Source] => x -> string(x) == unique(alldata.Source)[i], alldata)
+		catch
+			SourceFilter[i] =filter([:Source] => x -> string(x)== string(unique(alldata.Source)[i]), alldata)
+		end	
+	end	
+
+N_SourceCompound=Array{Any}(undef, size(unique(alldata.Source))[1])
+	for i=1:size(unique(alldata.Source))[1]
+	N_SourceCompound[i]=size(unique(SourceFilter[i].Name))[1]	
+	end
+
+N_Column=Array{Any}(undef, size(unique(alldata.Source))[1])
+	for i=1:size(unique(alldata.Source))[1]
+	N_Column[i]=size(unique(SourceFilter[i].Phase))[1]	
+	end	
+
+N_Elements=Array{Any}(undef, size(unique(alldata.Source))[1])
+	for i=1:size(unique(alldata.Source))[1]
+	N_Elements[i]=size(SourceFilter[i].Name)[1]	
+	end
+SourceFilter	
+
+df=DataFrame(Source=unique(alldata.Source),N_Elements=N_Elements,  NumberofCompounds=N_SourceCompound, N_Column=N_Column)	
+	return df, SourceFilter
+end	
+
+# ╔═╡ 512ae246-792c-45c7-ae58-406bc70d47ff
+SourceFilter(alldata)
+
+# ╔═╡ 36e6a92f-8729-4679-b733-b12fa29ac625
+size(unique(nfl.Phase))
+
+# ╔═╡ 44c3be0a-3376-4b51-bd07-683e96029d69
+SourceFilter(nfl)
 
 # ╔═╡ 3996350d-940a-48db-9930-7c391b748b07
 nfl
 
 # ╔═╡ 33ec66d1-2a25-45b6-936c-0acff05e624c
-unique(nfl.Cat_1)
+unique(nfl.CAS)
 
 # ╔═╡ 6729a636-aa06-4695-8fd6-2078322e2ffa
-md"""## Filter for Substance category"""
+md"""### Filter for Substance category"""
 
 # ╔═╡ 99c115a1-7bbf-4aa1-b526-6200e4d8a622
 begin 
+	function SubstFilter(nfl)
 	SubstanceFilter=Array{Any}(undef, size(unique(nfl.Cat_1))[1])
 	for i=1:size(unique(nfl.Cat_1))[1]
 		try
@@ -536,39 +574,16 @@ begin
 			SubstanceFilter[i] =filter([:Cat_1] => x -> string(x)== string(unique(nfl.Cat_1)[i]), nfl)
 		end	
 	end	
-SubstanceFilter	
+return SubstanceFilter	
+	end	
+	SubstanceFilter=SubstFilter(nfl)
 end	
 
-# ╔═╡ c365e82d-d5e5-4be0-81c9-c5a8097d4e8c
-begin 
-SourceFilter=Array{Any}(undef, size(unique(nfl.Source))[1])
-	for i=1:size(unique(nfl.Source))[1]
-		try
-		SourceFilter[i] =filter([:Source] => x -> string(x) == unique(nfl.Source)[i], nfl)
-		catch
-			SourceFilter[i] =filter([:Source] => x -> string(x)== string(unique(nfl.Source)[i]), nfl)
-		end	
-	end	
+# ╔═╡ 1d708017-f3d8-4126-9808-3cbc7bce0050
+SubstFilter(fl)
 
-N_SourceCompound=Array{Any}(undef, size(unique(nfl.Source))[1])
-	for i=1:size(unique(nfl.Source))[1]
-	N_SourceCompound[i]=size(unique(SourceFilter[i].Name))[1]	
-	end
-
-N_Column=Array{Any}(undef, size(unique(nfl.Source))[1])
-	for i=1:size(unique(nfl.Source))[1]
-	N_Column[i]=size(unique(SourceFilter[i].Phase))[1]	
-	end	
-
-N_Elements=Array{Any}(undef, size(unique(nfl.Source))[1])
-	for i=1:size(unique(nfl.Source))[1]
-	N_Elements[i]=size(SourceFilter[i].Name)[1]	
-	end
-SourceFilter	
-end	
-
-# ╔═╡ 512ae246-792c-45c7-ae58-406bc70d47ff
-DataFrame(Source=unique(nfl.Source), NumberofCompounds=N_SourceCompound, N_Column=N_Column, N_Elements=N_Elements)
+# ╔═╡ 21277d27-7ea7-4adc-b1b8-4429c29cdf51
+md"""## K-centric Retention Parameter"""
 
 # ╔═╡ 9b0d91eb-6672-4cf8-82e4-844becf699bb
 function PaperPlot(SubstanceFilter)
@@ -576,7 +591,7 @@ plotly()
 	Plot=Array{Any}(undef, size(SubstanceFilter)[1])
 	Plot=Plots.scatter(xlabel="Tchar",zlabel="thetachar", ylabel="DeltaCp")
 	for i=1:size(SubstanceFilter)[1]
-		Plots.scatter!(SubstanceFilter[i].Tchar, SubstanceFilter[i].DeltaCp,SubstanceFilter[i].thetachar, label=string(SubstanceFilter[i].Cat_1[1]))
+		Plots.scatter!(SubstanceFilter[i].Tchar, SubstanceFilter[i].DeltaCp,SubstanceFilter[i].thetachar, label=string(SubstanceFilter[i].Cat_1[1]), markers=Plots.supported_markers()[i], c=i)
 	end		
 return Plot
 end	
@@ -585,9 +600,10 @@ end
 begin
 gr()
 PlotTcharTheta=Array{Any}(undef, size(SubstanceFilter)[1])
-	PlotTcharTheta=Plots.scatter(xlabel=L"_{Tchar}", ylabel=L"θ_{char}")
+	PlotTcharTheta=Plots.scatter(xlabel=L"T_{char}", ylabel=L"θ_{char}")
 	for i=1:size(SubstanceFilter)[1]
-		Plots.scatter!(SubstanceFilter[i].Tchar, SubstanceFilter[i].thetachar, label=string(SubstanceFilter[i].Cat_1[1]), legend=:none, xlims=(-20,440))
+		Plots.scatter!(SubstanceFilter[i].Tchar, SubstanceFilter[i].thetachar, label=string(SubstanceFilter[i].Cat_1[1]), legend=:false,markers=Plots.supported_markers()[i], c=[i])
+		#
 	end
 	PlotTcharTheta
 end
@@ -598,7 +614,7 @@ gr()
 	PlotTcharCp=Array{Any}(undef, size(SubstanceFilter)[1])
 	PlotTcharCp=Plots.scatter(xlabel=L"T_{char}", ylabel=L"ΔC_p")
 	for i=1:size(SubstanceFilter)[1]
-		Plots.scatter!(SubstanceFilter[i].Tchar, SubstanceFilter[i].DeltaCp, label=string(SubstanceFilter[i].Cat_1[1]), xlims=(-20,440) , legend=:none, ylims=(-10,300))
+		Plots.scatter!(SubstanceFilter[i].Tchar, SubstanceFilter[i].DeltaCp, label=string(SubstanceFilter[i].Cat_1[1]), legend=:topleft, markers=Plots.supported_markers()[i], c=i)
 	end		
 	 PlotTcharCp
 end
@@ -606,8 +622,75 @@ end
 # ╔═╡ 09b949bf-36b5-44a6-ab13-e0074b824756
 	Plots.plot(PlotTcharTheta, PlotTcharCp)
 
-# ╔═╡ 6cdd3e4c-e599-41ac-8aaa-752eb05c533e
-PaperPlot(SubstanceFilter)
+# ╔═╡ b5c0895f-1683-4f46-960b-9463819610a1
+md""" ### Dependence between Θchar and Tchar
+
+Fit Blumberg2022/2010 Model 
+
+$Θ_{char}=(T_{char})^{0.7} \cdot (10^3 \cdot𝝋)^{0.09}$
+
+
+"""
+
+# ╔═╡ 492fabbd-c84a-421e-a169-4229cf444e11
+begin 
+	PhiFilter=Array{Any}(undef, size(unique(nfl.beta0))[1])
+	for i=1:size(unique(nfl.beta0))[1]
+		try
+		PhiFilter[i] =filter([:beta0] => x -> x == unique(nfl.beta0)[i], nfl)
+		catch
+			PhiFilter[i] =filter([:beta0] => x -> x== unique(nfl.beta0)[i], nfl)
+		end	
+	end	
+PhiFilter	
+end	
+
+# ╔═╡ 80745a29-6a58-47c8-a176-e6f58a858d82
+begin 
+	Theta_calc=Array{Any}(undef, size(unique(nfl.beta0)))
+	for i=1:size(unique(nfl.beta0))[1]
+		
+				data=Array{Any}(undef,size(PhiFilter[i].Tchar)[1])	
+				for j=1:size(PhiFilter[i].Tchar)[1]		
+				try
+					data[j] =(PhiFilter[i].Tchar[j]).^0.7.*(1000 .*1 ./(4 .*PhiFilter[i].beta0[j])).^0.09
+				catch
+					data[j]=NaN
+				end
+				end
+		Theta_calc[i]=data
+	end	
+	Theta_calc
+end	
+
+# ╔═╡ 333ffd2d-d4db-46fd-b3f3-5cbffeb5243d
+begin
+Plotti=Array{Any}(undef, size(unique(nfl.beta0)))
+			Plots.scatter()
+	for i=1:size(unique(nfl.beta0))[1]
+
+		Plotti=Plots.scatter!(PhiFilter[i].Tchar, PhiFilter[i].thetachar, label=unique(nfl.beta0)[i])
+
+	end
+	Plotti
+end	
+
+# ╔═╡ fc4a5a98-f1ab-45b5-9c2d-44693ad35313
+begin
+Theta_plot=Array{Any}(undef, size(unique(nfl.beta0))[1])
+	for j=1:size(unique(nfl.beta0))[1]
+	x=0:1:650
+	y=((x.+273.15)./273.15).^0.7.*(22 .*(1000 .*1 ./(4 .* unique(nfl.beta0)[j])).^0.09)
+		Theta_plot[j]=Plots.plot!(Plotti, x, y, label=unique(nfl.beta0)[j], legend=:outerright, c=j)
+	end
+	Theta_plot[1]
+end	
+
+# ╔═╡ bf9adfcc-5baf-486d-b606-4f1a8d935a17
+unique(nfl.beta0)[5]
+
+# ╔═╡ 421e55ec-a18b-4aba-9c88-0e53cdcef75d
+md""" ## ABC Model """
 
 # ╔═╡ fb2bf9b6-e7e2-4b5f-8013-e6db5d779f85
 begin
@@ -624,6 +707,12 @@ Plots.scatter(SubstanceFilter[4].A, SubstanceFilter[4].B, SubstanceFilter[4].C, 
 
 # ╔═╡ 202ab200-b358-4b3b-8bd9-da3a1c158d39
 #CSV.write("$(pwd())\\Database.csv", filter([:Source]=>(x)-> occursin.(string(x), string("Marquart2020","Duong2022", "Brehmer2022")), nfl))
+
+# ╔═╡ f687a423-bf8f-4c5f-b98e-f8afc5c4ee9e
+md""" ## PCA Analysis"""
+
+# ╔═╡ 455548e2-b4f8-4b70-90f7-0c64552f62bc
+md"""### Example"""
 
 # ╔═╡ 7ed2478c-7635-48dd-9357-900bc376829d
 dataset("datasets", "iris")
@@ -656,7 +745,7 @@ end
 scatter(Yte[1,:],Yte[2,:],Yte[3,:],marker=:circle,linewidth=0)
 
 # ╔═╡ ad5312d2-43bb-42f6-8327-a3de2dfc1aae
-md"""## PCA ABC Model"""
+md"""### PCA ABC Model"""
 
 # ╔═╡ 4ec1f88e-d2e4-43c0-9e43-68322ab96e1c
 nfl
@@ -677,7 +766,7 @@ ABC_Y=predict(PCA_ABC,  ABC_Testing)
 reconstruct(PCA_ABC, ABC_Y)
 
 # ╔═╡ 8a4541fc-7ebb-46f0-a652-10f7ba1ea689
-md"""## PCA kcentric Model"""
+md"""### PCA K-centric Model"""
 
 # ╔═╡ 52f944bf-2038-497a-ae39-a2ee95ad67d2
 kcentric_Training=Matrix(nfl[1:2:end-1,7:9])'
@@ -691,21 +780,34 @@ PCA_kcentric=fit(PCA, kcentric_Training; maxoutdim=2)
 # ╔═╡ 0698e398-d204-448e-9460-5eb2a51a5d05
 kcentric_Y= predict(PCA_kcentric, kcentric_Testing)
 
-# ╔═╡ 62373423-ecf6-4928-a527-f13145c84301
-Plots.scatter(kcentric_Y[1,:], kcentric_Y[2,:], xlabel="PC1", ylabel="PC2")
-
 # ╔═╡ ff6f166d-6d18-44c1-8be3-8d6d40bcd738
 reconstruct(PCA_kcentric, kcentric_Y)
 
+# ╔═╡ 62373423-ecf6-4928-a527-f13145c84301
+Plots.scatter(kcentric_Y[1,:], kcentric_Y[2,:], xlabel="PC1", ylabel="PC2")
+
 # ╔═╡ 00703bb9-21f6-4f93-95f4-45995d81ee5d
 begin 
+	gr()
 	KcentricPCA_Plot=Array{Any}(undef, size(SubstanceFilter)[1])
 		KcentricPCA_Plot=Plots.scatter(xlabel="PC1", ylabel="PC2")
 	for i=1:size(SubstanceFilter)[1]
 		Predict=predict(PCA_kcentric,Matrix(SubstanceFilter[i][!,7:9])')
-		Plots.scatter!(KcentricPCA_Plot, Predict[1,:],Predict[2,:], label=SubstanceFilter[i].Cat_1[1], legend=:outerright)
+		Plots.scatter!(KcentricPCA_Plot, Predict[1,:],Predict[2,:], label=SubstanceFilter[i].Cat_1[1], legend=:outerright, markers=Plots.supported_markers()[i], title="Compounds")
 	end		
 KcentricPCA_Plot
+end
+
+# ╔═╡ c00ded9a-6d20-4748-9dc6-789831820427
+begin 
+	gr()
+	KcentricPCA_Plot_beta=Array{Any}(undef, size(PhiFilter)[1])
+		KcentricPCA_Plot_beta=Plots.scatter(xlabel="PC1", ylabel="PC2")
+	for i=1:size(PhiFilter)[1]
+		Predict=predict(PCA_kcentric,Matrix(PhiFilter[i][!,7:9])')
+		Plots.scatter!(KcentricPCA_Plot_beta, Predict[1,:],Predict[2,:], label=PhiFilter[i].beta0[1], legend=:outerright, markers=Plots.supported_markers()[i], xlims=(-250,250), title="Phase Ratio")
+	end		
+KcentricPCA_Plot_beta
 end
 
 # ╔═╡ d175f8a5-9001-4d57-a8ca-715c19bbc94f
@@ -718,6 +820,12 @@ predict(PCA_kcentric,Matrix(SubstanceFilter[1][!,7:9])')
 begin 
 	[:,nfl.Cat_1.=="alcohol"]
 end	
+
+# ╔═╡ b5abad47-c35c-4763-958d-d1c0b6af6fae
+File=CSV.File("E:\\Tillman\\Doktorarbeit\\Arbeit\\Labor\\Messdaten\\RXI-5SilMS05\\FAMES\\Brehmer2022_lnk_T_Rxi5SilMS_beta125.CSV", delim=',', decimal='.')
+
+# ╔═╡ b7dff30b-541b-45b6-831e-b00ed5125a44
+CSV.write("E:\\Tillman\\Doktorarbeit\\Arbeit\\Labor\\Messdaten\\RXI-5SilMS05\\FAMES\\Brehmer2022_lnk_T_Rxi5SilMS_beta125_2.csv", File)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -830,7 +938,7 @@ uuid = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 version = "0.10.8"
 
 [[deps.Cairo_jll]]
-deps = ["Artifacts", "Bzip2_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
+deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
 git-tree-sha1 = "4b859a208b2397a7a623a03449e4636bdb17bcf2"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.16.1+1"
@@ -2057,6 +2165,7 @@ version = "1.4.1+0"
 """
 
 # ╔═╡ Cell order:
+# ╟─5861512e-a14b-11ec-3c6b-9bd2953bf909
 # ╠═c28cca6a-fdf3-4edf-9534-5c4f677c2889
 # ╠═b7be7b57-7e69-4cc9-af54-db9465f18d05
 # ╠═5cf8c59b-f927-4904-bc26-21048ae3d252
@@ -2070,7 +2179,7 @@ version = "1.4.1+0"
 # ╠═a50d4f05-0f4a-4ae0-ba5d-a27bad3869e0
 # ╠═81ccb3e6-dcca-4b66-9be6-a1fb63f7e056
 # ╟─9634b96c-18f1-479e-b28b-3d614893ce7c
-# ╟─3b9c6610-6839-4012-aa0b-219a347ca52f
+# ╠═3b9c6610-6839-4012-aa0b-219a347ca52f
 # ╟─d26fc674-ace5-43ef-af1d-855dfc21eba5
 # ╠═3eeea8dd-de5c-4c73-8d82-4bdb4979d2b0
 # ╠═4129a813-51b6-4790-9f20-a0d5e188b5c7
@@ -2140,27 +2249,37 @@ version = "1.4.1+0"
 # ╠═32fd5862-e14b-4cea-b99c-0f26e0d8fbb5
 # ╠═dd48df07-4bed-47ce-9799-05958e3adc7a
 # ╠═ef0c1872-da54-48b5-8212-634d7d91e9ac
-# ╟─5861512e-a14b-11ec-3c6b-9bd2953bf909
-# ╠═873b90e2-bc5d-4272-a90b-978bb4e1358d
-# ╠═71f510e2-e79f-453d-b30b-757bbba8859b
-# ╠═472aeb9e-2900-4bbc-abdb-a169cbd83d4c
-# ╠═bb9195be-606c-45f9-ba74-c569168bfb8f
+# ╟─873b90e2-bc5d-4272-a90b-978bb4e1358d
+# ╟─bc5f3e11-d5de-4343-b959-86431b8f04f1
 # ╟─23a8d4b2-dd8d-4a30-96ad-26de84f7c2a9
+# ╟─b846be08-4850-4bbd-9366-b7e2207bb370
 # ╟─7b39d781-b51c-4406-af76-ce9459b1cdb6
-# ╟─512ae246-792c-45c7-ae58-406bc70d47ff
-# ╠═3996350d-940a-48db-9930-7c391b748b07
-# ╟─33ec66d1-2a25-45b6-936c-0acff05e624c
-# ╟─6729a636-aa06-4695-8fd6-2078322e2ffa
-# ╟─99c115a1-7bbf-4aa1-b526-6200e4d8a622
 # ╟─c365e82d-d5e5-4be0-81c9-c5a8097d4e8c
+# ╠═512ae246-792c-45c7-ae58-406bc70d47ff
+# ╟─36e6a92f-8729-4679-b733-b12fa29ac625
+# ╠═44c3be0a-3376-4b51-bd07-683e96029d69
+# ╠═3996350d-940a-48db-9930-7c391b748b07
+# ╠═33ec66d1-2a25-45b6-936c-0acff05e624c
+# ╟─6729a636-aa06-4695-8fd6-2078322e2ffa
+# ╠═99c115a1-7bbf-4aa1-b526-6200e4d8a622
+# ╠═1d708017-f3d8-4126-9808-3cbc7bce0050
+# ╟─21277d27-7ea7-4adc-b1b8-4429c29cdf51
 # ╟─9b0d91eb-6672-4cf8-82e4-844becf699bb
 # ╟─3b0e9656-63e8-4fa3-8f06-33f8a2fcd4dc
 # ╟─4b5de04c-24ef-4f79-937a-f2816d7397d7
-# ╟─09b949bf-36b5-44a6-ab13-e0074b824756
-# ╟─6cdd3e4c-e599-41ac-8aaa-752eb05c533e
+# ╠═09b949bf-36b5-44a6-ab13-e0074b824756
+# ╟─b5c0895f-1683-4f46-960b-9463819610a1
+# ╠═492fabbd-c84a-421e-a169-4229cf444e11
+# ╟─80745a29-6a58-47c8-a176-e6f58a858d82
+# ╟─333ffd2d-d4db-46fd-b3f3-5cbffeb5243d
+# ╟─fc4a5a98-f1ab-45b5-9c2d-44693ad35313
+# ╟─bf9adfcc-5baf-486d-b606-4f1a8d935a17
+# ╟─421e55ec-a18b-4aba-9c88-0e53cdcef75d
 # ╟─fb2bf9b6-e7e2-4b5f-8013-e6db5d779f85
 # ╠═156b9224-3714-4039-aa49-ecc6b04d38dc
 # ╠═202ab200-b358-4b3b-8bd9-da3a1c158d39
+# ╟─f687a423-bf8f-4c5f-b98e-f8afc5c4ee9e
+# ╟─455548e2-b4f8-4b70-90f7-0c64552f62bc
 # ╟─391282b0-f684-4e3d-b4ba-1eba0689fe5e
 # ╟─7ed2478c-7635-48dd-9357-900bc376829d
 # ╠═0a3c98ea-8e40-4508-9b75-9280f118567e
@@ -2168,24 +2287,27 @@ version = "1.4.1+0"
 # ╠═687713db-b78e-42e6-b3d5-01581b9d4f0a
 # ╠═1a967a90-d016-4c1b-b02d-b8b32bd999eb
 # ╟─41962cb0-951e-4547-82bf-4309148343ec
-# ╠═f20591bb-c98c-4e6f-b186-9e4444dec8d9
+# ╟─f20591bb-c98c-4e6f-b186-9e4444dec8d9
 # ╟─ad5312d2-43bb-42f6-8327-a3de2dfc1aae
-# ╟─4ec1f88e-d2e4-43c0-9e43-68322ab96e1c
+# ╠═4ec1f88e-d2e4-43c0-9e43-68322ab96e1c
 # ╟─534ec747-4b14-4c01-a837-7e6db2479381
 # ╟─982446df-5021-44ca-b7a8-2f0042baf88d
 # ╠═b6fcf3bb-9b33-42ba-97fa-f0116ae0ec46
-# ╟─73611573-ae96-49d5-86be-8b646cd5c8bc
-# ╟─09806af8-d0d8-49a9-a2fe-4357992584b8
+# ╠═73611573-ae96-49d5-86be-8b646cd5c8bc
+# ╠═09806af8-d0d8-49a9-a2fe-4357992584b8
 # ╟─8a4541fc-7ebb-46f0-a652-10f7ba1ea689
-# ╠═52f944bf-2038-497a-ae39-a2ee95ad67d2
-# ╠═32471c63-a5c0-4ad9-b9e4-1701a8a9902b
+# ╟─52f944bf-2038-497a-ae39-a2ee95ad67d2
+# ╟─32471c63-a5c0-4ad9-b9e4-1701a8a9902b
 # ╠═fb7017ab-b8bb-4175-8434-5f9c1e026509
-# ╟─0698e398-d204-448e-9460-5eb2a51a5d05
+# ╠═0698e398-d204-448e-9460-5eb2a51a5d05
+# ╠═ff6f166d-6d18-44c1-8be3-8d6d40bcd738
 # ╟─62373423-ecf6-4928-a527-f13145c84301
-# ╟─ff6f166d-6d18-44c1-8be3-8d6d40bcd738
 # ╟─00703bb9-21f6-4f93-95f4-45995d81ee5d
+# ╟─c00ded9a-6d20-4748-9dc6-789831820427
 # ╟─d175f8a5-9001-4d57-a8ca-715c19bbc94f
 # ╟─e2271c7c-a808-4e2e-b2e0-76393a4fcb67
 # ╟─0f8c585e-e2d3-4135-8d2a-81b10829131a
+# ╠═b5abad47-c35c-4763-958d-d1c0b6af6fae
+# ╠═b7dff30b-541b-45b6-831e-b00ed5125a44
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
