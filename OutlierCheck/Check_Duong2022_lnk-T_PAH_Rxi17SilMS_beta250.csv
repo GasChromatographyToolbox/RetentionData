@@ -1,0 +1,17 @@
+Name,OutlierTest
+Naphthalene,true
+Acenaphthylene,true
+Acenaphthene,true
+Fluorene,true
+Phenanthrene,true
+Anthracene,true
+Fluoranthene,true
+Pyrene,true
+Benz[a]anthracene,true
+Chrysene,true
+Benzo[b]fluoranthene,true
+Benzo[k]fluoranthene,true
+Benzo[a]pyrene,true
+"Indeno[1,2,3-cd]pyrene",true
+"Dibenzo[a,h]anthracene",true
+"Benzo[g,h,i]perylene",true

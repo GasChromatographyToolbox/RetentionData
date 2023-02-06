@@ -1,0 +1,38 @@
+Name,OutlierTest
+Methyl butyrate,true
+Methyl hexanoate,true
+Methyl octanoate,true
+Methyl decanoate,true
+Methyl undecanoate,true
+Methyl laurate,true
+Methyl tridecanoate,true
+Methyl myristate,true
+Methyl myristoleate,true
+Methyl pentadecanoate,true
+Methyl cis-10-pentadecenoate,true
+Methyl palmitate,true
+Methyl palmitoleate,true
+Methyl heptadecanoate,true
+cis-10-Heptadecenoic acid methyl ester,true
+Methyl stearate,true
+trans-9-Elaidic acid methyl ester,true
+cis-9-Oleic acid methyl ester,true
+Methyl linolelaidate,true
+Methyl linoleate,true
+Methyl arachidate,true
+Methyl gamma linolenate,true
+Methyl cis-11-eicosenoate,true
+Methyl alpha linolenate,true
+Methyl heneicosanoate,true
+"cis-11,14-Eicosadienoic acid methyl ester",true
+Methyl behenate,true
+"cis-8,11,14-Eicosatrienoic acid methyl ester",true
+Methyl erucate,true
+"cis-11,14,17-Eicosatrienoic acid methyl ester",true
+"cis-5,8,11,14-Eicosatetraenoic acid methyl ester",true
+Methyl tricosanoate,true
+"cis-13,16-Docosadienoic acid methyl ester",true
+Methyl lignocerate,true
+"cis-5,8,11,14,17-Eicosapentaenoic acid methyl ester",true
+Methyl nervonate,true
+"cis-4,7,10,13,16,19-Docosahexaenoic acid methyl ester",true

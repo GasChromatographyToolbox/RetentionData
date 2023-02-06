@@ -1,9 +1,9 @@
 Name,OutlierTest
 Glyceryl triacetate,true
-Glyceryl tributyrate,true
+Glyceryl tributyrate,false
 Glyceryl trihexanoate,true
 Glyceryl trioctanoate,true
-Glyceryl tridecanoate,true
+Glyceryl tridecanoate,false
 Glyceryl trilaurate,true
 Glyceryl trimyristine,false
 Glyceryl tripalmitin,false
