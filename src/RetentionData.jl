@@ -8,6 +8,7 @@ using Plots
 using ChemicalIdentifiers
 using Statistics
 using Measurements
+using RAFF
 
 const R = 8.31446261815324
 const Tst = 273.15
@@ -958,13 +959,15 @@ Plot the `lnk`-values over `T` of the selected dataset `i` of the selected subst
 function plot_lnk_fit(fit, i, j)
 	T = 0.0:1.0:800.0
 	plnk = scatter(fit[i].T[j], fit[i].lnk[j], label="data", title=fit[i].Name[j], xlabel="T in °C", ylabel="lnk")
-	if "i_ABC" in names(fit[i])
-		ex_i_ABC = fit[i].ex_i_ABC[j]
-		scatter!(plnk, fit[i].T[j][ex_i_ABC], fit[i].lnk[j][ex_i_ABC], label="excluded ABC", m=:diamond, mcolor=:grey, msize=2)
-		ex_i_Kcentric = fit[i].ex_i_Kcentric[j]
-		scatter!(plnk, fit[i].T[j][ex_i_Kcentric], fit[i].lnk[j][ex_i_Kcentric], label="excluded Kcentric", m=:cross, mcolor=:orange, msize=2)
+	#if !isempty(fit[i].ex_i_ABC[j])
+	#	scatter!(plnk, first.(fit[i].ex_i_ABC[j]), last.(fit[i].ex_i_ABC[j]), label="excluded ABC", m=:diamond, mcolor=:grey, msize=2)
+	#end
+	if fit[i].AcceptCheck[j] == true
+		scatter!(plnk, first.(fit[i].ex_i_Kcentric[j]), last.(fit[i].ex_i_Kcentric[j]), label="excluded outliers", m=:cross, mcolor=:orange, msize=2)
+	else 
+		scatter!(plnk, first.(fit[i].ex_i_Kcentric[j]), last.(fit[i].ex_i_Kcentric[j]), label="included outliers", m=:cross, mcolor=:orange, msize=2)
 	end
-	plot!(plnk, T, ABC(T.+Tst, fit[i].fitABC[j].param), label=string("ABC, R²=", round(fit[i].R²_ABC[j]; digits=4)))
+	#plot!(plnk, T, ABC(T.+Tst, fit[i].fitABC[j].param), label=string("ABC, R²=", round(fit[i].R²_ABC[j]; digits=4)))
 	plot!(plnk, T, Kcentric(T.+Tst, fit[i].fitKcentric[j].param), label=string("Kcentric, R²=", round(fit[i].R²_Kcentric[j]; digits=4)))
 	return plnk
 end
@@ -977,35 +980,37 @@ end
 Plot the absolute residuals (not the weighted) of `lnk`-values over `T` of the selected dataset `i` of the selected substance `j` to the fitted models.
 """
 function plot_res_lnk_fit(fit, i, j)
-	#if "i_ABC" in names(fit[i])
-	i_ABC = fit[i].i_ABC[j]
-	i_Kcentric = fit[i].i_Kcentric[j]
-	#else
-	#	i_ABC = findall(isa.(fit[i].lnk[j], Float64))
-	#	i_Kcentric = findall(isa.(fit[i].lnk[j], Float64))
-	#end
-	preslnk = scatter(fit[i].T[j][i_ABC], fit[i].lnk[j][i_ABC] .- ABC(fit[i].T[j][i_ABC].+Tst, fit[i].fitABC[j].param), 
-							label=string("ABC, R²=", round(fit[i].R²_ABC[j]; digits=4)), title=fit[i].Name[j], xlabel="T in °C", ylabel="Resid(lnk)")
-	scatter!(preslnk, fit[i].T[j][i_Kcentric], fit[i].lnk[j][i_Kcentric] .- Kcentric(fit[i].T[j][i_Kcentric].+Tst, fit[i].fitKcentric[j].param), 
-							label=string("Kcentric, R²=", round(fit[i].R²_Kcentric[j]; digits=4)))
-	#if "ex_i_ABC" in names(fit[i])
-	ex_i_ABC = fit[i].ex_i_ABC[j]
-	ex_i_Kcentric = fit[i].ex_i_Kcentric[j]
-	if length(ex_i_ABC) > 0
-		scatter!(preslnk, fit[i].T[j][ex_i_ABC], fit[i].lnk[j][ex_i_ABC] .- ABC(fit[i].T[j][ex_i_ABC].+Tst, fit[i].fitABC[j].param), 
-							label="excluded ABC", m=:diamond, mcolor=:grey, msize=2)
+	X = fit[i].T[j]
+	Y = fit[i].lnk[j]
+
+	Kcentric_ = fit[i].fitKcentric[j]
+	
+	XOutKcentric = first.(fit[i].ex_i_Kcentric[j])
+	YOutKcentric = last.(fit[i].ex_i_Kcentric[j])
+	
+	YInKcentric = filter(x -> x ∉ last.(fit[i].ex_i_Kcentric[j]), Y)
+	XInKcentric = Array{Float64}(undef, length(YInKcentric))
+	for ii=1:length(YInKcentric)
+		XInKcentric[ii] = X[findfirst(YInKcentric[ii].==Y)]
 	end
-	if length(ex_i_Kcentric) > 0
-		scatter!(preslnk, fit[i].T[j][ex_i_Kcentric], fit[i].lnk[j][ex_i_Kcentric] .- Kcentric(fit[i].T[j][ex_i_Kcentric].+Tst, fit[i].fitKcentric[j].param), 
-							label="excluded Kcentric", m=:cross, mcolor=:orange, msize=2)
+
+	resOutKcentric = RetentionData.Kcentric(XOutKcentric .+ 273.15, Kcentric_.param) .- YOutKcentric
+	
+	if fit[i].AcceptCheck[j] == true
+		pRes = scatter(XInKcentric, Kcentric_.resid, label=string("Kcentric, R²=", round(fit[i].R²_Kcentric[j]; digits=4)), xlabel="Temperature in °C", ylabel="residual")
+		scatter!(pRes, XOutKcentric, resOutKcentric, label="outliers", c=:orange, m=:rect)
+	else
+		pRes = scatter(X, Kcentric_.resid, label=string("Kcentric, R²=", round(fit[i].R²_Kcentric[j]; digits=4)), xlabel="Temperature in °C", ylabel="residual")
+		scatter!(pRes, XOutKcentric, resOutKcentric, label="potential outliers", c=:orange, m=:rect)
 	end
-	return preslnk
+	
+	return pRes
 end
 
 """
 	fit(model, T, lnk, lb, ub; weighted=false, threshold=NaN)
 
-Fit the `model`-function to `lnk` over `T` data, with parameter lower boundaries `lb` and upper boundaries `ub`. 
+Old version. Fit the `model`-function to `lnk` over `T` data, with parameter lower boundaries `lb` and upper boundaries `ub`. 
 Data points with a residuum above `threshold` are excluded and the fit is recalculated, until all residua are below the threshold or only three data points are left (unless `threshold = NaN`, which is default). 
 If `weighted = true` the residuals of an unwheighted fit (OLS) are used as weights for a second fit (``w_i = 1/res_i^2``)
 """
@@ -1065,9 +1070,171 @@ function fit(model, T, lnk, lb, ub; weighted=false, threshold=NaN)
 end
 
 """
+	fit(model, T, lnk; check=true, ftrusted=0.7)
+
+New version. Fit the `model`-function to `lnk` over `T` data. If `check` is `true` than a robust fit (RAFF.jl, parameter `ftrusted`) is executed and outliers are excluded from
+the fit with LsqFit.jl. If `check` is `false` than the outliers found with RAFF.jl are still used for the fit with LsqFit.jl.
+
+# Output
+* `fit` - the result from LsqFit.jl
+* `robust` - the result from RAFF.jl
+* `outlier` - the outliers found with RAFF.jl as a tuple of `(T, lnk)`
+"""
+function fit(model, T, lnk; check=true, ftrusted=0.7)
+	# Kcentric model is prefered, using the ABC model the robust fit some times tends toward a nearly linear fit 
+	raffmodel(x, p) = if model == RetentionData.ABC
+		p[1] + p[2]/x[1] + p[3]*log(x[1])
+	elseif model == RetentionData.Kcentric
+		(p[3] + p[1]/p[2])*(p[1]/x[1] - 1) + p[3]*real(log(Complex(x[1]/p[1])))
+	end
+	if model == RetentionData.ABC
+		p0 = [-100.0, 10000.0, 10.0]
+	elseif model == RetentionData.Kcentric
+		Tchar0 = T[findfirst(minimum(abs.(lnk)).==abs.(lnk))] # estimator for Tchar -> Temperature with the smalles lnk-value
+		p0 = [Tchar0+273.15, 30.0, 10.0]
+	end
+	# first robust fitting with RAFF.jl
+	robust = raff(raffmodel, [collect(skipmissing(T)).+273.15 collect(skipmissing(lnk))], 3; initguess=p0, ftrusted=ftrusted)
+	# second least-square-fit with LsqFit.jl without the outliers
+
+	 	
+	if check==false
+		# use all data for lsq-fit
+		fit =curve_fit(model, T .+273.15, lnk, p0)
+	else	
+		# use only non-outlier data for lsq-fit
+		fit = curve_fit(model, T[Not(robust.outliers)].+273.15, lnk[Not(robust.outliers)], p0)
+	end	
+	
+	# residual of outliers to the lsq-result:
+	#res_outliers = model(T[robust.outliers] .+ 273.15, fit.param) .- lnk[robust.outliers]
+	# - if this residual is below a threshold (e.g. the highest residual of the used data), than this outlier is not a outlier anymore -> cleared outlier
+	#cleared_outliers = robust.outliers[findall(abs.(res_outliers).<maximum(abs.(fit.resid)))] # perhaps use here a more sufisticated methode -> test if this value belongs to the same distribution as the other values (normal distribution)
+	
+	#Create a Tuple of outliers
+	
+	#if !isempty(cleared_outliers)
+		# - re-run the lsq-fit now using the cleared outliers
+		# index remaining outlier
+	#	i_out = findall(!in(T[cleared_outliers]),T[robust.outliers])
+		# fit
+	#	lsq = curve_fit(model, T[Not(robust.outliers[])].+273.15, lnk[Not(robust.outliers[i_out])], fit.param)
+	#	Tuple = Array{Any}(undef, size(robust.outliers[i_out])[1])
+	#	for i=1:size(robust.outliers[i_out])[1]
+	#		Tuple[i]= (T[robust.outliers[i_out][i]], lnk[robust.outliers[i_out][i]])
+	#	end	
+	#	return lsq, robust, Tuple
+	#else
+	outlier = Array{Any}(undef, size(robust.outliers)[1])
+	for i=1:size(robust.outliers)[1]
+		outlier[i] = (T[robust.outliers[i]],lnk[robust.outliers[i]])
+	end	
+	return fit, robust, outlier
+	#end
+end	
+
+"""
+	AcceptTest(Dataset, Check; ftrusted=0.7)
+
+Make the fit of lnk over T for a all solutes of a `Dataset` with the Kcentric-model. With the boolean variable `Check` a test for outliers, using a robust fit (RAFF.jl), is executed. 
+
+# Output
+The fit results and additional statistics are exported as a DataFrame. Categories, which are included in the measured lnk-data are appended to the DataFrame.
+"""
+function AcceptTest(Dataset, Check; ftrusted=0.7)
+	#fitABC = Array{Any}(undef, length(Dataset[!,1]))
+	fitKcentric = Array{Any}(undef, length(Dataset[!,1]))
+	T = Array{Array{Float64}}(undef, length(Dataset[!,1]))
+	lnk = Array{Array{Float64}}(undef, length(Dataset[!,1]))
+	name = Array{String}(undef, length(Dataset[!,1]))
+	#excludedABC_i = Array{Any}(undef, length(Dataset[!,1]))
+	#RobustABC = Array{Any}(undef, length(Dataset[!,1]))
+	excludedKcentric_i = Array{Any}(undef, length(Dataset[!,1]))
+	RobustKcentric = Array{Any}(undef, length(Dataset[!,1]))
+	#R²_ABC = Array{Float64}(undef, length(Dataset[!,1]))
+	R²_Kcentric = Array{Float64}(undef, length(Dataset[!,1]))
+	#χ²_ABC = Array{Float64}(undef, length(Dataset[!,1]))
+	χ²_Kcentric = Array{Float64}(undef, length(Dataset[!,1]))
+	#χ̄²_ABC = Array{Float64}(undef, length(Dataset[!,1]))
+	χ̄²_Kcentric = Array{Float64}(undef, length(Dataset[!,1]))
+	Checkbox=Array{Bool}(undef, length(Dataset[!,1]))
+	for j=1:length(Dataset[!,1])
+
+		T_ = RetentionData.T_column_names_to_Float(Dataset)
+		Tindex = findall(occursin.("Cat", names(Dataset)).==false)[2:end]
+		lnk_ = collect(Union{Missing,Float64}, Dataset[j, Tindex])
+
+		T[j] = T_[findall(ismissing.(lnk_).==false)]
+		lnk[j] = lnk_[findall(ismissing.(lnk_).==false)]
+		
+		#ii = findall(isa.(lnk[j], Float64)) # indices of `lnk` which are NOT missing
+		name[j] = Dataset[!, 1][j]
+
+		#fitABC[j], RobustABC[j], excludedABC_i[j] = fit(RetentionData.ABC, T[j], lnk[j], check=Check[j], ftrusted=ftrusted) #fit_outlier_test(m, xx, yy; ftrusted=0.7)
+
+		fitKcentric[j], RobustKcentric[j], excludedKcentric_i[j] = fit(RetentionData.Kcentric, T[j], lnk[j], check=Check[j], ftrusted=ftrusted)
+		
+		#R²_ABC[j] = RetentionData.coeff_of_determination(RetentionData.ABC, fitABC[j], T[j][Not(RobustABC[j].outliers)].+273.15, lnk[j][Not(RobustABC[j].outliers)])
+		R²_Kcentric[j] = RetentionData.coeff_of_determination(RetentionData.Kcentric, fitKcentric[j], T[j][Not(RobustKcentric[j].outliers)].+RetentionData.Tst, lnk[j][Not(RobustKcentric[j].outliers)])
+		#χ²_ABC[j] = rss(fitABC[j])
+		#χ̄²_ABC[j] = mse(fitABC[j])
+		χ²_Kcentric[j] = rss(fitKcentric[j])
+		χ̄²_Kcentric[j] = mse(fitKcentric[j])
+
+		Checkbox[j]=Check[j]
+	end
+	#fits= DataFrame(Name=name, T=T, lnk=lnk, fitABC=fitABC, fitKcentric=fitKcentric, 
+	#					RobustABC=RobustABC, RobustKcentric=RobustKcentric, ex_i_ABC=excludedABC_i, ex_i_Kcentric=excludedKcentric_i, 
+	#					R²_ABC=R²_ABC, R²_Kcentric=R²_Kcentric,
+	#					χ²_ABC=χ²_ABC, χ²_Kcentric=χ²_Kcentric,
+	#					χ̄²_ABC=χ̄²_ABC, χ̄²_Kcentric=χ̄²_Kcentric,
+	#					AcceptCheck= Checkbox)
+	fits= DataFrame(Name=name,
+						T=T,
+						lnk=lnk,
+						fitKcentric=fitKcentric, 
+						RobustKcentric=RobustKcentric,
+						ex_i_Kcentric=excludedKcentric_i, 
+						R²_Kcentric=R²_Kcentric,
+						χ²_Kcentric=χ²_Kcentric,
+						χ̄²_Kcentric=χ̄²_Kcentric,
+						AcceptCheck= Checkbox)
+	# add columns with "Cat" in column name
+	i_cat = findall(occursin.("Cat", names(Dataset)))
+	for j=1:length(i_cat)
+		fits[!, "Cat_$(j)"] = Dataset[!, i_cat[j]]
+	end
+return fits
+end
+
+"""
 	fit_models(data::Array{DataFrame}, β0::Array{Float64})
 
-Fit the ABC-model and the K-centric-model at the lnk(T) data of the `data`-array of dataframes, using LsqFit.jl 
+New version. Fit the K-centric-model at the lnk(T) data of the `data`-array of dataframes, using LsqFit.jl 
+"""
+function fit_models(data::Array{DataFrame}, CheckBase; ftrusted=0.7)
+	fits = Array{DataFrame}(undef, length(data))
+	for i=1:length(data)
+		fits[i]=AcceptTest(data[i], CheckBase[i], ftrusted=ftrusted)
+	end
+	return fits
+end
+
+"""	
+	fit_models!(meta_data::DataFrame, CheckBase; ftrusted=0.7)
+
+New version. Fit the K-centric-model at the lnk(T) data of the `data`-array of dataframes, using RAFF.jl and LsqFit.jl and add the result in a new column (`fit`) of `meta_data 
+"""
+function fit_models!(meta_data::DataFrame, CheckBase; ftrusted=0.7)
+	fitting = fit_models(meta_data.data, CheckBase, ftrusted=ftrusted)
+	meta_data[!, "fitting"] = fitting
+	return meta_data
+end
+
+"""
+	fit_models(data::Array{DataFrame}, β0::Array{Float64})
+
+Old version. Fit the ABC-model and the K-centric-model at the lnk(T) data of the `data`-array of dataframes, using LsqFit.jl 
 """
 function fit_models(data::Array{DataFrame}; weighted=false, threshold=NaN, lb_ABC=[-Inf, -Inf, -Inf], ub_ABC=[Inf, Inf, Inf], lb_Kcentric=[-Inf, -Inf, -Inf], ub_Kcentric=[Inf, Inf, Inf])
 
@@ -1123,7 +1290,7 @@ end
 """
 	fit_models!(meta_data::DataFrame; weighted=false, threshold=NaN, lb_ABC=[-Inf, 0.0, 0.0], ub_ABC=[0.0, Inf, 50.0], lb_Kcentric=[0.0, 0.0, 0.0], ub_Kcentric=[Inf, Inf, 500.0])
 
-Fit the ABC-model and the K-centric-model at the lnk(T) data of the `data`-array of dataframes, using LsqFit.jl and add the result in a new column (`fit`) of `meta_data 
+Old version. Fit the ABC-model and the K-centric-model at the lnk(T) data of the `data`-array of dataframes, using LsqFit.jl and add the result in a new column (`fit`) of `meta_data 
 """
 function fit_models!(meta_data::DataFrame; weighted=false, threshold=NaN, lb_ABC=[-Inf, 0.0, 0.0], ub_ABC=[0.0, Inf, 50.0], lb_Kcentric=[0.0, 0.0, 0.0], ub_Kcentric=[Inf, Inf, 500.0])
 	fitting = fit_models(meta_data.data; weighted=weighted, threshold=threshold, lb_ABC=lb_ABC, ub_ABC=ub_ABC, lb_Kcentric=lb_Kcentric, ub_Kcentric=ub_Kcentric)
@@ -1151,42 +1318,51 @@ function extract_parameters_from_fit(fit, β0)
 		ΔSref = Array{Measurement{Float64}}(undef, length(fit[i].Name))
 		beta0 = β0[i].*ones(length(fit[i].Name))
 		Tref = T0.*ones(length(fit[i].Name))
-		n_ABC = Array{Int}(undef, length(fit[i].Name))
+		#n_ABC = Array{Int}(undef, length(fit[i].Name))
 		n_Kcentric = Array{Int}(undef, length(fit[i].Name))
-		approx_equal = Array{Bool}(undef, length(fit[i].Name))
-		WLS = Array{Bool}(undef, length(fit[i].Name))
+		#approx_equal = Array{Bool}(undef, length(fit[i].Name))
+		#WLS = Array{Bool}(undef, length(fit[i].Name))
 		for j=1:length(fit[i].Name)
-			A[j] = (fit[i].fitABC[j].param[1] ± stderror(fit[i].fitABC[j])[1]) + log(β0[i])
-			B[j] = fit[i].fitABC[j].param[2] ± stderror(fit[i].fitABC[j])[2]
-			C[j] = fit[i].fitABC[j].param[3] ± stderror(fit[i].fitABC[j])[3]
-
+			#A[j] = (fit[i].fitABC[j].param[1] ± stderror(fit[i].fitABC[j])[1]) + log(β0[i])
+			#B[j] = fit[i].fitABC[j].param[2] ± stderror(fit[i].fitABC[j])[2]
+			#C[j] = fit[i].fitABC[j].param[3] ± stderror(fit[i].fitABC[j])[3]
+			
 			Tchar[j] = (fit[i].fitKcentric[j].param[1] ± stderror(fit[i].fitKcentric[j])[1]) - Tst
 			θchar[j] = fit[i].fitKcentric[j].param[2] ± stderror(fit[i].fitKcentric[j])[2]
 			ΔCp[j] = (fit[i].fitKcentric[j].param[3] ± stderror(fit[i].fitKcentric[j])[3]) * R
+			A[j], B[j], C[j] = RetentionData.Kcentric_to_ABC(Tchar[j], θchar[j], ΔCp[j], β0[i])
+
 			TD = RetentionData.ABC_to_TD(A[j], B[j], C[j], T0)
 			ΔHref[j] = TD[1]
 			ΔSref[j] = TD[2]
 
-			n_ABC[j] = length(fit[i].fitABC[j].resid)
+			#n_ABC[j] = length(fit[i].fitABC[j].resid)
 			n_Kcentric[j] = length(fit[i].fitKcentric[j].resid)
-			if round(fit[i].χ²_ABC[j]; sigdigits=5) == round(fit[i].χ²_Kcentric[j]; sigdigits=5)
-				approx_equal[j] = true
-			else
-				approx_equal[j] = false
-			end
-			if length(fit[i].fitABC[j].wt) == 0
-				WLS[j] = false
-			else
-				WLS[j] = true
-			end
+			#if round(fit[i].χ²_ABC[j]; sigdigits=5) == round(fit[i].χ²_Kcentric[j]; sigdigits=5)
+			#	approx_equal[j] = true
+			#else
+			#	approx_equal[j] = false
+			#end
+			#if length(fit[i].fitABC[j].wt) == 0
+			#	WLS[j] = false
+			#else
+			#	WLS[j] = true
+			#end
 		end
+		#Par[i] = DataFrame(Name=fit[i].Name, A=A, B=B, C=C, Tchar=Tchar, thetachar=θchar, DeltaCp=ΔCp, DeltaHref=ΔHref, DeltaSref=ΔSref,
+		#					beta0=beta0, Tref=Tref, 
+		#					R²_ABC=fit[i].R²_ABC, R²_Kcentric=fit[i].R²_Kcentric,
+		#					χ²_ABC=fit[i].χ²_ABC, χ²_Kcentric=fit[i].χ²_Kcentric,
+		#					χ̄²_ABC=fit[i].χ̄²_ABC, χ̄²_Kcentric=fit[i].χ̄²_Kcentric,
+		#					n_ABC=n_ABC, n_Kcentric=n_Kcentric,
+		#					approx_equal=approx_equal, WLS=WLS)
+
 		Par[i] = DataFrame(Name=fit[i].Name, A=A, B=B, C=C, Tchar=Tchar, thetachar=θchar, DeltaCp=ΔCp, DeltaHref=ΔHref, DeltaSref=ΔSref,
 							beta0=beta0, Tref=Tref, 
-							R²_ABC=fit[i].R²_ABC, R²_Kcentric=fit[i].R²_Kcentric,
-							χ²_ABC=fit[i].χ²_ABC, χ²_Kcentric=fit[i].χ²_Kcentric,
-							χ̄²_ABC=fit[i].χ̄²_ABC, χ̄²_Kcentric=fit[i].χ̄²_Kcentric,
-							n_ABC=n_ABC, n_Kcentric=n_Kcentric,
-							approx_equal=approx_equal, WLS=WLS)
+							R²_Kcentric=fit[i].R²_Kcentric,
+							χ²_Kcentric=fit[i].χ²_Kcentric,
+							χ̄²_Kcentric=fit[i].χ̄²_Kcentric,
+							n_Kcentric=n_Kcentric)
 		# add columns with "Cat" in column name
 		i_cat = findall(occursin.("Cat", names(fit[i])))
 		for j=1:length(i_cat)
