@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.17
+# v0.19.19
 
 using Markdown
 using InteractiveUtils
@@ -43,7 +43,13 @@ database format: $(@bind select_format Select(["all", "ABC", "Kcentric", "TD", "
 """
 
 # ╔═╡ f4253f29-7268-42ae-a17a-25e860234b0b
-db = RetentionData.database(db_path; filter_CAS=check_CAS, filter_flag=check_flag, db_format=select_format)
+db, alldata = RetentionData.database(db_path; filter_CAS=check_CAS, filter_flag=check_flag, db_format=select_format)
+
+# ╔═╡ ce218b9c-5609-4526-bc1f-3f81139190fd
+db
+
+# ╔═╡ 8872c305-d663-4aa3-a0a0-85c54f8c5935
+alldata
 
 # ╔═╡ 93a5ed9f-64ce-4ee8-bee0-ecd2ff2dcbb8
 md"""
@@ -147,6 +153,11 @@ md"""
 $(DownloadButton(sprint(CSV.write, db_filter), "database.csv"))
 """
 
+# ╔═╡ 59689ce2-57a4-4a1f-925d-3bdd07c0572e
+md"""
+# End
+"""
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -243,7 +254,7 @@ uuid = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 version = "0.10.3"
 
 [[deps.Cairo_jll]]
-deps = ["Artifacts", "Bzip2_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
+deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
 git-tree-sha1 = "4b859a208b2397a7a623a03449e4636bdb17bcf2"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.16.1+1"
@@ -1408,6 +1419,8 @@ version = "0.9.1+5"
 # ╠═fec530e6-d675-4bb9-8b5a-6aa607574a81
 # ╠═5861512e-a14b-11ec-3c6b-9bd2953bf909
 # ╠═f4253f29-7268-42ae-a17a-25e860234b0b
+# ╠═ce218b9c-5609-4526-bc1f-3f81139190fd
+# ╠═8872c305-d663-4aa3-a0a0-85c54f8c5935
 # ╟─93a5ed9f-64ce-4ee8-bee0-ecd2ff2dcbb8
 # ╟─560c76d6-9e50-461a-9815-66b40b59e580
 # ╟─49ddd8eb-a833-43b8-9f62-18f4d5afaf10
@@ -1417,10 +1430,11 @@ version = "0.9.1+5"
 # ╟─7c95815d-11e5-4de5-8d83-a7ef8518751c
 # ╟─5b1de655-4092-4a9c-b763-d3bdfae5f0e6
 # ╠═fe328e54-adaa-409c-8de8-7ba8686354b3
+# ╟─c05ff77f-369c-4afa-8e25-d81939ed9dc2
+# ╠═59689ce2-57a4-4a1f-925d-3bdd07c0572e
 # ╠═f090a29a-e69c-4c52-b7ae-fe92543b8564
 # ╠═16cbb035-e52d-4c43-8e70-8fc794053d92
 # ╠═e1f0837c-bb51-4ce1-8cae-bb4d241915a0
 # ╠═e270769e-60d8-4690-b976-e003295a7d23
-# ╟─c05ff77f-369c-4afa-8e25-d81939ed9dc2
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
