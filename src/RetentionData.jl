@@ -1167,8 +1167,8 @@ function extract_parameters_from_fit(fit, β0)
 			ΔHref[j] = TD[1]
 			ΔSref[j] = TD[2]
 
-			n_ABC[j] = length(fit[i].i_ABC[j])
-			n_Kcentric[j] = length(fit[i].i_Kcentric[j])
+			n_ABC[j] = length(fit[i].fitABC[j].resid)
+			n_Kcentric[j] = length(fit[i].fitKcentric[j].resid)
 			if round(fit[i].χ²_ABC[j]; sigdigits=5) == round(fit[i].χ²_Kcentric[j]; sigdigits=5)
 				approx_equal[j] = true
 			else
