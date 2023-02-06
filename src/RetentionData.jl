@@ -569,6 +569,7 @@ function dataframe_of_all(meta_data)
 	Name = String[]
 	Phase = String[]
 	Source = String[]
+	dataset = String[]
 	A = Float64[]
 	B = Float64[]
 	C = Float64[]
@@ -587,6 +588,7 @@ function dataframe_of_all(meta_data)
 			push!(Name, meta_data.data[i].Name[j])
 			push!(Phase, meta_data.phase[i])
 			push!(Source, meta_data.source[i])
+			push!(dataset, meta_data.filename[i])
 			push!(A, meta_data.data[i].A[j])
 			push!(B, meta_data.data[i].B[j])
 			push!(C, meta_data.data[i].C[j])
@@ -602,7 +604,7 @@ function dataframe_of_all(meta_data)
 			push!(gas, meta_data.gas[i])
 		end
 	end
-	dfall = DataFrame(Name=Name, Phase=Phase, Source=Source,
+	dfall = DataFrame(Name=Name, Phase=Phase, Source=Source, DataSet=dataset,
 						A=A, B=B, C=C,
 						Tchar=Tchar, thetachar=thetachar, DeltaCp=DeltaCp,
 						DeltaHref=DeltaHref, DeltaSref=DeltaSref, Tref=Tref,
@@ -617,6 +619,22 @@ function dataframe_of_all(meta_data)
 		dfall[!, "Cat_$(j)"] = catstring
 	end	
 	return dfall
+end
+
+
+function dataframe_of_all_CAS_flags(meta_data)
+	dfall = dataframe_of_all(meta_data)
+	# add cas
+	CI = RetentionData.substance_identification(dfall)
+	dfall[!, "CAS"] = CI.CAS
+	# add flags
+	dfall[!, "flag"] = RetentionData.flag(dfall)
+	return dfall
+end
+
+function filter_dataframe_of_all(dfall)
+	dfall_f = filter([:CAS, :flag] => (x, y) -> ismissing(x)==false && isempty(y), dfall)
+	return dfall_f
 end
 
 """
@@ -726,9 +744,17 @@ function substance_identification(data::DataFrame)
 	for i=1:length(data.Name)
 		if data.Name[i] in shortnames.shortname
 			j = findfirst(data.Name[i].==shortnames.shortname)
-			ci = search_chemical(string(shortnames.name[j]))
+			ci = try
+				search_chemical(string(shortnames.name[j]))
+			catch
+				missing
+			end
 		else
-			ci = search_chemical(data.Name[i])
+			ci = try
+				search_chemical(data.Name[i])
+			catch
+				missing
+			end
 		end
 		if ismissing(ci)
 			if data.Name[i] in missing_subs.name
@@ -1186,18 +1212,19 @@ function align_categories(newdata)
 	# find all columns with "Cat" in the name
 	iCat = findall(occursin.("Cat", names(newdata)))
 	# find identical CAS entrys
-	uniqueCAS = unique(newdata.CAS)
-	i_identicalCAS = Array{Array{Int64,1}}(undef, length(uniqueCAS))
+	CAS = replace(newdata.CAS, missing => nothing)
+	uniqueCAS = unique(CAS)
+	#CAS_f = filter(x->!ismissing(x), newdata.CAS)
+	i_identicalCAS = Array{Array{Union{Missing,Int64},1}}(undef, length(uniqueCAS))
 	union_catstrings = Array{Array{Union{Missing,Any},1}}(undef, length(uniqueCAS))
 	for i=1:length(uniqueCAS)
-		#if !ismissing(findall(newdata.CAS.==uniqueCAS[i]))
-			i_identicalCAS[i] = findall(newdata.CAS.==uniqueCAS[i])
-			#union_catstring = Array{Union{Missing,Any}}(undef, length(i_identicalCAS[i]))
-			for j=1:length(i_identicalCAS[i])
-				union_catstrings[i] = unique(Matrix(newdata[i_identicalCAS[i],iCat]))
-				filter!(x -> ismissing(x).==false, union_catstrings[i])
-			end
-		#end
+		if !isnothing(uniqueCAS[i])
+			i_identicalCAS[i] = findall(CAS.==uniqueCAS[i])
+			union_catstrings[i] = unique(Matrix(newdata[i_identicalCAS[i],iCat]))
+			filter!(x -> ismissing(x).==false, union_catstrings[i])
+		else
+			union_catstrings[i] = [missing]
+		end
 	end
 	#i_identicalCAS
 	# number of Cat columns needed
@@ -1211,7 +1238,7 @@ function align_categories(newdata)
 	# add the new Cat Columns
 	categories = Array{Union{Missing,String}}(missing, length(newnewdata.CAS), maxcat)
 	for i=1:length(newnewdata.CAS)
-		ii = findfirst(uniqueCAS.==newnewdata.CAS[i])
+		ii = findfirst(uniqueCAS.==CAS[i])
 		for j=1:length(union_catstrings[ii])
 			categories[i,j] = union_catstrings[ii][j]
 		end
@@ -1241,7 +1268,7 @@ function add_group_to_Cat!(newdata)
 	iCat = findall(occursin.("Cat", names(newdata)))
 	for i=1:length(newdata.CAS)
 		for j=1:length(groups.CAS)
-			if newdata.CAS[i] in groups.CAS[j]
+			if !ismissing(newdata.CAS[i]) && (newdata.CAS[i] in groups.CAS[j])
 				if  ismissing(!(groups.Group[j] in newdata[i, iCat])) || !(groups.Group[j] in newdata[i, iCat])# group not allready in Cat
 					# find the first Cat column with missing entry
 					if isnothing(findfirst(ismissing.(collect(newdata[i,iCat]))))
@@ -1415,25 +1442,29 @@ function database(db_path; filter_CAS=true, filter_flag=true, db_format="all")
 		alldata = filter!([:flag] => y -> isempty(y), alldata)
 	end
 	# add categories
-	if filter_CAS == true
+	##if filter_CAS == true
+	RetentionData.add_group_to_Cat!(alldata)
 		alldata = RetentionData.align_categories(alldata)
-		RetentionData.add_group_to_Cat!(alldata)
-	else
-		alldata_woCAS = filter([:CAS] => x -> ismissing(x)==true, alldata)
-		alldata_wCAS = filter([:CAS] => x -> ismissing(x)==false, alldata)
-		alldata_wCAS = RetentionData.align_categories(alldata_wCAS)
-		RetentionData.add_group_to_Cat!(alldata_wCAS)
+		
+	##else
+	##	alldata_woCAS = filter([:CAS] => x -> ismissing(x)==true, alldata)
+	##	alldata_wCAS = filter([:CAS] => x -> ismissing(x)==false, alldata)
+	##	alldata_wCAS = RetentionData.align_categories(alldata_wCAS)
+	##	RetentionData.add_group_to_Cat!(alldata_wCAS)
 		#
-		alldata = outerjoin(alldata_wCAS, alldata_woCAS, on = intersect(names(alldata_wCAS), names(alldata_woCAS)), matchmissing=:equal)
-	end
+	##	alldata = outerjoin(alldata_wCAS, alldata_woCAS, on = intersect(names(alldata_wCAS), names(alldata_woCAS)), matchmissing=:equal)
+	##end
 	
 	# format
 	if db_format == "old_format"
 		db = RetentionData.old_database_format(alldata)
 	else
 		db = RetentionData.new_database_format(alldata; ParSet=db_format, filter_flag=filter_flag)
+		RetentionData.add_group_to_Cat!(db)
+		db = RetentionData.align_categories(db)
 	end
-	return db
+	
+	return db, alldata
 end
 
 function filter_Cat(newdata, cat)
