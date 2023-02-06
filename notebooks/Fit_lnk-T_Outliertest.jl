@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.14
+# v0.19.19
 
 using Markdown
 using InteractiveUtils
@@ -29,43 +29,49 @@ end
 # ╔═╡ 6f0ac0bc-9a3f-11ec-0866-9f56a0d489dd
 md"""
 # Fit lnk(T) data
-Fit the ABC-model and the K-centric model to the lnk(T) data loaded from the folder `db_path` (and its subfolders). Test for Outliers. 
+Fit the K-centric model to the lnk(T) data loaded from the folder `db_path` (and its subfolders). Test for Outliers. 
+"""
+
+# ╔═╡ 2fd4d728-9068-415c-b006-26f93dddce28
+md"""
+## Compare parameters
+"""
+
+# ╔═╡ bebf0dbc-96de-4e16-90ae-206930a106ee
+md"""
+## Save Data
+
+Save all parameter data: $(@bind select_save CheckBox(default=false))
+"""
+
+# ╔═╡ 91c46525-43f9-4ef2-98f4-35fb3974d64f
+md"""
+# End
 """
 
 # ╔═╡ c037a761-f192-4a3b-a617-b6024ac6cd61
 begin
-	data = RetentionData.load_lnkT_data(db_path)
-	#RetentionData.fit_models!(data; weighted=false, threshold=NaN, lb_ABC=[-Inf, -Inf, -Inf], ub_ABC=[Inf, Inf, Inf], lb_Kcentric=[-Inf, -Inf, -Inf], ub_Kcentric=[Inf, Inf, Inf])
-end
+	data = RetentionData.load_lnkT_data(db_path);
+end;
 
-# ╔═╡ 7c800ec4-7194-4cb0-87c8-b3b196deeb16
-function fit_outlier_test(model, T, lnk; ftrusted=0.7)
-	# Kcentric model is prefered, using the ABC model the robust fit some times tends toward a nearly linear fit 
-	raffmodel(x, p) = if model == RetentionData.ABC
-		p[1] + p[2]/x[1] + p[3]*log(x[1])
-	elseif model == RetentionData.Kcentric
-		(p[3] + p[1]/p[2])*(p[1]/x[1] - 1) + p[3]*real(log(Complex(x[1]/p[1])))
-	end
-	if model == RetentionData.ABC
-		p0 = [-100.0, 10000.0, 10.0]
-	elseif model == RetentionData.Kcentric
-		Tchar0 = T[findfirst(minimum(abs.(lnk)).==abs.(lnk))] # estimator for Tchar -> Temperature with the smalles lnk-value
-		p0 = [Tchar0+273.15, 30.0, 10.0]
-	end
-	# first robust fitting with RAFF.jl
-	robust = raff(raffmodel, [collect(skipmissing(T)).+273.15 collect(skipmissing(lnk))], 3; initguess=p0, ftrusted=ftrusted)
-	# second least-square-fit with LsqFit.jl without the outliers
-	fit = curve_fit(model, T[Not(robust.outliers)].+273.15, lnk[Not(robust.outliers)], p0)
-	# residual of outliers to the lsq-result:
-	res_outliers = model(T[robust.outliers] .+ 273.15, fit.param) .- lnk[robust.outliers]
-	# - if this residual is below a threshold (e.g. the highest residual of the used data), than this outlier is not a outlier anymore -> cleared outlier
-	cleared_outliers = robust.outliers[findall(abs.(res_outliers).<maximum(abs.(fit.resid)))] # perhaps use here a more sufisticated methode -> test if this value belongs to the same distribution as the other values (normal distribution)
-	if !isempty(cleared_outliers)
-		# - re-run the lsq-fit now using the cleared outliers 
-		lsq = curve_fit(model, T[Not(robust.outliers[findall(!in(T[cleared_outliers]),T[robust.outliers])])].+273.15, lnk[Not(robust.outliers[findall(!in(T[cleared_outliers]),T[robust.outliers])])], fit.param)
-		return fit, robust, res_outliers, cleared_outliers, lsq
-	else
-		return fit, robust, res_outliers
+# ╔═╡ ae6986cd-33f3-48b1-9f8b-71535670bf27
+md"""
+## Plot lnk(T) and fit
+Select data set: $(@bind select_dataset Slider(1:length(data.filename); show_value=true))
+"""
+
+# ╔═╡ 3bac9f60-8749-425b-8e87-ba1d7442ca93
+md"""
+Select substance: $(@bind select_substance Slider(1:length(data.data[select_dataset][!,1]); show_value=true))
+"""
+
+# ╔═╡ b8cb55b5-c40d-4f9b-96fe-580c41cbf3d6
+data.filename[select_dataset], data.data[select_dataset][!,1][select_substance]
+
+# ╔═╡ d57b2b89-9763-4998-8434-465de994ce54
+begin
+	if select_save == true
+		RetentionData.save_all_parameter_data(data)
 	end
 end
 
@@ -73,7 +79,7 @@ end
 function OutlierCheck(data, select_dataset)	
 	
 	defaultdata=
-	try CSV.File(string("C:\\Users\\Brehmer\\Documents\\GitHub\\RetentionData\\OutlierCheck\\","Check_",data.filename[select_dataset])).OutlierTest
+	try CSV.File(joinpath(project, "OutlierCheck", string("Check_",data.filename[select_dataset]))).OutlierTest
 	catch 
 	end
 	return try 
@@ -126,177 +132,66 @@ $(inputs)
 	end			
 end
 
-# ╔═╡ ae6986cd-33f3-48b1-9f8b-71535670bf27
-md"""
-## Plot lnk(T) and fit
-Select data set: $(@bind select_dataset Slider(1:length(data.filename); show_value=true))
-"""
-
-# ╔═╡ 3bac9f60-8749-425b-8e87-ba1d7442ca93
-md"""
-Select substance: $(@bind select_substance Slider(1:length(data.data[select_dataset][!,1]); show_value=true))
-"""
-
-# ╔═╡ b8cb55b5-c40d-4f9b-96fe-580c41cbf3d6
-data.filename[select_dataset], data.fitting[select_dataset].Name[select_substance]
-
-# ╔═╡ 67d3b9dc-ae20-4ef8-982c-6be10c96fb5c
-begin 
-m = RetentionData.Kcentric
-X = data.fitting[select_dataset].T[select_substance]
-Y = data.fitting[select_dataset].lnk[select_substance]
-	
-	FIT = data.fitting[select_dataset].fitKcentric[select_substance]
-	Robust=data.fitting[select_dataset].i_Kcentric[select_substance]
-	collectOutliers= Array{Any}(undef, size(data.fitting[select_dataset].ex_i_Kcentric[select_substance])[1], 2)
-	for i=1:size(data.fitting[select_dataset].ex_i_Kcentric[select_substance])[1]
-		for j=1:2
-			collectOutliers[i,j]=data.fitting[select_dataset].ex_i_Kcentric[select_substance][i][j] 
-		end	
-	end	
-
-	resOut=m(X[Robust.outliers] .+ 273.15, FIT.param) .- Y[Robust.outliers]
-	
-	XX = 0.0:1.0:800.0	
-	fitP=scatter(X,Y, xlabel="Temperature in °C", ylabel="ln(k)", label="data")
-	plot!(XX, m(XX.+273.15, FIT.param), label="lsq")
-	scatter!(collectOutliers[:,1], collectOutliers[:,2] , m=:diamond, markersize=5, c=:red, label="outliers")
-	plot!(XX, m(XX.+273.15, Robust.solution), label="robust")
-	
-	pRes = scatter(X[Not(Robust.outliers)], FIT.resid, label="used data", xlabel="Temperature in °C", ylabel="residual", c=5)
-	scatter!(pRes, X[Robust.outliers], resOut, label="outliers", c=:red)
-	#if length(fit_test) == 5
-	#	scatter!(pfit, X[fit_test[4]], yy[fit_test[4]], m=:rect, markersize=2, c=:green, label="cleared outliers")
-	#	plot!(pfit, XX, m(XX.+273.15, fit_test[5].param), label="lsq cleared outliers")
-	#	scatter!(pres, X[Not(fit_test[2].outliers[findall(!in(X[fit_test[4]]),X[fit_test[2].outliers])])], fit_test[5].resid, label="included cleared outliers", c=:green)
-	#end
-	plot(fitP, pRes, size=(700,400))
-end
-
-# ╔═╡ 3b0c2125-ece5-41d6-92d3-f6cc3e4cfacc
-md"""plot without outliers:"""
-
-# ╔═╡ 0a7a4cbc-5d25-44b9-91d1-67808df1626b
-begin
-	#Plot without Outliers
-	#m = RetentionData.Kcentric
-	xx = data.fitting[select_dataset].T[select_substance][findall(ismissing.(data.fitting[select_dataset].lnk[select_substance]).==false)]
-	yy = data.fitting[select_dataset].lnk[select_substance][findall(ismissing.(data.fitting[select_dataset].lnk[select_substance]).==false)]
-	xxx = 0.0:1.0:800.0	
-
-	Outliers=Robust
-	
-	pFit = scatter(xx[Not(Outliers.outliers)],yy[Not(Outliers.outliers)], xlabel="Temperature in °C", ylabel="ln(k)", label="data")
-	
-	plot!(pFit, xxx, m(xxx.+273.15, Outliers.solution), label="robust")
-	plot!(xxx, m(xxx.+273.15, FIT.param), label="lsq")
-
-	pRes_ = scatter(xx[Not(Outliers.outliers)], FIT.resid, label="used data", xlabel="Temperature in °C", ylabel="residual", c=5)
-	#scatter!(pRes_, xx[Outliers.outliers],	Outliers[3], label="outliers", c=:red)
-	#if length(Outliers) == 5
-	#	scatter!(pfit_, xx[fit_test_[4]], yy[Outliers[4]], m=:rect, markersize=2, c=:green, label="cleared outliers")
-	#	plot!(pFit, xxx, m(xxx.+273.15,	Outliers[5].param), label="lsq cleared outliers")
-		#scatter!(pRes_, xx[Not(	Outliers[2].outliers[findall(!in(xx[	Outliers[4]]),xx[Outliers[2].outliers])])], Outliers[5].resid, label="included cleared outliers", c=:green)
-	#end
-	
-	plot(pFit, pRes_, size=(700,400))
-end
-
-# ╔═╡ 2d8d554b-adf3-4794-8079-5f6848dbc34a
-#=begin
-	m = RetentionData.Kcentric
-	xx = data.fitting[select_dataset].T[select_substance][findall(ismissing.(data.fitting[select_dataset].lnk[select_substance]).==false)]
-	yy = data.fitting[select_dataset].lnk[select_substance][findall(ismissing.(data.fitting[select_dataset].lnk[select_substance]).==false)]
-	fit_test = fit_outlier_test(m, xx, yy; ftrusted=0.7)#(0.8, 1.0))
-	xxx = 0.0:1.0:800.0	
-	pfit = scatter(xx,yy, xlabel="Temperature in °C", ylabel="ln(k)", label="data")
-	plot!(pfit, xxx, m(xxx.+273.15, fit_test[2].solution), label="robust")
-	scatter!(pfit, xx[fit_test[2].outliers], yy[fit_test[2].outliers], m=:diamond, markersize=5, c=:red, label="outliers")
-	plot!(pfit, xxx, m(xxx.+273.15, fit_test[1].param), label="lsq")
-	pres = scatter(xx[Not(fit_test[2].outliers)], fit_test[1].resid, label="used data", xlabel="Temperature in °C", ylabel="residual", c=5)
-	scatter!(pres, xx[fit_test[2].outliers], fit_test[3], label="outliers", c=:red)
-	if length(fit_test) == 5
-		scatter!(pfit, xx[fit_test[4]], yy[fit_test[4]], m=:rect, markersize=2, c=:green, label="cleared outliers")
-		plot!(pfit, xxx, m(xxx.+273.15, fit_test[5].param), label="lsq cleared outliers")
-		scatter!(pres, xx[Not(fit_test[2].outliers[findall(!in(xx[fit_test[4]]),xx[fit_test[2].outliers])])], fit_test[5].resid, label="included cleared outliers", c=:green)
-	end
-	
-	plot(pfit, pres, size=(700,400))
-end=#
-
 # ╔═╡ 49a1e6d9-b939-4795-8c7f-61e92dc09ee8
 @bind Check OutlierCheck(data, select_dataset)
 
-# ╔═╡ bebf0dbc-96de-4e16-90ae-206930a106ee
-md"""## Save Data """
-
-# ╔═╡ 64968bac-4878-4564-a16c-06722f215a9b
-#resOut=m(X[Robust.outliers] .+ 273.15, FIT.param) .- Y[Robust.outliers]
-
-# ╔═╡ ae5a44de-e350-4340-aa1f-49afe8c51bc5
-#=begin
-m = RetentionData.Kcentric
-	#xx = data.fitting[select_dataset].T[select_substance][findall(ismissing.(data.fitting[select_dataset].lnk[select_substance]).==false)]
-	#yy = data.fitting[select_dataset].lnk[select_substance][findall(ismissing.(data.fitting[select_dataset].lnk[select_substance]).==false)]
-	fit_test_ = fit_outlier_test(m, xx, yy; ftrusted=(0.8, 1.0))
-	#xxx = 0.0:1.0:800.0	
-	pfit_ = scatter(xx,yy, xlabel="Temperature in °C", ylabel="ln(k)", label="data")
-	plot!(pfit_, xxx, m(xxx.+273.15, fit_test_[2].solution), label="robust")
-	scatter!(pfit_, xx[fit_test_[2].outliers], yy[fit_test_[2].outliers], m=:diamond, markersize=5, c=:red, label="outliers")
-	plot!(pfit_, xxx, m(xxx.+273.15, fit_test_[1].param), label="lsq")
-	pres_ = scatter(xx[Not(fit_test_[2].outliers)], fit_test_[1].resid, label="used data", xlabel="Temperature in °C", ylabel="residual", c=5)
-	scatter!(pres_, xx[fit_test_[2].outliers], fit_test_[3], label="outliers", c=:red)
-	if length(fit_test_) == 5
-		scatter!(pfit_, xx[fit_test_[4]], yy[fit_test_[4]], m=:rect, markersize=2, c=:green, label="cleared outliers")
-		plot!(pfit_, xxx, m(xxx.+273.15, fit_test_[5].param), label="lsq cleared outliers")
-		scatter!(pres_, xx[Not(fit_test_[2].outliers[findall(!in(xx[fit_test_[4]]),xx[fit_test_[2].outliers])])], fit_test_[5].resid, label="included cleared outliers", c=:green)
-	end
+# ╔═╡ 53c1de7f-fe4e-47d2-ba06-8ff9cf20bc87
+begin
+	CSV.write(joinpath(project, "OutlierCheck", string("Check_",data.filename[select_dataset])), DataFrame(Name=data.data[select_dataset][!,1], OutlierTest=RetentionData.AcceptTest(data.data[select_dataset], Check).AcceptCheck))
 	
-	plot(pfit_, pres_, size=(700,400))
-end=#
-
-# ╔═╡ c6d787a2-4aaa-4155-bae4-4235e8fc7ea1
-# include the R2 value of the lsq-fits
-# use the solution where R2 is better?
-# also add to both plots (lnk(T) and res(T)) the lsq-fit for all points, if outliers are detected
-
-# ╔═╡ fad7761b-84b8-4287-a08a-2ace85b1081e
-# put this function (as option) in the fit_models() function
+	CheckBase = Array{Any}(undef, size(data.filename)[1])
+	for i=1:size(data.filename)[1]
+		if isfile(joinpath(project, "OutlierCheck", string("Check_",data.filename[i])))
+			CheckBase[i] = CSV.File(joinpath(project, "OutlierCheck", string("Check_",data.filename[i]))).OutlierTest
+		else 
+			CheckBase[i] = trues(size(data.data[i])[1])	
+		end
+		
+	end	
+	#RetentionData.fit_models!(data, CheckBase);	
+	fitting = RetentionData.fit_models(data.data, CheckBase)
+	data[!, "fitting"] = fitting
+	RetentionData.extract_parameters_from_fit!(data);
+end;
 
 # ╔═╡ cd5d0b6c-6e76-4293-80a0-b07ea94a05d8
 begin
+	CheckBase
+	RetentionData.AcceptTest(data.data[select_dataset], Check)
 	plnk = RetentionData.plot_lnk_fit(data.fitting, select_dataset, select_substance)
 	preslnk = RetentionData.plot_res_lnk_fit(data.fitting, select_dataset, select_substance)
-	#pl = plot(plnk, preslnk)
+	pl = plot(plnk, preslnk)
+	Tchar = data.parameters[select_dataset].Tchar[select_substance]
+	θchar = data.parameters[select_dataset].thetachar[select_substance]
+	ΔCp = data.parameters[select_dataset].DeltaCp[select_substance]
+	mini_Kcentric = Tchar + (Tchar+273.15)^2/(θchar*ΔCp/8.31446261815324)
+	mini_lnk_Kcentric = (ΔCp/8.31446261815324+(Tchar+273.15)/θchar)*((Tchar+273.15)/(mini_Kcentric+273.15)-1)+ΔCp/8.31446261815324*log((mini_Kcentric+273.15)/(Tchar+273.15))
 	md"""
+	Fit result:
+
+	``T_{char} = `` $(round(Tchar; sigdigits=5)) K
+	
+	``θ_{char} = `` $(round(θchar; sigdigits=5)) °C
+
+	``ΔC_p = `` $(round(ΔCp; sigdigits=5)) J mol⁻¹ K⁻¹
+
+	``T_{min} = `` $(round(mini_Kcentric; sigdigits=5)) K
+
+	``\ln{k}_{min} = `` $(round(mini_lnk_Kcentric; sigdigits=5))
+	
 	$(embed_display(pl))
-	### Observation
-	For n=3 the results of ABC-model and K-centric model are different (but similar). For n>3 the results of both models are identical.
 	"""
 end
 
-# ╔═╡ 2d7ed692-9524-428c-92cf-d4ecabe8278e
-test = ["name", "60", "70", "Cat", "Cat_b"]
-
-# ╔═╡ faa843f7-ef50-47ab-a5a4-9d32265b7e5a
-test[findall(occursin.("Cat", test).==false)[2:end]]
-
-# ╔═╡ dbf47c68-709f-45b5-9ae1-b75fe2e76c5f
-Tindex = findall(occursin.("Cat", test).==false)[2:end]
-
-# ╔═╡ 2fd4d728-9068-415c-b006-26f93dddce28
-md"""
-## Compare parameters
-"""
-
-# ╔═╡ f57fc4ec-9522-401f-91de-9495ca50bbb9
-#RetentionData.extract_parameters_from_fit!(data);
-
 # ╔═╡ a65c584d-a669-4dfe-8deb-03ce2fd3a0c0
-data.parameters[select_dataset]
+begin
+	CheckBase
+	data.parameters[select_dataset]
+end
 
 # ╔═╡ 8a0d3816-b114-42e3-8bef-cda7b63af509
 begin
+	CheckBase
 	plotly()
 	pABC = scatter(Measurements.value.(data.parameters[1].A), Measurements.value.(data.parameters[1].B), Measurements.value.(data.parameters[1].C), label=1, xlabel="A", ylabel="B", zlabel="C")
 	for i=2:length(data.parameters)
@@ -307,6 +202,7 @@ end
 
 # ╔═╡ baba96bf-b0fb-43a3-8f58-954343b918fd
 begin
+	CheckBase
 	plotly()
 	pKcentric = scatter(Measurements.value.(data.parameters[1].Tchar), Measurements.value.(data.parameters[1].thetachar), Measurements.value.(data.parameters[1].DeltaCp), label=1, xlabel="Tchar in °C", ylabel="θchar in °C", zlabel="ΔCp in J mol⁻¹ K⁻¹")
 	for i=2:length(data.parameters)
@@ -315,20 +211,9 @@ begin
 	pKcentric
 end
 
-# ╔═╡ 4a2c19cb-0321-4d64-91a5-51127f31ce9d
-begin
-	plotly()
-	pKcentric_ = scatter(Measurements.value.(data.parameters[1].Tchar), Measurements.value.(data.parameters[1].thetachar), Measurements.value.(data.parameters[1].DeltaCp), label=1, xlabel="Tchar in °C", ylabel="θchar in °C", zlabel="ΔCp in J mol⁻¹ K⁻¹")
-	for i=2:length(data.parameters)
-		if i!=3
-			scatter!(pKcentric_, Measurements.value.(data.parameters[i].Tchar), Measurements.value.(data.parameters[i].thetachar), Measurements.value.(data.parameters[i].DeltaCp), label=i)
-		end
-	end
-	pKcentric_
-end
-
 # ╔═╡ 4dd4f07a-4654-4fd5-99f1-0fab845a545d
 begin
+	CheckBase
 	plotly()
 	pEntalpie = scatter(Measurements.value.(data.parameters[1].DeltaHref), Measurements.value.(data.parameters[1].DeltaSref), Measurements.value.(data.parameters[1].DeltaCp), label=1, xlabel="ΔHref in ", ylabel="ΔSref in", zlabel="ΔCp in J mol⁻¹ K⁻¹")
 	for i=2:length(data.parameters)
@@ -341,346 +226,29 @@ end
 
 # ╔═╡ 8eb557fa-8e94-49fd-8fc5-17f8d42943c6
 begin
-	p_R2_ABC = scatter(data.parameters[1].R²_ABC, title="R², ABC-model", ylabel="R²", label=1)
-	for i=2:length(data.parameters)
-		scatter!(p_R2_ABC, data.parameters[i].R²_ABC, label=i)
-	end
+	CheckBase
+	#p_R2_ABC = scatter(data.parameters[1].R²_ABC, title="R², ABC-model", ylabel="R²", label=1)
+	#for i=2:length(data.parameters)
+	#	scatter!(p_R2_ABC, data.parameters[i].R²_ABC, label=i)
+	#end
 
 	p_R2_Kcentric = scatter(data.parameters[1].R²_Kcentric, title="R², Kcentric-model", ylabel="R²", label=1)
 	for i=2:length(data.parameters)
 		scatter!(p_R2_Kcentric, data.parameters[i].R²_Kcentric, label=i)
 	end
 	
-	p_χ2_ABC = scatter(data.parameters[1].χ²_ABC, title="χ², ABC-model", ylabel="χ²", label=1)
-	for i=2:length(data.parameters)
-		scatter!(p_χ2_ABC, data.parameters[i].χ²_ABC, label=i)
-	end
+	#p_χ2_ABC = scatter(data.parameters[1].χ²_ABC, title="χ², ABC-model", ylabel="χ²", label=1)
+	#for i=2:length(data.parameters)
+	#	scatter!(p_χ2_ABC, data.parameters[i].χ²_ABC, label=i)
+	#end
 	
 	p_χ2_Kcentric = scatter(data.parameters[1].χ²_Kcentric, title="χ², Kcentric-model", ylabel="χ²", label=1)
 	for i=2:length(data.parameters)
 		scatter!(p_χ2_Kcentric, data.parameters[i].χ²_Kcentric, label=i)
 	end
-	plot(p_R2_ABC, p_R2_Kcentric, p_χ2_ABC, p_χ2_Kcentric)
+	#plot(p_R2_ABC, p_R2_Kcentric, p_χ2_ABC, p_χ2_Kcentric)
+	plot(p_R2_Kcentric, p_χ2_Kcentric)
 end
-
-# ╔═╡ 448c3252-4e1e-4a9a-a8da-a23ab0959dee
-md""" # Fit functions """
-
-# ╔═╡ fcb24959-64f6-423e-9e9e-e6d2e3c25f26
-#=begin function fit_(model, T, lnk; weighted=false, threshold=NaN)
-
-	flagged_index = Int[]
-	ok_index = findall(ismissing.(lnk).==false) # indices of `lnk` which are NOT missing
-	
-	if model == ABC
-		# seems to be reliable for all measured data
-		p0 = [-100.0, 10000.0, 10.0]
-	elseif model == Kcentric
-		# in case of weighted fit, a rough estimator for Tchar is needed
-		# otherwise the fit can be far off
-		TT = T[ok_index]
-		Tchar0 = TT[findfirst(minimum(abs.(lnk[ok_index])).==abs.(lnk[ok_index]))] # estimator for Tchar -> Temperature with the smalles lnk-value
-		p0 = [Tchar0+Tst, 30.0, 10.0]
-	end
-
-		fit = curve_fit(model, T[ok_index].+Tst, lnk[ok_index], p0)
-
-	return fit, ok_index, flagged_index
-end
-	
-"""
-	fit_models(data::Array{DataFrame}, β0::Array{Float64})
-
-Fit the ABC-model and the K-centric-model at the lnk(T) data of the `data`-array of dataframes, using LsqFit.jl 
-"""
-function fit_models_old(data::Array{DataFrame}; ftrusted=0.7)
-
-	fits = Array{DataFrame}(undef, length(data))
-	for i=1:length(data)
-		fitABC = Array{Any}(undef, length(data[i][!,1]))
-		fitKcentric = Array{Any}(undef, length(data[i][!,1]))
-		T = Array{Array{Float64}}(undef, length(data[i][!,1]))
-		lnk = Array{Array{Float64}}(undef, length(data[i][!,1]))
-		name = Array{String}(undef, length(data[i][!,1]))
-		excludedABC_i = Array{Any}(undef, length(data[i][!,1]))
-		okABC_i = Array{Any}(undef, length(data[i][!,1]))
-		excludedKcentric_i = Array{Any}(undef, length(data[i][!,1]))
-		okKcentric_i = Array{Any}(undef, length(data[i][!,1]))
-		R²_ABC = Array{Float64}(undef, length(data[i][!,1]))
-		R²_Kcentric = Array{Float64}(undef, length(data[i][!,1]))
-		χ²_ABC = Array{Float64}(undef, length(data[i][!,1]))
-		χ²_Kcentric = Array{Float64}(undef, length(data[i][!,1]))
-		χ̄²_ABC = Array{Float64}(undef, length(data[i][!,1]))
-		χ̄²_Kcentric = Array{Float64}(undef, length(data[i][!,1]))
-		for j=1:length(data[i][!,1])
-		
-			T_ = RetentionData.T_column_names_to_Float(data[i])
-			Tindex = findall(occursin.("Cat", names(data[i])).==false)[2:end]
-			lnk_ = collect(Union{Missing,Float64}, data[i][j, Tindex])
-
-			T[j] = T_[findall(ismissing.(lnk_).==false)]
-			lnk[j] = lnk_[findall(ismissing.(lnk_).==false)]
-			
-			#ii = findall(isa.(lnk[j], Float64)) # indices of `lnk` which are NOT missing
-			name[j] = data[i][!, 1][j]
-
-			fitABC[j], okABC_i[j], excludedABC_i[j] = fit(RetentionData.ABC, T[j], lnk[j], ftrusted=ftrusted) #fit_outlier_test(m, xx, yy; ftrusted=0.7)
-
-			fitKcentric[j], okKcentric_i[j], excludedKcentric_i[j] = fit(RetentionData.Kcentric, T[j], lnk[j], ftrusted=ftrusted)
-
-			Not(okKcentric_i[j].outliers)
-
-			R²_ABC[j] = RetentionData.coeff_of_determination(RetentionData.ABC, fitABC[j], T[j][Not(okABC_i[j].outliers)].+273.15, lnk[j][Not(okABC_i[j].outliers)])
-			R²_Kcentric[j] = RetentionData.coeff_of_determination(RetentionData.Kcentric, fitKcentric[j], T[j][Not(okKcentric_i[j].outliers)].+RetentionData.Tst, lnk[j][Not(okKcentric_i[j].outliers)])
-			χ²_ABC[j] = rss(fitABC[j])
-			χ̄²_ABC[j] = mse(fitABC[j])
-			χ²_Kcentric[j] = rss(fitKcentric[j])
-			χ̄²_Kcentric[j] = mse(fitKcentric[j])
-		end
-		fits[i] = DataFrame(Name=name, T=T, lnk=lnk, fitABC=fitABC, fitKcentric=fitKcentric, 
-							i_ABC=okABC_i, i_Kcentric=okKcentric_i, ex_i_ABC=excludedABC_i, ex_i_Kcentric=excludedKcentric_i, 
-							R²_ABC=R²_ABC, R²_Kcentric=R²_Kcentric,
-							χ²_ABC=χ²_ABC, χ²_Kcentric=χ²_Kcentric,
-							χ̄²_ABC=χ̄²_ABC, χ̄²_Kcentric=χ̄²_Kcentric)
-		# add columns with "Cat" in column name
-		i_cat = findall(occursin.("Cat", names(data[i])))
-		for j=1:length(i_cat)
-			fits[i][!, "Cat_$(j)"] = data[i][!, i_cat[j]]
-		end
-	end
-	return fits
-end
-
-"""
-	fit_models!(meta_data::DataFrame; weighted=false, threshold=NaN, lb_ABC=[-Inf, 0.0, 0.0], ub_ABC=[0.0, Inf, 50.0], lb_Kcentric=[0.0, 0.0, 0.0], ub_Kcentric=[Inf, Inf, 500.0])
-
-Fit the ABC-model and the K-centric-model at the lnk(T) data of the `data`-array of dataframes, using LsqFit.jl and add the result in a new column (`fit`) of `meta_data 
-"""
-function fit_models!(meta_data::DataFrame;Check=true, ftrusted=0.7)
-	fitting = fit_models(meta_data.data, Check, ftrusted=ftrusted)
-	meta_data[!, "fitting"] = fitting
-	return meta_data
-end
-end=#
-
-# ╔═╡ c1fbe870-ffd5-423b-8d59-0d06e56c9e07
-begin 
-	function fit(model, T, lnk; check=true, ftrusted=0.7)
-	# Kcentric model is prefered, using the ABC model the robust fit some times tends toward a nearly linear fit 
-	raffmodel(x, p) = if model == RetentionData.ABC
-		p[1] + p[2]/x[1] + p[3]*log(x[1])
-	elseif model == RetentionData.Kcentric
-		(p[3] + p[1]/p[2])*(p[1]/x[1] - 1) + p[3]*real(log(Complex(x[1]/p[1])))
-	end
-	if model == RetentionData.ABC
-		p0 = [-100.0, 10000.0, 10.0]
-	elseif model == RetentionData.Kcentric
-		Tchar0 = T[findfirst(minimum(abs.(lnk)).==abs.(lnk))] # estimator for Tchar -> Temperature with the smalles lnk-value
-		p0 = [Tchar0+273.15, 30.0, 10.0]
-	end
-	# first robust fitting with RAFF.jl
-	robust = raff(raffmodel, [collect(skipmissing(T)).+273.15 collect(skipmissing(lnk))], 3; initguess=p0, ftrusted=ftrusted)
-	# second least-square-fit with LsqFit.jl without the outliers
-
-	 	
-	if check==false
-		fit =curve_fit(model, T .+273.15, lnk, p0)
-	else	
-		fit = curve_fit(model, T[Not(robust.outliers)].+273.15, lnk[Not(robust.outliers)], p0)
-	end	
-	
-	# residual of outliers to the lsq-result:
-	res_outliers = model(T[robust.outliers] .+ 273.15, fit.param) .- lnk[robust.outliers]
-	# - if this residual is below a threshold (e.g. the highest residual of the used data), than this outlier is not a outlier anymore -> cleared outlier
-	cleared_outliers = robust.outliers[findall(abs.(res_outliers).<maximum(abs.(fit.resid)))] # perhaps use here a more sufisticated methode -> test if this value belongs to the same distribution as the other values (normal distribution)
-	#Create a Tuple of outliers
-	
-	Tuple=Array{Any}(undef, size(robust.outliers)[1])
-		for i=1:size(robust.outliers)[1]
-			Tuple[i]=(T[robust.outliers[i]],lnk[robust.outliers[i]])
-		end	
-	if !isempty(cleared_outliers)
-		# - re-run the lsq-fit now using the cleared outliers 
-		lsq = curve_fit(model, T[Not(robust.outliers[findall(!in(T[cleared_outliers]),T[robust.outliers])])].+273.15, lnk[Not(robust.outliers[findall(!in(T[cleared_outliers]),T[robust.outliers])])], fit.param)
-		Tuple2=Array{Any}(undef, size(robust.outliers[findall(!in(T[cleared_outliers]),T[robust.outliers])])[1])
-			for i=1:size(robust.outliers[findall(!in(T[cleared_outliers]),T[robust.outliers])])[1]
-				Tuple2[i]= (T[robust.outliers[findall(!in(T[cleared_outliers]),T[robust.outliers])][i]], lnk[robust.outliers[findall(!in(T[cleared_outliers]),T[robust.outliers])][i]])
-			end	
-		return lsq, robust, Tuple2
-	else
-		return fit, robust, Tuple
-	end
-	end	
-	
-end		
-
-# ╔═╡ 2a906f58-cdad-4944-b190-a5019cb1396f
-function AcceptTest(Dataset, Check; ftrusted=0.7)
-		fitABC = Array{Any}(undef, length(Dataset[!,1]))
-		fitKcentric = Array{Any}(undef, length(Dataset[!,1]))
-		T = Array{Array{Float64}}(undef, length(Dataset[!,1]))
-		lnk = Array{Array{Float64}}(undef, length(Dataset[!,1]))
-		name = Array{String}(undef, length(Dataset[!,1]))
-		excludedABC_i = Array{Any}(undef, length(Dataset[!,1]))
-		okABC_i = Array{Any}(undef, length(Dataset[!,1]))
-		excludedKcentric_i = Array{Any}(undef, length(Dataset[!,1]))
-		okKcentric_i = Array{Any}(undef, length(Dataset[!,1]))
-		R²_ABC = Array{Float64}(undef, length(Dataset[!,1]))
-		R²_Kcentric = Array{Float64}(undef, length(Dataset[!,1]))
-		χ²_ABC = Array{Float64}(undef, length(Dataset[!,1]))
-		χ²_Kcentric = Array{Float64}(undef, length(Dataset[!,1]))
-		χ̄²_ABC = Array{Float64}(undef, length(Dataset[!,1]))
-		χ̄²_Kcentric = Array{Float64}(undef, length(Dataset[!,1]))
-		Checkbox=Array{Bool}(undef, length(Dataset[!,1]))
-		for j=1:length(Dataset[!,1])
-
-			T_ = RetentionData.T_column_names_to_Float(Dataset)
-			Tindex = findall(occursin.("Cat", names(Dataset)).==false)[2:end]
-			lnk_ = collect(Union{Missing,Float64}, Dataset[j, Tindex])
-
-			T[j] = T_[findall(ismissing.(lnk_).==false)]
-			lnk[j] = lnk_[findall(ismissing.(lnk_).==false)]
-			
-			#ii = findall(isa.(lnk[j], Float64)) # indices of `lnk` which are NOT missing
-			name[j] = Dataset[!, 1][j]
-
-			fitABC[j], okABC_i[j], excludedABC_i[j] = fit(RetentionData.ABC, T[j], lnk[j], check=Check[j], ftrusted=ftrusted) #fit_outlier_test(m, xx, yy; ftrusted=0.7)
-
-			fitKcentric[j], okKcentric_i[j], excludedKcentric_i[j] = fit(RetentionData.Kcentric, T[j], lnk[j], check=Check[j], ftrusted=ftrusted)
-
-			Not(okKcentric_i[j].outliers)
-
-			R²_ABC[j] = RetentionData.coeff_of_determination(RetentionData.ABC, fitABC[j], T[j][Not(okABC_i[j].outliers)].+273.15, lnk[j][Not(okABC_i[j].outliers)])
-			R²_Kcentric[j] = RetentionData.coeff_of_determination(RetentionData.Kcentric, fitKcentric[j], T[j][Not(okKcentric_i[j].outliers)].+RetentionData.Tst, lnk[j][Not(okKcentric_i[j].outliers)])
-			χ²_ABC[j] = rss(fitABC[j])
-			χ̄²_ABC[j] = mse(fitABC[j])
-			χ²_Kcentric[j] = rss(fitKcentric[j])
-			χ̄²_Kcentric[j] = mse(fitKcentric[j])
-
-			Checkbox[j]=Check[j]
-		end
-		fits= DataFrame(Name=name, T=T, lnk=lnk, fitABC=fitABC, fitKcentric=fitKcentric, 
-							i_ABC=okABC_i, i_Kcentric=okKcentric_i, ex_i_ABC=excludedABC_i, ex_i_Kcentric=excludedKcentric_i, 
-							R²_ABC=R²_ABC, R²_Kcentric=R²_Kcentric,
-							χ²_ABC=χ²_ABC, χ²_Kcentric=χ²_Kcentric,
-							χ̄²_ABC=χ̄²_ABC, χ̄²_Kcentric=χ̄²_Kcentric,
-							AcceptCheck= Checkbox)
-		# add columns with "Cat" in column name
-		i_cat = findall(occursin.("Cat", names(Dataset)))
-		for j=1:length(i_cat)
-			fits[!, "Cat_$(j)"] = Dataset[!, i_cat[j]]
-		end
-	return fits
-end
-
-# ╔═╡ 1ec53761-5a43-42a5-a5dc-ee94accf0650
-begin
-
-md""" Save results from Outlier check"""
-	
-CSV.write(string("C:\\Users\\Brehmer\\Documents\\GitHub\\RetentionData\\OutlierCheck\\","Check_",data.filename[select_dataset]), DataFrame(Name=data.data[select_dataset][!,1], OutlierTest=AcceptTest(data.data[select_dataset], Check).AcceptCheck))
-
-CheckBase=Array{Any}(undef, size(data.filename)[1])
-	for i=1:size(data.filename)[1]
-		try
-			CheckBase[i]=CSV.File(string("C:\\Users\\Brehmer\\Documents\\GitHub\\RetentionData\\OutlierCheck\\","Check_",data.filename[i])).OutlierTest
-		catch 
-			CheckBase[i]=Array{Any}(undef, size(data.data[i])[1])
-				 		for j=1:size(data.data[i])[1]
-							CheckBase[i][j]= true
-						end		
-		end	
-		end	
-CheckBase	
-RetentionData.extract_parameters_from_fit!(data);
-end;
-
-# ╔═╡ 437bc369-4ad4-4641-b9b2-d64cce55736e
- fit(m, X, Y, check=CheckBase[select_dataset][select_substance]; ftrusted=0.7)
-
-# ╔═╡ 1f5ae6f9-eb0e-49cf-aad6-f0b65442c1a8
-CheckBase
-
-# ╔═╡ d1152703-304f-4a2a-bc8f-36456c63100a
-begin function fit_models(data::Array{DataFrame}, CheckBase; ftrusted=0.7)
-
-	fits = Array{DataFrame}(undef, length(data))
-	for i=1:length(data)
-
-		fits[i]=AcceptTest(data[i], CheckBase[i], ftrusted=ftrusted)
-	end
-	return fits
-
-	end
-
-"""	
-	fit_models!(meta_data::DataFrame; weighted=false, threshold=NaN, lb_ABC=[-Inf, 0.0, 0.0], ub_ABC=[0.0, Inf, 50.0], lb_Kcentric=[0.0, 0.0, 0.0], ub_Kcentric=[Inf, Inf, 500.0])
-
-Fit the ABC-model and the K-centric-model at the lnk(T) data of the `data`-array of dataframes, using LsqFit.jl and add the result in a new column (`fit`) of `meta_data 
-"""
-function fit_models!(meta_data::DataFrame,CheckBase; ftrusted=0.7)
-	fitting = fit_models(meta_data.data,CheckBase, ftrusted=ftrusted)
-	meta_data[!, "fitting"] = fitting
-	return meta_data
-end
-	
-end
-
-# ╔═╡ 3c8e66f6-fa6f-430b-816c-c3a1bfbe76af
-begin
-fit_models!(data, CheckBase).fitting[select_dataset]
-RetentionData.extract_parameters_from_fit(data.fitting, data.beta0);
-	A = data.parameters[select_dataset].A[select_substance];
-	B = data.parameters[select_dataset].B[select_substance];
-	C = data.parameters[select_dataset].C[select_substance];
-	Tchar = data.parameters[select_dataset].Tchar[select_substance];
-	θchar = data.parameters[select_dataset].thetachar[select_substance];
-	ΔCp = data.parameters[select_dataset].DeltaCp[select_substance];
-end;	
-
-# ╔═╡ 8587abf6-b962-4e9c-a8b4-2d9ba5a25e51
-Tchar
-
-# ╔═╡ ca984e5b-2e1f-40ce-ad65-453171b402dc
-θchar
-
-# ╔═╡ 6493101e-d266-4cff-a72b-7e2829d158ce
-ΔCp
-
-# ╔═╡ d1ef794d-dd55-4cf4-8fde-f0a03ea2e2cd
-mini_Kcentric = Tchar + (Tchar+273.15)^2/(θchar*ΔCp/8.31446261815324)
-
-# ╔═╡ 6c250c7e-c95a-4bc1-a523-299b96e43584
-mini_lnk_Kcentric = (ΔCp/8.31446261815324+(Tchar+273.15)/θchar)*((Tchar+273.15)/(mini_Kcentric+273.15)-1)+ΔCp/8.31446261815324*log((mini_Kcentric+273.15)/(Tchar+273.15))
-
-# ╔═╡ d7a5f461-33e1-4602-b803-0223ef9a4484
-maxi_μ_Kcentric = 1/(1+exp(mini_lnk_Kcentric))
-
-# ╔═╡ 5a84d979-f8ff-466f-946e-7c2d0917eebc
-A
-
-# ╔═╡ 388801a7-2ebb-44cf-8154-320e514ceb2d
-B
-
-# ╔═╡ cd26abc7-244c-4535-9db9-8530053471dd
-C
-
-# ╔═╡ 9ba32dff-3be6-493a-b9b4-abe025bb1dad
-mini_ABC = B/C - 273.15
-
-# ╔═╡ fc3b5738-f63f-41b3-808a-8086bce5aefc
-fit_models!(data, CheckBase);
-
-# ╔═╡ 325478fb-6b22-4f33-a455-a7fd1dfa8ec7
-fit_models!(data, CheckBase).fitting;
-
-# ╔═╡ d57b2b89-9763-4998-8434-465de994ce54
-#RetentionData.save_all_parameter_data(data)
-
-# ╔═╡ 91c46525-43f9-4ef2-98f4-35fb3974d64f
-md"""
-# End
-"""
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -712,8 +280,9 @@ RAFF = "~0.6.4"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.7.2"
+julia_version = "1.8.2"
 manifest_format = "2.0"
+project_hash = "2b1659f32ab573908b0840d2390058736b30f255"
 
 [[deps.AbstractPlutoDingetjes]]
 deps = ["Pkg"]
@@ -729,6 +298,7 @@ version = "3.4.0"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
+version = "1.1.1"
 
 [[deps.ArrayInterfaceCore]]
 deps = ["LinearAlgebra", "SparseArrays", "SuiteSparse"]
@@ -864,6 +434,7 @@ version = "4.5.0"
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
+version = "0.5.2+0"
 
 [[deps.ConstructionBase]]
 deps = ["LinearAlgebra"]
@@ -947,8 +518,9 @@ uuid = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 version = "0.9.3"
 
 [[deps.Downloads]]
-deps = ["ArgTools", "LibCURL", "NetworkOptions"]
+deps = ["ArgTools", "FileWatching", "LibCURL", "NetworkOptions"]
 uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
+version = "1.6.0"
 
 [[deps.DualNumbers]]
 deps = ["Calculus", "NaNMath", "SpecialFunctions"]
@@ -995,6 +567,9 @@ deps = ["Compat", "Dates", "Mmap", "Printf", "Test", "UUIDs"]
 git-tree-sha1 = "e27c4ebe80e8699540f2d6c805cc12203b614f12"
 uuid = "48062228-2e41-5def-b9a4-89aafe57970f"
 version = "0.9.20"
+
+[[deps.FileWatching]]
+uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 
 [[deps.FillArrays]]
 deps = ["LinearAlgebra", "Random", "SparseArrays", "Statistics"]
@@ -1243,10 +818,12 @@ uuid = "4af54fe1-eca0-43a8-85a7-787d91b784e3"
 [[deps.LibCURL]]
 deps = ["LibCURL_jll", "MozillaCACerts_jll"]
 uuid = "b27032c2-a3e7-50c8-80cd-2d36dbcbfd21"
+version = "0.6.3"
 
 [[deps.LibCURL_jll]]
 deps = ["Artifacts", "LibSSH2_jll", "Libdl", "MbedTLS_jll", "Zlib_jll", "nghttp2_jll"]
 uuid = "deac9b47-8bc7-5906-a0fe-35ac56dc84c0"
+version = "7.84.0+0"
 
 [[deps.LibGit2]]
 deps = ["Base64", "NetworkOptions", "Printf", "SHA"]
@@ -1255,6 +832,7 @@ uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
 [[deps.LibSSH2_jll]]
 deps = ["Artifacts", "Libdl", "MbedTLS_jll"]
 uuid = "29816b5a-b9ab-546f-933c-edad1886dfa8"
+version = "1.10.2+0"
 
 [[deps.Libdl]]
 uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
@@ -1362,6 +940,7 @@ version = "1.1.7"
 [[deps.MbedTLS_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "c8ffd9c3-330d-5841-b78e-0817d7145fa1"
+version = "2.28.0+0"
 
 [[deps.Measurements]]
 deps = ["Calculus", "LinearAlgebra", "Printf", "RecipesBase", "Requires"]
@@ -1391,6 +970,7 @@ version = "0.7.5"
 
 [[deps.MozillaCACerts_jll]]
 uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
+version = "2022.2.1"
 
 [[deps.NLSolversBase]]
 deps = ["DiffResults", "Distributed", "FiniteDiff", "ForwardDiff"]
@@ -1406,6 +986,7 @@ version = "1.0.1"
 
 [[deps.NetworkOptions]]
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
+version = "1.2.0"
 
 [[deps.Ogg_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1416,10 +997,12 @@ version = "1.3.5+1"
 [[deps.OpenBLAS_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
 uuid = "4536629a-c528-5b80-bd46-f80d51c5b363"
+version = "0.3.20+0"
 
 [[deps.OpenLibm_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "05823500-19ac-5b8b-9628-191a04bc5112"
+version = "0.8.1+0"
 
 [[deps.OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1453,6 +1036,7 @@ version = "1.4.1"
 [[deps.PCRE2_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "efcefdf7-47ab-520b-bdef-62a2eaa19f15"
+version = "10.40.0+0"
 
 [[deps.PDMats]]
 deps = ["LinearAlgebra", "SparseArrays", "SuiteSparse"]
@@ -1475,6 +1059,7 @@ version = "0.40.1+0"
 [[deps.Pkg]]
 deps = ["Artifacts", "Dates", "Downloads", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+version = "1.8.0"
 
 [[deps.PlotThemes]]
 deps = ["PlotUtils", "Requires", "Statistics"]
@@ -1591,6 +1176,7 @@ version = "0.3.0+0"
 
 [[deps.SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
+version = "0.7.0"
 
 [[deps.Scratch]]
 deps = ["Dates"]
@@ -1694,6 +1280,7 @@ uuid = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
 [[deps.TOML]]
 deps = ["Dates"]
 uuid = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
+version = "1.0.0"
 
 [[deps.TableTraits]]
 deps = ["IteratorInterfaceExtensions"]
@@ -1710,6 +1297,7 @@ version = "1.10.0"
 [[deps.Tar]]
 deps = ["ArgTools", "SHA"]
 uuid = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
+version = "1.10.1"
 
 [[deps.TensorCore]]
 deps = ["LinearAlgebra"]
@@ -1925,6 +1513,7 @@ version = "1.4.0+3"
 [[deps.Zlib_jll]]
 deps = ["Libdl"]
 uuid = "83775a58-1f1d-513f-b197-d71354ab007a"
+version = "1.2.12+3"
 
 [[deps.Zstd_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1947,6 +1536,7 @@ version = "0.15.1+0"
 [[deps.libblastrampoline_jll]]
 deps = ["Artifacts", "Libdl", "OpenBLAS_jll"]
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
+version = "5.1.1+0"
 
 [[deps.libfdk_aac_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1969,10 +1559,12 @@ version = "1.3.7+1"
 [[deps.nghttp2_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "8e850ede-7688-5339-a07c-302acd2aaf8d"
+version = "1.48.0+0"
 
 [[deps.p7zip_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
+version = "17.4.0+0"
 
 [[deps.x264_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1995,57 +1587,23 @@ version = "1.4.1+0"
 
 # ╔═╡ Cell order:
 # ╟─6f0ac0bc-9a3f-11ec-0866-9f56a0d489dd
-# ╟─0b608842-5672-44cc-bd70-c168c537667e
-# ╟─c037a761-f192-4a3b-a617-b6024ac6cd61
-# ╟─3c8e66f6-fa6f-430b-816c-c3a1bfbe76af
-# ╟─7c800ec4-7194-4cb0-87c8-b3b196deeb16
-# ╟─435c5fca-0765-4d2c-b13d-1a67d83cc045
 # ╟─ae6986cd-33f3-48b1-9f8b-71535670bf27
 # ╟─3bac9f60-8749-425b-8e87-ba1d7442ca93
 # ╟─b8cb55b5-c40d-4f9b-96fe-580c41cbf3d6
-# ╟─67d3b9dc-ae20-4ef8-982c-6be10c96fb5c
-# ╟─3b0c2125-ece5-41d6-92d3-f6cc3e4cfacc
-# ╟─0a7a4cbc-5d25-44b9-91d1-67808df1626b
-# ╟─2d8d554b-adf3-4794-8079-5f6848dbc34a
-# ╟─437bc369-4ad4-4641-b9b2-d64cce55736e
+# ╟─cd5d0b6c-6e76-4293-80a0-b07ea94a05d8
 # ╟─49a1e6d9-b939-4795-8c7f-61e92dc09ee8
-# ╠═8587abf6-b962-4e9c-a8b4-2d9ba5a25e51
-# ╠═ca984e5b-2e1f-40ce-ad65-453171b402dc
-# ╠═6493101e-d266-4cff-a72b-7e2829d158ce
-# ╟─d1ef794d-dd55-4cf4-8fde-f0a03ea2e2cd
-# ╟─d7a5f461-33e1-4602-b803-0223ef9a4484
-# ╟─6c250c7e-c95a-4bc1-a523-299b96e43584
-# ╠═5a84d979-f8ff-466f-946e-7c2d0917eebc
-# ╠═388801a7-2ebb-44cf-8154-320e514ceb2d
-# ╠═cd26abc7-244c-4535-9db9-8530053471dd
-# ╟─9ba32dff-3be6-493a-b9b4-abe025bb1dad
-# ╟─bebf0dbc-96de-4e16-90ae-206930a106ee
-# ╟─1f5ae6f9-eb0e-49cf-aad6-f0b65442c1a8
-# ╠═1ec53761-5a43-42a5-a5dc-ee94accf0650
-# ╟─fc3b5738-f63f-41b3-808a-8086bce5aefc
-# ╟─64968bac-4878-4564-a16c-06722f215a9b
-# ╟─ae5a44de-e350-4340-aa1f-49afe8c51bc5
-# ╟─c6d787a2-4aaa-4155-bae4-4235e8fc7ea1
-# ╟─fad7761b-84b8-4287-a08a-2ace85b1081e
-# ╠═cd5d0b6c-6e76-4293-80a0-b07ea94a05d8
-# ╠═2d7ed692-9524-428c-92cf-d4ecabe8278e
-# ╠═faa843f7-ef50-47ab-a5a4-9d32265b7e5a
-# ╠═dbf47c68-709f-45b5-9ae1-b75fe2e76c5f
+# ╟─53c1de7f-fe4e-47d2-ba06-8ff9cf20bc87
 # ╟─2fd4d728-9068-415c-b006-26f93dddce28
-# ╟─f57fc4ec-9522-401f-91de-9495ca50bbb9
 # ╟─a65c584d-a669-4dfe-8deb-03ce2fd3a0c0
 # ╟─8a0d3816-b114-42e3-8bef-cda7b63af509
 # ╟─baba96bf-b0fb-43a3-8f58-954343b918fd
-# ╟─4a2c19cb-0321-4d64-91a5-51127f31ce9d
 # ╟─4dd4f07a-4654-4fd5-99f1-0fab845a545d
 # ╟─8eb557fa-8e94-49fd-8fc5-17f8d42943c6
-# ╟─448c3252-4e1e-4a9a-a8da-a23ab0959dee
-# ╟─325478fb-6b22-4f33-a455-a7fd1dfa8ec7
-# ╟─fcb24959-64f6-423e-9e9e-e6d2e3c25f26
-# ╟─d1152703-304f-4a2a-bc8f-36456c63100a
-# ╟─2a906f58-cdad-4944-b190-a5019cb1396f
-# ╟─c1fbe870-ffd5-423b-8d59-0d06e56c9e07
+# ╟─bebf0dbc-96de-4e16-90ae-206930a106ee
 # ╠═d57b2b89-9763-4998-8434-465de994ce54
 # ╟─91c46525-43f9-4ef2-98f4-35fb3974d64f
+# ╟─0b608842-5672-44cc-bd70-c168c537667e
+# ╟─c037a761-f192-4a3b-a617-b6024ac6cd61
+# ╟─435c5fca-0765-4d2c-b13d-1a67d83cc045
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
