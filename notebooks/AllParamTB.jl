@@ -602,7 +602,7 @@ gr()
 PlotTcharTheta=Array{Any}(undef, size(SubstanceFilter)[1])
 	PlotTcharTheta=Plots.scatter(xlabel=L"T_{char}", ylabel=L"θ_{char}")
 	for i=1:size(SubstanceFilter)[1]
-		Plots.scatter!(SubstanceFilter[i].Tchar, SubstanceFilter[i].thetachar, label=string(SubstanceFilter[i].Cat_1[1]), legend=:false,markers=Plots.supported_markers()[i], c=[i])
+		Plots.scatter!(SubstanceFilter[i].Tchar, SubstanceFilter[i].thetachar, label=string(SubstanceFilter[i].Cat_1[1]), legend=:topleft,markers=Plots.supported_markers()[i], c=[i], ylims=(0,90))
 		#
 	end
 	PlotTcharTheta
@@ -614,13 +614,13 @@ gr()
 	PlotTcharCp=Array{Any}(undef, size(SubstanceFilter)[1])
 	PlotTcharCp=Plots.scatter(xlabel=L"T_{char}", ylabel=L"ΔC_p")
 	for i=1:size(SubstanceFilter)[1]
-		Plots.scatter!(SubstanceFilter[i].Tchar, SubstanceFilter[i].DeltaCp, label=string(SubstanceFilter[i].Cat_1[1]), legend=:topleft, markers=Plots.supported_markers()[i], c=i)
+		Plots.scatter!(SubstanceFilter[i].Tchar, SubstanceFilter[i].DeltaCp, label=string(SubstanceFilter[i].Cat_1[1]), legend=:false, markers=Plots.supported_markers()[i], c=i)
 	end		
 	 PlotTcharCp
 end
 
 # ╔═╡ 09b949bf-36b5-44a6-ab13-e0074b824756
-	Plots.plot(PlotTcharTheta, PlotTcharCp)
+	Plots.plot(PlotTcharTheta, PlotTcharCp, layout=(1,2), size=(1200,600), dpi=500)
 
 # ╔═╡ b5c0895f-1683-4f46-960b-9463819610a1
 md""" ### Dependence between Θchar and Tchar
@@ -697,7 +697,7 @@ begin
 PlotABC=Array{Any}(undef, size(SubstanceFilter)[1])
 	PlotABC=Plots.scatter(xlabel="A", ylabel="B", zlabel="C")
 	for i=1:size(SubstanceFilter)[1]
-		Plots.scatter!(SubstanceFilter[i].A, SubstanceFilter[i].B, SubstanceFilter[i].C, label=string(SubstanceFilter[i].Cat_1[1]))
+		Plots.scatter!(SubstanceFilter[i].A, SubstanceFilter[i].B, SubstanceFilter[i].C, label=string(SubstanceFilter[i].Cat_1[1]), legend=:outerright, m=Plots.supported_markers()[i], camera=(0,10))
 	end		
 PlotABC
 end
@@ -826,6 +826,16 @@ File=CSV.File("E:\\Tillman\\Doktorarbeit\\Arbeit\\Labor\\Messdaten\\RXI-5SilMS05
 
 # ╔═╡ b7dff30b-541b-45b6-831e-b00ed5125a44
 CSV.write("E:\\Tillman\\Doktorarbeit\\Arbeit\\Labor\\Messdaten\\RXI-5SilMS05\\FAMES\\Brehmer2022_lnk_T_Rxi5SilMS_beta125_2.csv", File)
+
+# ╔═╡ 6913f8fc-4113-42b5-bf13-e5d54e99e5a1
+ö=[120889.6 ± 170.4
+121606.8± 1475.7
+119084.0 ± 1276.0
+102300.0 ± 4700.0].*0.25*10^-3
+
+
+# ╔═╡ c9c4e4f2-8762-49ed-84cb-e64f8e5cd7bb
+120889.6 ± 170.4
 
 # ╔═╡ 8f28b8b5-8866-4d80-84a5-468db7dbcb21
 function wind_speed_input(directions::Vector)
@@ -2284,12 +2294,12 @@ version = "1.4.1+0"
 # ╠═3996350d-940a-48db-9930-7c391b748b07
 # ╠═33ec66d1-2a25-45b6-936c-0acff05e624c
 # ╟─6729a636-aa06-4695-8fd6-2078322e2ffa
-# ╠═99c115a1-7bbf-4aa1-b526-6200e4d8a622
+# ╟─99c115a1-7bbf-4aa1-b526-6200e4d8a622
 # ╠═1d708017-f3d8-4126-9808-3cbc7bce0050
 # ╟─21277d27-7ea7-4adc-b1b8-4429c29cdf51
 # ╠═9b0d91eb-6672-4cf8-82e4-844becf699bb
-# ╠═3b0e9656-63e8-4fa3-8f06-33f8a2fcd4dc
-# ╟─4b5de04c-24ef-4f79-937a-f2816d7397d7
+# ╟─3b0e9656-63e8-4fa3-8f06-33f8a2fcd4dc
+# ╠═4b5de04c-24ef-4f79-937a-f2816d7397d7
 # ╠═09b949bf-36b5-44a6-ab13-e0074b824756
 # ╟─b5c0895f-1683-4f46-960b-9463819610a1
 # ╠═492fabbd-c84a-421e-a169-4229cf444e11
@@ -2298,7 +2308,7 @@ version = "1.4.1+0"
 # ╟─fc4a5a98-f1ab-45b5-9c2d-44693ad35313
 # ╟─bf9adfcc-5baf-486d-b606-4f1a8d935a17
 # ╟─421e55ec-a18b-4aba-9c88-0e53cdcef75d
-# ╟─fb2bf9b6-e7e2-4b5f-8013-e6db5d779f85
+# ╠═fb2bf9b6-e7e2-4b5f-8013-e6db5d779f85
 # ╠═156b9224-3714-4039-aa49-ecc6b04d38dc
 # ╠═202ab200-b358-4b3b-8bd9-da3a1c158d39
 # ╟─f687a423-bf8f-4c5f-b98e-f8afc5c4ee9e
@@ -2312,7 +2322,7 @@ version = "1.4.1+0"
 # ╟─41962cb0-951e-4547-82bf-4309148343ec
 # ╟─f20591bb-c98c-4e6f-b186-9e4444dec8d9
 # ╟─ad5312d2-43bb-42f6-8327-a3de2dfc1aae
-# ╠═4ec1f88e-d2e4-43c0-9e43-68322ab96e1c
+# ╟─4ec1f88e-d2e4-43c0-9e43-68322ab96e1c
 # ╟─534ec747-4b14-4c01-a837-7e6db2479381
 # ╟─982446df-5021-44ca-b7a8-2f0042baf88d
 # ╠═b6fcf3bb-9b33-42ba-97fa-f0116ae0ec46
@@ -2324,8 +2334,8 @@ version = "1.4.1+0"
 # ╠═fb7017ab-b8bb-4175-8434-5f9c1e026509
 # ╠═0698e398-d204-448e-9460-5eb2a51a5d05
 # ╠═ff6f166d-6d18-44c1-8be3-8d6d40bcd738
-# ╟─62373423-ecf6-4928-a527-f13145c84301
-# ╟─00703bb9-21f6-4f93-95f4-45995d81ee5d
+# ╠═62373423-ecf6-4928-a527-f13145c84301
+# ╠═00703bb9-21f6-4f93-95f4-45995d81ee5d
 # ╟─c00ded9a-6d20-4748-9dc6-789831820427
 # ╟─d175f8a5-9001-4d57-a8ca-715c19bbc94f
 # ╟─e2271c7c-a808-4e2e-b2e0-76393a4fcb67
@@ -2333,6 +2343,8 @@ version = "1.4.1+0"
 # ╠═b5abad47-c35c-4763-958d-d1c0b6af6fae
 # ╠═b7dff30b-541b-45b6-831e-b00ed5125a44
 # ╠═594ff5a8-6c04-42e5-b0ff-62d0351b9e77
+# ╠═6913f8fc-4113-42b5-bf13-e5d54e99e5a1
+# ╠═c9c4e4f2-8762-49ed-84cb-e64f8e5cd7bb
 # ╠═8f28b8b5-8866-4d80-84a5-468db7dbcb21
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
