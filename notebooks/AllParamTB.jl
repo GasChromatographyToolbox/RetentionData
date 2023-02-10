@@ -20,16 +20,6 @@ using LaTeXStrings
 # ╔═╡ 391282b0-f684-4e3d-b4ba-1eba0689fe5e
 begin 
 	using MultivariateStats, RDatasets
-# load iris dataset
-iris = dataset("datasets", "iris")
-
-# split half to training set
-Xtr = Matrix(iris[1:2:end,1:4])'
-Xtr_labels = Vector(iris[1:2:end,5])
-
-# split other half to testing set
-Xte = Matrix(iris[2:2:end,1:4])'
-Xte_labels = Vector(iris[2:2:end,5])
 end	
 
 # ╔═╡ 5861512e-a14b-11ec-3c6b-9bd2953bf909
@@ -40,74 +30,25 @@ md"""
 - combine all data into one DataFrame/csv-file
 """
 
-# ╔═╡ abc5bab1-66c6-4ae8-95a8-3ba6d7eecbf5
-filter_φ = 0.002
+# ╔═╡ 979d0e68-135a-4570-a835-8be8e7095326
+md"""
+## DataFrame with the structure of database for GasChromatographySimulator.jl v0.3 and lower
+""";
 
 # ╔═╡ 9634b96c-18f1-479e-b28b-3d614893ce7c
 md"""
 ## DataFrame with the new structure of database for GasChromatographySimulator.jl v0.4 and higher
 """
 
-# ╔═╡ 3eeea8dd-de5c-4c73-8d82-4bdb4979d2b0
-parset = "Kcentric"
+# ╔═╡ 8bc510bf-b40a-4f7f-b5e9-05bdca6fe1a3
+#CSV.write("../Databases/newformat_$(parset).csv", new_db)
 
-# ╔═╡ 453cbd8f-8f98-4bc7-8577-877455d8354e
-md"""
-## ChemicalIdentifiers.jl
-"""
-
-# ╔═╡ fa394ad0-055e-4c8f-a3cf-931cd421cb7e
-md"""
-## Filter for stationary phase and phase ratio
-"""
-
-# ╔═╡ 5ee8d8f2-3c3c-4d4a-a14d-e9a0f23c3ef5
-# [x] filter for not identified substances -> alternative names (save in `shortnames.csv`) or they are not in the database of ChemicalIdentifiers.jl (in this case add a separate database with name, CAS, formula, MW, Smiles -> missing.csv)
-
-# ╔═╡ 1b8f3f28-e612-40d0-9b09-136543cbb126
-md"""
-## DataFrame with the structure of database for GasChromatographySimulator.jl v0.3 and lower
-"""
-
-# ╔═╡ 49ddd8eb-a833-43b8-9f62-18f4d5afaf10
+# ╔═╡ b2b6ef1c-ca2d-4a52-a586-b3c2b13b6bac
 md"""
 ## Plot parameters Tchar, θchar, ΔCp
 """
 
-# ╔═╡ 8b0b5a9f-666a-43c2-bdab-3d771334f12b
-md"""
-### Conclusions from duplicates
-- if _Blumberg2017_ is one of the sources, keep these
-- in the case of the three duplicates from _McGinitie2011_ different mobile phases where used (He, H₂ and N₂) resp. different column diameters (0.1mm, 0.2mm, 0.25mm, 0.32mm, 0.53mm; these are also duplicates with _McGinitie2014a_)-> similar results, keep the ones with He resp. 0.25mm
-- duplicates from only _Marquart2020_ represent different observed isomers? related to the substance -> keep them all
-- some complete duplicates (parameters have the same value) -> use only the first substance
-"""
-
-# ╔═╡ ccc85a17-690a-4fa4-9b14-9ca58a22e9c8
-md"""
-## Filter for homologous series
-"""
-
-# ╔═╡ 3c860294-55cd-4b8d-8fa2-46583793fe00
-md"""
-## Flag the parameter sets
-"""
-
-# ╔═╡ a39e1661-4765-411c-a062-233a64770391
-md""" 
-## Extract number of rings from SMILES
-"""
-
-# ╔═╡ aa7bd88a-4722-493b-9c1d-2e69cf4333f3
-md"""
-## Extract number of elements from formula
-"""
-
-# ╔═╡ 58c8bd1d-2e69-48ac-9cfc-bb525ebe79c8
-# - Name, CAS, Phase, Tchar, thetachar, DeltaCp, phi0, Source, Cat_1, Cat_2, ...
-# - Name, CAS, Phase, A, B, C, phi0, Source, Cat_1, Cat_2, ...
-
-# ╔═╡ 326a0c21-454d-489f-b960-be356671e1db
+# ╔═╡ 15735325-4827-45ee-bebc-e4b365cffb9c
 md"""
 ### Observations
 
@@ -118,38 +59,114 @@ The parameters of the K-centric-model do **not** span a plane in the parameter-s
 - estimate the residua of single points
 """
 
+# ╔═╡ 93a5ed9f-64ce-4ee8-bee0-ecd2ff2dcbb8
+md"""
+## Plot parameters A, B, C
+"""
+
+# ╔═╡ 0be26332-63de-412f-b97c-975f10afd59f
+md"""
+### Observations
+
+The parameters of the ABC-model span a plane in the ABC-space. With a estimated plane equation the divergence of single data points can be evaluated. This could also be used in the estimation of parameters.
+
+#### ToDo:
+- fit a plane equation to the points
+- estimate the residua of single points
+"""
+
+# ╔═╡ 97d4ff70-092c-40db-90a2-6a8994ad920c
+md"""
+## Plot parameters ΔHref, ΔSref, ΔCp
+"""
+
+# ╔═╡ d28a4b20-af06-4613-810b-dafb9a5f0ccd
+md"""
+### Observations
+
+The parameters of the Thermodynamic-model do span two planes in the parameter-space. One plane consits soly of data from the group of Harynuk (Karolat, McGinitie). The other plane consists of other sources, including ower one measurements. Interestingly, the parameters from Blumberg are in the second plane, while the data from which they are derived (Karolat) are in the first plane.
+
+The data from the sources of Karolat2010, McGinitie2011, McGinitie2012a, McGinitie2014a and McGinitie2014b are given in the Thermodynamic-model (ΔHref, ΔSref, ΔCp).
+
+The data from Blumberg2017 is given in the ABC and Kcentric parameter sets and with enthalpy/entropy change at Tchar as reference temperature. Therefore, the calculation of refereence entropy/entalpy change at the reference temperature of 90°C should be re-evaluated. 
+
+#### ToDo:
+- check the calculation of ΔHref and ΔSref
+"""
+
+# ╔═╡ c28cca6a-fdf3-4edf-9534-5c4f677c2889
+md"""
+# Flag the parameter sets
+"""
+
+# ╔═╡ 3eeea8dd-de5c-4c73-8d82-4bdb4979d2b0
+parset = "Kcentric"
+
+# ╔═╡ 46c27c29-69d1-45bd-bfe1-b230ec20a0c9
+md"""
+## Some Filters
+
+- exclude flagged data
+- exclude data with `CAS = missing`
+""";
+
+# ╔═╡ fa394ad0-055e-4c8f-a3cf-931cd421cb7e
+md"""
+### Filter for stationary phase and phase ratio
+""";
+
+# ╔═╡ baa8a3ad-edda-47cd-8e7a-35926cf43975
+filter_φ = 0.002;
+
+# ╔═╡ 8ce7d078-f5f2-4062-97b5-356d79f98466
+filter_sp = "Rxi5ms";
+
+# ╔═╡ 5ee8d8f2-3c3c-4d4a-a14d-e9a0f23c3ef5
+# [x] filter for not identified substances -> alternative names (save in `shortnames.csv`) or they are not in the database of ChemicalIdentifiers.jl (in this case add a separate database with name, CAS, formula, MW, Smiles -> missing.csv)
+
+# ╔═╡ ccc85a17-690a-4fa4-9b14-9ca58a22e9c8
+md"""
+### Filter for homologous series
+""";
+
+# ╔═╡ c6ea845e-52bf-4d5d-b042-8afbd2bfdc39
+md"""
+## Add Category groups (e.g. BTEX, Grob, ...)
+""";
+
+# ╔═╡ 3a7fdea7-245c-404f-b101-b5a3718a511a
+md"""
+### Same categories for same substances
+""";
+
+# ╔═╡ 1c6fec9b-6719-4b11-8e5b-52d874920b8b
+md"""
+## ChemicalIdentifiers.jl
+""";
+
+# ╔═╡ aa7bd88a-4722-493b-9c1d-2e69cf4333f3
+md"""
+### Extract number of elements from formula
+""";
+
+# ╔═╡ a39e1661-4765-411c-a062-233a64770391
+md""" 
+### Extract number of rings from SMILES
+""";
+
+# ╔═╡ 58c8bd1d-2e69-48ac-9cfc-bb525ebe79c8
+# - Name, CAS, Phase, Tchar, thetachar, DeltaCp, phi0, Source, Cat_1, Cat_2, ...
+# - Name, CAS, Phase, A, B, C, phi0, Source, Cat_1, Cat_2, ...
+
 # ╔═╡ 4d44c3bf-910d-411e-b3b8-99c1c60d43b1
 #CSV.write("../Databases/newformat_$(parset)_$(filter_sp)_beta$(1/(4*filter_φ)).csv", new_db_filter)
 
 # ╔═╡ 390a66a8-e497-4a0f-b6c4-34487df787e9
 # Name, CAS, Cnumber, Hnumber, Onumber, Nnumber, Ringnumber, Molmass, Phase, Tchar, thetachar, DeltaCp, phi0, Annotation
 
-# ╔═╡ fda7f746-0f7e-4dff-b8e6-7765f580e542
-md"""
-## Some more filters for the duplicates
-"""
-
 # ╔═╡ 917e88c6-cf5d-4d8f-93e5-f50ea2bb2cdc
 md"""
-## Find duplicates
-"""
-
-# ╔═╡ 93a5ed9f-64ce-4ee8-bee0-ecd2ff2dcbb8
-md"""
-## Plot parameters A, B, C
-"""
-
-# ╔═╡ b4044a75-03ad-4f75-a2ac-716b0c2c628f
-md"""
-## Plot parameters ΔHref, ΔSref, ΔCp
-"""
-
-# ╔═╡ 11de4e14-3b56-4238-bed8-c110f4de2d44
-md"""
-## Some Filters
-
-- exclude flagged data
-- exclude data with `CAS = missing`
+# Find duplicates
 """
 
 # ╔═╡ 496b86c5-900e-4786-a254-082b8155c65b
@@ -162,11 +179,22 @@ begin
 	db_path = joinpath(project, "Databases")
 end
 
-# ╔═╡ 91370172-405b-4204-b248-0330436f08e2
+# ╔═╡ fec530e6-d675-4bb9-8b5a-6aa607574a81
+begin
+	using CSV, DataFrames, LambertW, Plots, LsqFit, Statistics, ChemicalIdentifiers, Measurements
+	include(joinpath(project, "src", "RetentionData.jl"))
+	using PlutoUI
+	TableOfContents()
+end
+
+# ╔═╡ 4b59a4a6-4036-4563-bc06-4b6942ef4d00
+search_chemical("555-44-2");
+
+# ╔═╡ 77ec770e-bcd4-4f8a-8e37-cd7a518debc7
 abspath(joinpath(project, ".."))
 
-# ╔═╡ 3757151c-2244-4e45-985c-2ef869abd23d
-data = RetentionData.load_allparameter_data(db_path)
+# ╔═╡ e92ee318-9f88-40f2-81cf-e2d60bf2f45a
+data = RetentionData.load_allparameter_data(db_path);
 
 # ╔═╡ 3b9c6610-6839-4012-aa0b-219a347ca52f
 data.data[end]
@@ -179,43 +207,8 @@ begin
 	alldata
 end
 
-# ╔═╡ 4129a813-51b6-4790-9f20-a0d5e188b5c7
-CI = RetentionData.substance_identification(alldata)
-
-# ╔═╡ c28cca6a-fdf3-4edf-9534-5c4f677c2889
-element_numbers = RetentionData.formula_to_dict.(CI.formula)
-
-# ╔═╡ 31a4dc3a-0b29-45b1-9876-47bd082e72bb
-# add CAS to alldata
-alldata[!, "CAS"] = CI.CAS
-
-# ╔═╡ b54b46bb-d420-42a7-acc4-000f2177860d
-RetentionData.formula_to_dict(CI.formula[end])
-
-# ╔═╡ e34c35f8-1ec8-47ba-af8e-77f10cf2c27b
-rimgnumbers = RetentionData.ring_number.(CI.smiles)
-
-# ╔═╡ 5d719450-b016-4cb5-b4a7-2f0e71eba5f3
-fl, nfl = RetentionData.flagged_data(alldata)
-
-# ╔═╡ fec530e6-d675-4bb9-8b5a-6aa607574a81
-begin
-	using CSV, DataFrames, LambertW, Plots, LsqFit, Statistics, ChemicalIdentifiers, Measurements
-	include(joinpath(project, "src", "RetentionData.jl"))
-	using PlutoUI
-	TableOfContents()
-end
-
-# ╔═╡ 5cf8c59b-f927-4904-bc26-21048ae3d252
-filter([:CAS] => x -> ismissing(x), CI)  
-
-# ╔═╡ c99ca5d6-7f7d-4462-afab-e11154370054
-begin
-	plotly()
-	pKcentric = scatter(nfl.Tchar, nfl.thetachar, nfl.DeltaCp, label="not flagged", xlabel="Tchar", ylabel="thetachar", zlabel="DeltaCp")
-	scatter!(pKcentric, fl.Tchar, fl.thetachar, fl.DeltaCp, label="flagged", c=:red, m=:cross)
-	pKcentric
-end
+# ╔═╡ 91d21ca2-5657-4f9b-ae66-629fa77236f1
+fl, nfl = RetentionData.flagged_data(alldata);
 
 # ╔═╡ 7c95815d-11e5-4de5-8d83-a7ef8518751c
 begin 
@@ -227,6 +220,75 @@ begin
 	end
 	pTD_nfl_
 end
+
+# ╔═╡ 7eb28537-4d9e-4529-b6f7-b0407bce814c
+pKcentric_nfl = scatter(nfl.Tchar, nfl.thetachar, nfl.DeltaCp, label="not flagged", xlabel="Tchar", ylabel="θchar", zlabel="ΔCp", camera=(30, 30))
+
+# ╔═╡ d460b5e1-9060-4fe5-bcea-8c63a0ea071e
+begin
+	plotly()
+	pKcentric = scatter(nfl.Tchar, nfl.thetachar, nfl.DeltaCp, label="not flagged", xlabel="Tchar", ylabel="thetachar", zlabel="DeltaCp")
+	scatter!(pKcentric, fl.Tchar, fl.thetachar, fl.DeltaCp, label="flagged", c=:red, m=:cross)
+	pKcentric
+end
+
+# ╔═╡ 17387b6a-e126-4923-ac14-229d980ed9ad
+pABC_nfl = scatter(nfl.A, nfl.B, nfl.C, label="not flagged", xlabel="A", ylabel="B", zlabel="C")
+
+# ╔═╡ 0e559fd4-5fef-4375-9e7a-1e052cf61b7a
+begin
+	plotly()
+	pABC = scatter(nfl.A, nfl.B, nfl.C, label="not flagged", xlabel="A", ylabel="B", zlabel="C")
+	scatter!(pABC, fl.A, fl.B, fl.C, label="flagged", c=:red, m=:cross)
+	pABC
+end
+
+# ╔═╡ 8287590e-0e6d-4591-a616-0b64d84ca767
+pTD_nfl = scatter(nfl.DeltaHref, nfl.DeltaSref, nfl.DeltaCp, label="not flagged", xlabel="DeltaHref", ylabel="DeltaSref", zlabel="DeltaCp")
+
+# ╔═╡ ef518fe9-1920-4c95-9ef3-2b2542621fc0
+begin
+	plotly()
+	pTD = scatter(nfl.DeltaHref, nfl.DeltaSref, nfl.DeltaCp, label="not flagged", xlabel="DeltaHref", ylabel="DeltaSref", zlabel="DeltaCp")
+	scatter!(pTD, fl.DeltaHref, fl.DeltaSref, fl.DeltaCp, label="flagged", c=:red, m=:cross)
+	pTD
+end
+
+# ╔═╡ 76c115ae-8482-4e1d-a4ff-873beb68cb41
+scatter(nfl.A, nfl.B, nfl.C, label="not flagged", xlabel="A", ylabel="B", zlabel="C", camera=(30,15))
+
+# ╔═╡ d619df94-5bb2-4349-a83d-ccfd13b95906
+# only use substances with a CAS entry
+alldata_f = filter([:CAS, :flag] => (x, y) -> ismissing(x)==false && isempty(y), alldata);
+
+# ╔═╡ 54a2712b-d696-4097-8522-f5e1a87ecbec
+alldata_f_ = RetentionData.align_categories(alldata_f);
+
+# ╔═╡ 610d535a-2025-4419-b35b-8d28dbaa62b8
+RetentionData.add_group_to_Cat!(alldata_f_)
+
+# ╔═╡ 1e72ad83-50c4-4acc-8a35-39d6431dded8
+CI = RetentionData.substance_identification(alldata);
+
+# ╔═╡ 5cf8c59b-f927-4904-bc26-21048ae3d252
+filter([:CAS] => x -> ismissing(x), CI)  ;
+
+# ╔═╡ 31a4dc3a-0b29-45b1-9876-47bd082e72bb
+# add CAS to alldata
+alldata[!, "CAS"] = CI.CAS;
+
+# ╔═╡ b54b46bb-d420-42a7-acc4-000f2177860d
+RetentionData.formula_to_dict(CI.formula[end]);
+
+# ╔═╡ 311a09e1-7cfd-42bf-be24-0315b6727d2e
+element_numbers = RetentionData.formula_to_dict.(CI.formula);
+
+# ╔═╡ 42aeba5d-772d-4366-8bab-51a9c0875917
+rimgnumbers = RetentionData.ring_number.(CI.smiles);
+
+# ╔═╡ 823317eb-e0eb-465e-9bf5-a24e541445b8
+# add CAS to alldata
+alldata[!, "CAS"] = CI.CAS
 
 # ╔═╡ e74f1990-5dd2-4062-a8d0-345a5005d0c2
 function add_homologous_to_Cat!(newdata)
@@ -254,105 +316,34 @@ function add_homologous_to_Cat!(newdata)
 		end
 	end
 	return newdata
-end
-
-# ╔═╡ 560c76d6-9e50-461a-9815-66b40b59e580
-begin
-	plotly()
-	pABC = scatter(nfl.A, nfl.B, nfl.C, label="not flagged", xlabel="A", ylabel="B", zlabel="C")
-	scatter!(pABC, fl.A, fl.B, fl.C, label="flagged", c=:red, m=:cross)
-	pABC
-end
+end;
 
 # ╔═╡ 46e16092-d952-4c4f-a952-c5201797fcd1
-homologous_series = DataFrame(CSV.File(joinpath(project, "data", "homologous.csv")))
+homologous_series = DataFrame(CSV.File(joinpath(project, "data", "homologous.csv")));
 
-# ╔═╡ 8d1c0954-ace2-4621-99aa-ce692936247b
-hs = unique(homologous_series[!,3])
+# ╔═╡ 78cfb200-3935-40f1-b4ff-a14aec1949f8
+names(homologous_series);
 
-# ╔═╡ d619df94-5bb2-4349-a83d-ccfd13b95906
-# only use substances with a CAS entry
-alldata_f = filter([:CAS, :flag] => (x, y) -> ismissing(x)==false && isempty(y), alldata)
+# ╔═╡ 7359cd1d-fd78-422f-b9fa-3b6f9d33860a
+homologous_series."homologous series";
 
-# ╔═╡ 54a2712b-d696-4097-8522-f5e1a87ecbec
-alldata_f_ = RetentionData.align_categories(alldata_f)
+# ╔═╡ 739a430d-6dc7-49e7-87b9-8befa0e6184f
+hs = unique(homologous_series[!,3]);
 
-# ╔═╡ 610d535a-2025-4419-b35b-8d28dbaa62b8
-RetentionData.add_group_to_Cat!(alldata_f_)
-
-# ╔═╡ 80c784b2-35a6-4fc9-a1fd-7b1d6d89462f
-begin
-	plotly()
-	pTD = scatter(nfl.DeltaHref, nfl.DeltaSref, nfl.DeltaCp, label="not flagged", xlabel="DeltaHref", ylabel="DeltaSref", zlabel="DeltaCp")
-	scatter!(pTD, fl.DeltaHref, fl.DeltaSref, fl.DeltaCp, label="flagged", c=:red, m=:cross)
-	pTD
-end
-
-# ╔═╡ a56ed363-4cc7-4471-b0aa-34109d2dcb45
-pABC_nfl = scatter(nfl.A, nfl.B, nfl.C, label="not flagged", xlabel="A", ylabel="B", zlabel="C")
-
-# ╔═╡ 76c115ae-8482-4e1d-a4ff-873beb68cb41
-scatter(nfl.A, nfl.B, nfl.C, label="not flagged", xlabel="A", ylabel="B", zlabel="C", camera=(30,15))
-
-# ╔═╡ 4000c057-c75a-4bd8-93fd-dcfce907101c
-search_chemical("555-44-2")
-
-# ╔═╡ a94f22a9-5332-429a-bd31-3c1799781ffe
-scatter(nfl.Tchar, nfl.DeltaCp, label="not flagged", xlabel=L"T_{char}", ylabel=L"ΔC_p", camera=(30, 45))
-
-# ╔═╡ bfc0bd73-94c2-4742-b334-e632933d6dfe
+# ╔═╡ fda7f746-0f7e-4dff-b8e6-7765f580e542
 md"""
-### Observations
-
-The parameters of the ABC-model span a plane in the ABC-space. With a estimated plane equation the divergence of single data points can be evaluated. This could also be used in the estimation of parameters.
-
-#### ToDo:
-- fit a plane equation to the points
-- estimate the residua of single points
+## Some more filters for the duplicates
 """
 
-# ╔═╡ e17bf6fe-f3b6-4904-bb05-8b068fd9cf1f
-md"""
-## Same categories for same substances
-"""
-
-# ╔═╡ eaed9fdd-d4a2-41f7-8e05-588869e12780
-#CSV.write("../Databases/oldformat_$(parset).csv", old_db)
-
-# ╔═╡ e9f134c3-25e7-45a8-a07e-a3cfdc6c027b
-pKcentric_nfl = scatter(nfl.Tchar, nfl.thetachar, nfl.DeltaCp, label="not flagged", xlabel=L"T_{char}", ylabel=L"\theta_{char}", zlabel=L"\Delta C_p", camera=(30, 30))
-
-# ╔═╡ 897c8de6-c042-49aa-98ee-e5b3762756b8
-filter_sp = "Rxi5ms"
-
-# ╔═╡ d24832da-ff7d-4d4c-af5d-6662eca846cf
-begin gr() 
-scatter(nfl.Tchar, nfl.thetachar, label="not flagged", xlabel=L"T_{char}", ylabel=L"\theta_{char}")
-end	
-
-# ╔═╡ 070c0b3b-efa4-4f4d-a567-87ba4b7c936b
-unique(alldata.Phase)
-
-# ╔═╡ d5381c2d-1794-4af1-9ebb-5188334fc592
-md"""
-## Add Category groups (e.g. BTEX, Grob, ...)
-"""
-
-# ╔═╡ f51eb4f5-3529-4c5a-8e2d-1902242ab7af
-names(homologous_series)
-
-# ╔═╡ 6260e6e0-02e4-4c95-9889-020e5c3c2d60
-pTD_nfl = scatter(nfl.DeltaHref, nfl.DeltaSref, nfl.DeltaCp, label="not flagged", xlabel="DeltaHref", ylabel="DeltaSref", zlabel="DeltaCp")
-
-# ╔═╡ e5b49869-2763-4ec9-ae7f-7b70164c0c67
+# ╔═╡ 50f1d5b3-2251-455a-8d7d-8bddfeed3611
 dup_data, dup_entry = RetentionData.duplicated_data(alldata_f_)
+
+# ╔═╡ 47138dbf-5c60-4cdc-b484-ff168d11055f
+dup_data[70];
 
 # ╔═╡ b7be7b57-7e69-4cc9-af54-db9465f18d05
 # 1st take only the entrys without duplicates, delete columns 'd', 'gas' and 'flag'
-nondup_data = alldata_f_[findall(dup_entry.==false),Not([:d, :gas, :flag])]
-
-# ╔═╡ 47138dbf-5c60-4cdc-b484-ff168d11055f
-dup_data[70]
+nondup_data = alldata_f_[findall(dup_entry.==false),Not([:d, :gas, :flag])];
 
 # ╔═╡ 81ccb3e6-dcca-4b66-9be6-a1fb63f7e056
 # 2nd filter the duplicate data dup_data according to decisions
@@ -386,12 +377,12 @@ begin
 			#push!(selected_dup_data, dup_data[i][1,cols]) # choose first -> error
 		end
 	end
-	selected_dup_data
+	selected_dup_data;
 end
 
 # ╔═╡ a50d4f05-0f4a-4ae0-ba5d-a27bad3869e0
 dup_data_1, dup_entry_1 = RetentionData.duplicated_data(selected_dup_data)
-# -> remaining cases of duplicates (some will stay, e.g. Marquart2020)
+# -> remaining cases of duplicates (some will stay, e.g. Marquart2020);
 
 # ╔═╡ 4a73771a-3adc-4fad-8d6a-148dcf9cc3c4
 # 3rd combine both dataframes and sort for "source", "phase", "Tchar"
@@ -400,21 +391,24 @@ begin
 	newdata
 end
 
+# ╔═╡ 3d0b0729-c7a6-408a-8e2c-b5255347a65e
+old_db = RetentionData.old_database_format(newdata);
+
 # ╔═╡ 8397c671-c0d1-4632-ae9a-55a6dccd1002
 new_db = RetentionData.new_database_format(newdata; ParSet=parset)
 
 # ╔═╡ 1d23d9a9-996a-4c88-9bef-2fcc55fd5b44
-new_db_filter = filter([:Phase, :phi0] => (x, y) -> x == filter_sp && y == filter_φ, new_db)
+new_db_filter = filter([:Phase, :phi0] => (x, y) -> x == filter_sp && y == filter_φ, new_db);
 
 # ╔═╡ ff046879-3607-47e4-afe3-b42bb1738b9f
-add_homologous_to_Cat!(newdata)
-
-# ╔═╡ 23e0cf31-1c67-48d1-b014-26c1b44e04a8
-old_db = RetentionData.old_database_format(newdata)
+add_homologous_to_Cat!(newdata);
 
 # ╔═╡ baa7d024-ec90-4744-922d-830f40683abe
 dup_data_2, dup_entry_2 = RetentionData.duplicated_data(newdata)
 # only duplicated data from Marquart2020 remain
+
+# ╔═╡ dd48df07-4bed-47ce-9799-05958e3adc7a
+count(dup_entry)
 
 # ╔═╡ 87a761c6-85ce-4342-a7d4-a13a378c6c45
 md"""
@@ -422,7 +416,7 @@ md"""
 $(@bind select_dup Slider(1:length(dup_data); show_value=true))
 """
 
-# ╔═╡ f02137a4-75a1-49ac-81a3-a1f04bab9ca2
+# ╔═╡ bac7d9ef-d6bd-4955-b8e1-dfa6f6f7f038
 begin
 	T = 0.0:1.0:400.0
 	Tst = 273.15
@@ -441,10 +435,7 @@ end
 # ╔═╡ 9a09e9cb-26cf-4576-a581-7b832fbab775
 pKcentric_dup = scatter(dup_data[select_dup].Tchar, dup_data[select_dup].thetachar, dup_data[select_dup].DeltaCp, title="duplicated data, $(dup_data[select_dup].Name[1]), $(dup_data[select_dup].Phase[1])", label="", xlabel="Tchar", ylabel="θchar", zlabel="ΔCp");
 
-# ╔═╡ 6dac8047-1170-4b65-9cee-2c8db3b62d63
-homologous_series."homologous series"
-
-# ╔═╡ c7f1acaa-d53e-427e-b646-f3920a2ce6b7
+# ╔═╡ fecbe30c-d7a9-41d2-8044-2ca4c4034ca3
 pABC_dup = scatter(dup_data[select_dup].A, dup_data[select_dup].B, dup_data[select_dup].C, title="duplicated data, $(dup_data[select_dup].Name[1]), $(dup_data[select_dup].Phase[1])", label="", xlabel="A", ylabel="B", zlabel="C");
 
 # ╔═╡ ba1c7f65-3e24-4b86-b2e2-521459993250
@@ -454,22 +445,26 @@ $(embed_display(pABC_dup))
 $(embed_display(pKcentric_dup))
 """
 
-# ╔═╡ 32fd5862-e14b-4cea-b99c-0f26e0d8fbb5
+# ╔═╡ 9290687e-26d1-4ccf-9603-d46b8ae9dcb7
 md"""
-### Observations
-
-The parameters of the Thermodynamic-model do span two planes in the parameter-space. One plane consits soly of data from the group of Harynuk (Karolat, McGinitie). The other plane consists of other sources, including ower one measurements. Interestingly, the parameters from Blumberg are in the second plane, while the data from which they are derived (Karolat) are in the first plane.
-
-The data from the sources of Karolat2010, McGinitie2011, McGinitie2012a, McGinitie2014a and McGinitie2014b are given in the Thermodynamic-model (ΔHref, ΔSref, ΔCp).
-
-The data from Blumberg2017 is given in the ABC and Kcentric parameter sets and with enthalpy/entropy change at Tchar as reference temperature. Therefore, the calculation of refereence entropy/entalpy change at the reference temperature of 90°C should be re-evaluated. 
-
-#### ToDo:
-- check the calculation of ΔHref and ΔSref
+### Conclusions from duplicates
+- if _Blumberg2017_ is one of the sources, keep these
+- in the case of the three duplicates from _McGinitie2011_ different mobile phases where used (He, H₂ and N₂) resp. different column diameters (0.1mm, 0.2mm, 0.25mm, 0.32mm, 0.53mm; these are also duplicates with _McGinitie2014a_)-> similar results, keep the ones with He resp. 0.25mm
+- duplicates from only _Marquart2020_ represent different observed isomers? related to the substance -> keep them all
+- some complete duplicates (parameters have the same value) -> use only the first substance
 """
 
-# ╔═╡ dd48df07-4bed-47ce-9799-05958e3adc7a
-count(dup_entry)
+# ╔═╡ eaed9fdd-d4a2-41f7-8e05-588869e12780
+#CSV.write("../Databases/oldformat_$(parset).csv", old_db)
+
+# ╔═╡ 897c8de6-c042-49aa-98ee-e5b3762756b8
+# ╠═╡ disabled = true
+#=╠═╡
+
+  ╠═╡ =#
+
+# ╔═╡ 070c0b3b-efa4-4f4d-a567-87ba4b7c936b
+unique(alldata.Phase)
 
 # ╔═╡ ef0c1872-da54-48b5-8212-634d7d91e9ac
 # filter for all alkanes
@@ -497,6 +492,14 @@ sort(filter_Cat(newdata, "Grob"), [:Phase])
 
 # ╔═╡ 873b90e2-bc5d-4272-a90b-978bb4e1358d
 md"""# Supplemental Material For Paper"""
+
+# ╔═╡ d24832da-ff7d-4d4c-af5d-6662eca846cf
+begin gr() 
+scatter(nfl.Tchar, nfl.thetachar, label="not flagged", xlabel=L"T_{char}", ylabel=L"\theta_{char}")
+end	
+
+# ╔═╡ a94f22a9-5332-429a-bd31-3c1799781ffe
+scatter(nfl.Tchar, nfl.DeltaCp, label="not flagged", xlabel=L"T_{char}", ylabel=L"ΔC_p", camera=(30, 45))
 
 # ╔═╡ bc5f3e11-d5de-4343-b959-86431b8f04f1
 md"""## Lambert W function"""
@@ -527,7 +530,7 @@ SourceFilter=Array{Any}(undef, size(unique(alldata.Source))[1])
 
 N_SourceCompound=Array{Any}(undef, size(unique(alldata.Source))[1])
 	for i=1:size(unique(alldata.Source))[1]
-	N_SourceCompound[i]=size(unique(SourceFilter[i].Name))[1]	
+	N_SourceCompound[i]=size(unique(SourceFilter[i].CAS))[1]	
 	end
 
 N_Column=Array{Any}(undef, size(unique(alldata.Source))[1])
@@ -548,11 +551,52 @@ end
 # ╔═╡ 512ae246-792c-45c7-ae58-406bc70d47ff
 SourceFilter(alldata)
 
-# ╔═╡ 36e6a92f-8729-4679-b733-b12fa29ac625
-size(unique(nfl.Phase))
+# ╔═╡ e945beeb-a9de-4a2d-bc8b-73c3f3dd37b1
+SourceFilter(nfl)
+
+# ╔═╡ 20eb935e-c66d-46fe-b309-e4f37f29e667
+SourceFilter(nfl)[2][12:14]
+
+# ╔═╡ b8c51d43-fd7d-440e-b516-a49a21cf44b8
+#SV.write(string(pwd(), "\\Table1.csv"), append!(append!(SourceFilter(nfl)[2][12], SourceFilter(nfl)[2][13]), SourceFilter(nfl)[2][14]))
+
+# ╔═╡ 015e4eb0-f60e-474f-9ab9-98f6c44b9d8f
+CAS_example=
+["78-70-6"
+"97-53-0"
+"4602-84-0"
+"4602-84-0"
+"106-24-1"
+"54464-57-2"
+"54464-57-2"
+"54464-57-2"
+"54464-57-2"
+"76-49-3"
+"97-54-1"
+"102-76-1"
+"60-01-5"
+"621-71-6"
+"621-70-5"
+"538-24-9"
+"538-23-8"
+"37680-73-2"
+"35065-28-2"
+"35065-27-1"
+"35065-29-3"
+"7012-37-5"
+"35693-99-3"
+"120-12-7"
+"56-55-3"
+"191-24-2"
+"218-01-9"
+"53-70-3"
+"193-39-5"]
+
+# ╔═╡ bbaa8bd7-5b38-4fda-aab9-d97d0c14c410
+#CSV.write(string(pwd(), "\\Literature.csv"), SourceFilter(alldata)[1])
 
 # ╔═╡ 44c3be0a-3376-4b51-bd07-683e96029d69
-SourceFilter(nfl)
+#CSV.write(string(pwd(), "\\verfication.csv"), SourceFilter(nfl)[1])
 
 # ╔═╡ 3996350d-940a-48db-9930-7c391b748b07
 nfl
@@ -602,11 +646,39 @@ gr()
 PlotTcharTheta=Array{Any}(undef, size(SubstanceFilter)[1])
 	PlotTcharTheta=Plots.scatter(xlabel=L"T_{char}", ylabel=L"θ_{char}")
 	for i=1:size(SubstanceFilter)[1]
-		Plots.scatter!(SubstanceFilter[i].Tchar, SubstanceFilter[i].thetachar, label=string(SubstanceFilter[i].Cat_1[1]), legend=:topleft,markers=Plots.supported_markers()[i], c=[i], ylims=(0,90))
+		if i==4
+		Name="others"
+		else
+		Name=SubstanceFilter[i].Cat_1[1]	
+		end
+		Plots.scatter!(SubstanceFilter[i].Tchar, SubstanceFilter[i].thetachar, label=string(Name), legend=:topleft,markers=Plots.supported_markers()[i], c=[i], ylims=(0,90))
 		#
 	end
 	PlotTcharTheta
+end;
+
+# ╔═╡ ed134625-a178-48d8-856f-e8b25f57842d
+begin
+plotly()
+PlotKcentric3D=Array{Any}(undef, size(SubstanceFilter)[1])
+	PlotKcentric3D=Plots.scatter(xlabel="Tchar", ylabel=L"θchar", zlabel="ΔCp")
+	for i=1:size(SubstanceFilter)[1]
+		if i==4
+		Name="others"
+		else
+		Name=SubstanceFilter[i].Cat_1[1]	
+		end
+		Plots.scatter!(SubstanceFilter[i].Tchar, SubstanceFilter[i].thetachar, SubstanceFilter[i].DeltaCp, label=string(Name), legend=:topleft,markers=Plots.supported_markers()[i], c=[i], ylims=(0,90))
+		#
+	end
+	PlotKcentric3D
 end
+
+# ╔═╡ 2d89e6eb-4c6e-4c6f-8a82-55eaf66de976
+begin plotly()
+Plots.scatter!()
+	gui()
+end	
 
 # ╔═╡ 4b5de04c-24ef-4f79-937a-f2816d7397d7
 begin 
@@ -617,17 +689,20 @@ gr()
 		Plots.scatter!(SubstanceFilter[i].Tchar, SubstanceFilter[i].DeltaCp, label=string(SubstanceFilter[i].Cat_1[1]), legend=:false, markers=Plots.supported_markers()[i], c=i)
 	end		
 	 PlotTcharCp
-end
+end;
 
 # ╔═╡ 09b949bf-36b5-44a6-ab13-e0074b824756
-	Plots.plot(PlotTcharTheta, PlotTcharCp, layout=(1,2), size=(1200,600), dpi=500)
+	Plots.plot(PlotTcharTheta, PlotTcharCp, layout=(1,2), size=(1200,600), dpi=500, minorgrid=true)
+
+# ╔═╡ 13a8c60e-979b-47e6-bcdc-7a314fd27ebb
+savefig(Plots.plot(PlotTcharTheta, PlotTcharCp, layout=(1,2), size=(1200,600), dpi=500, minorgrid=true), "Kcentric.svg" )
 
 # ╔═╡ b5c0895f-1683-4f46-960b-9463819610a1
-md""" ### Dependence between Θchar and Tchar
+md""" ### Dependence between θchar and Tchar
 
 Fit Blumberg2022/2010 Model 
 
-$Θ_{char}=(T_{char})^{0.7} \cdot (10^3 \cdot𝝋)^{0.09}$
+$θ_{char}=(T_{char})^{0.7} \cdot (10^3 \cdot𝝋)^{0.09}$
 
 
 """
@@ -669,7 +744,7 @@ Plotti=Array{Any}(undef, size(unique(nfl.beta0)))
 			Plots.scatter()
 	for i=1:size(unique(nfl.beta0))[1]
 
-		Plotti=Plots.scatter!(PhiFilter[i].Tchar, PhiFilter[i].thetachar, label=unique(nfl.beta0)[i])
+		Plotti=Plots.scatter!(PhiFilter[i].Tchar, PhiFilter[i].thetachar, label=unique(nfl.beta0)[i], xlabel=L"T_{char}", ylabel=L"θ_{char}", title="Influence of Phase ratio")
 
 	end
 	Plotti
@@ -694,13 +769,25 @@ md""" ## ABC Model """
 
 # ╔═╡ fb2bf9b6-e7e2-4b5f-8013-e6db5d779f85
 begin
+	plotly()
 PlotABC=Array{Any}(undef, size(SubstanceFilter)[1])
 	PlotABC=Plots.scatter(xlabel="A", ylabel="B", zlabel="C")
 	for i=1:size(SubstanceFilter)[1]
-		Plots.scatter!(SubstanceFilter[i].A, SubstanceFilter[i].B, SubstanceFilter[i].C, label=string(SubstanceFilter[i].Cat_1[1]), legend=:outerright, m=Plots.supported_markers()[i], camera=(0,10))
+		if i==4
+		Name="others"
+		else
+		Name=SubstanceFilter[i].Cat_1[1]	
+		end
+		Plots.scatter!(SubstanceFilter[i].A, SubstanceFilter[i].B, SubstanceFilter[i].C, label=string(Name), legend=:outerright, m=Plots.supported_markers()[i])
 	end		
 PlotABC
 end
+
+# ╔═╡ 715bd7c8-dccf-471e-a0a7-25de1be7aab4
+begin plotly()
+Plots.scatter!()
+	gui()
+end	
 
 # ╔═╡ 156b9224-3714-4039-aa49-ecc6b04d38dc
 Plots.scatter(SubstanceFilter[4].A, SubstanceFilter[4].B, SubstanceFilter[4].C, label=unique(nfl.Cat_1)[4])
@@ -709,52 +796,19 @@ Plots.scatter(SubstanceFilter[4].A, SubstanceFilter[4].B, SubstanceFilter[4].C, 
 #CSV.write("$(pwd())\\Database.csv", filter([:Source]=>(x)-> occursin.(string(x), string("Marquart2020","Duong2022", "Brehmer2022")), nfl))
 
 # ╔═╡ f687a423-bf8f-4c5f-b98e-f8afc5c4ee9e
-md""" ## PCA Analysis"""
-
-# ╔═╡ 455548e2-b4f8-4b70-90f7-0c64552f62bc
-md"""### Example"""
-
-# ╔═╡ 7ed2478c-7635-48dd-9357-900bc376829d
-dataset("datasets", "iris")
-
-# ╔═╡ 0a3c98ea-8e40-4508-9b75-9280f118567e
-Matrix(iris[1:2:end,1:4])
-
-# ╔═╡ 94ca7430-8b87-4a6e-97fc-37d742fae6c4
-M = fit(PCA, Xtr; maxoutdim=3)
-
-# ╔═╡ 687713db-b78e-42e6-b3d5-01581b9d4f0a
-Yte = predict(M, Xte)
-
-# ╔═╡ 1a967a90-d016-4c1b-b02d-b8b32bd999eb
-Xr = reconstruct(M, Yte)
-
-# ╔═╡ 41962cb0-951e-4547-82bf-4309148343ec
-begin 
-setosa = Yte[:,Xte_labels.=="setosa"]
-versicolor = Yte[:,Xte_labels.=="versicolor"]
-virginica = Yte[:,Xte_labels.=="virginica"]
-
-p = scatter(setosa[1,:],setosa[2,:],setosa[3,:],marker=:circle,linewidth=0)
-scatter!(versicolor[1,:],versicolor[2,:],versicolor[3,:],marker=:circle,linewidth=0)
-scatter!(virginica[1,:],virginica[2,:],virginica[3,:],marker=:circle,linewidth=0)
-plot!(p,xlabel="PC1",ylabel="PC2",zlabel="PC3")
-end	
-
-# ╔═╡ f20591bb-c98c-4e6f-b186-9e4444dec8d9
-scatter(Yte[1,:],Yte[2,:],Yte[3,:],marker=:circle,linewidth=0)
+md""" # PCA Analysis"""
 
 # ╔═╡ ad5312d2-43bb-42f6-8327-a3de2dfc1aae
-md"""### PCA ABC Model"""
+md"""## PCA ABC Model"""
 
 # ╔═╡ 4ec1f88e-d2e4-43c0-9e43-68322ab96e1c
 nfl
 
 # ╔═╡ 534ec747-4b14-4c01-a837-7e6db2479381
-ABC_Training=Matrix(nfl[1:2:end-1,4:6])'
+ABC_Training=Matrix(nfl[1:2:end-1,5:7])'
 
 # ╔═╡ 982446df-5021-44ca-b7a8-2f0042baf88d
- ABC_Testing=Matrix(nfl[2:2:end,4:6])'
+ ABC_Testing=Matrix(nfl[2:2:end,5:7])'
 
 # ╔═╡ b6fcf3bb-9b33-42ba-97fa-f0116ae0ec46
 PCA_ABC=fit(PCA, ABC_Training; maxoutdim=2)
@@ -766,13 +820,13 @@ ABC_Y=predict(PCA_ABC,  ABC_Testing)
 reconstruct(PCA_ABC, ABC_Y)
 
 # ╔═╡ 8a4541fc-7ebb-46f0-a652-10f7ba1ea689
-md"""### PCA K-centric Model"""
+md"""## PCA K-centric Model"""
 
 # ╔═╡ 52f944bf-2038-497a-ae39-a2ee95ad67d2
-kcentric_Training=Matrix(nfl[1:2:end-1,7:9])'
+kcentric_Training=Matrix(nfl[1:2:end-1,8:10])'
 
 # ╔═╡ 32471c63-a5c0-4ad9-b9e4-1701a8a9902b
-kcentric_Testing=Matrix(nfl[2:2:end,7:9])'
+kcentric_Testing=Matrix(nfl[2:2:end,8:10])'
 
 # ╔═╡ fb7017ab-b8bb-4175-8434-5f9c1e026509
 PCA_kcentric=fit(PCA, kcentric_Training; maxoutdim=2)
@@ -786,17 +840,30 @@ reconstruct(PCA_kcentric, kcentric_Y)
 # ╔═╡ 62373423-ecf6-4928-a527-f13145c84301
 Plots.scatter(kcentric_Y[1,:], kcentric_Y[2,:], xlabel="PC1", ylabel="PC2")
 
+# ╔═╡ 4badc718-b4a0-4642-adcb-b88a55193280
+SubstanceFilter[4].Cat_1[1]
+
 # ╔═╡ 00703bb9-21f6-4f93-95f4-45995d81ee5d
 begin 
-	gr()
 	KcentricPCA_Plot=Array{Any}(undef, size(SubstanceFilter)[1])
-		KcentricPCA_Plot=Plots.scatter(xlabel="PC1", ylabel="PC2")
+		KcentricPCA_Plot=Plots.scatter()
 	for i=1:size(SubstanceFilter)[1]
-		Predict=predict(PCA_kcentric,Matrix(SubstanceFilter[i][!,7:9])')
-		Plots.scatter!(KcentricPCA_Plot, Predict[1,:],Predict[2,:], label=SubstanceFilter[i].Cat_1[1], legend=:outerright, markers=Plots.supported_markers()[i], title="Compounds")
+				if i==4
+		Name="others"
+		else
+		Name=SubstanceFilter[i].Cat_1[1]	
+		end	
+		Predict=predict(PCA_kcentric,Matrix(SubstanceFilter[i][!,8:10])')
+		Plots.scatter!(KcentricPCA_Plot, Predict[1,:],Predict[2,:], label=Name, legend=:outerright, markers=Plots.supported_markers()[i], title="Compounds",dpi=500, size=(800,400), minorgrid=true)
 	end		
 KcentricPCA_Plot
 end
+
+# ╔═╡ 8f2f176e-cab0-4ab8-8d9c-f635d6e95460
+savefig(KcentricPCA_Plot, "PCA.svg" )
+
+# ╔═╡ c4de94c8-5a6c-4db2-8826-80e8555642b5
+Plots.plot(KcentricPCA_Plot)
 
 # ╔═╡ c00ded9a-6d20-4748-9dc6-789831820427
 begin 
@@ -804,14 +871,14 @@ begin
 	KcentricPCA_Plot_beta=Array{Any}(undef, size(PhiFilter)[1])
 		KcentricPCA_Plot_beta=Plots.scatter(xlabel="PC1", ylabel="PC2")
 	for i=1:size(PhiFilter)[1]
-		Predict=predict(PCA_kcentric,Matrix(PhiFilter[i][!,7:9])')
+		Predict=predict(PCA_kcentric,Matrix(PhiFilter[i][!,8:10])')
 		Plots.scatter!(KcentricPCA_Plot_beta, Predict[1,:],Predict[2,:], label=PhiFilter[i].beta0[1], legend=:outerright, markers=Plots.supported_markers()[i], xlims=(-250,250), title="Phase Ratio")
 	end		
 KcentricPCA_Plot_beta
 end
 
 # ╔═╡ d175f8a5-9001-4d57-a8ca-715c19bbc94f
-SubstanceFilter[1][!,7:9]
+SubstanceFilter[1][!,8:10]
 
 # ╔═╡ e2271c7c-a808-4e2e-b2e0-76393a4fcb67
 predict(PCA_kcentric,Matrix(SubstanceFilter[1][!,7:9])')
@@ -822,43 +889,10 @@ begin
 end	
 
 # ╔═╡ b5abad47-c35c-4763-958d-d1c0b6af6fae
-File=CSV.File("E:\\Tillman\\Doktorarbeit\\Arbeit\\Labor\\Messdaten\\RXI-5SilMS05\\FAMES\\Brehmer2022_lnk_T_Rxi5SilMS_beta125.CSV", delim=',', decimal='.')
+#File=CSV.File("E:\\Tillman\\Doktorarbeit\\Arbeit\\Labor\\Messdaten\\RXI-5SilMS05\\FAMES\\Brehmer2022_lnk_T_Rxi5SilMS_beta125.CSV", delim=',', decimal='.')
 
 # ╔═╡ b7dff30b-541b-45b6-831e-b00ed5125a44
-CSV.write("E:\\Tillman\\Doktorarbeit\\Arbeit\\Labor\\Messdaten\\RXI-5SilMS05\\FAMES\\Brehmer2022_lnk_T_Rxi5SilMS_beta125_2.csv", File)
-
-# ╔═╡ 6913f8fc-4113-42b5-bf13-e5d54e99e5a1
-ö=[120889.6 ± 170.4
-121606.8± 1475.7
-119084.0 ± 1276.0
-102300.0 ± 4700.0].*0.25*10^-3
-
-
-# ╔═╡ c9c4e4f2-8762-49ed-84cb-e64f8e5cd7bb
-120889.6 ± 170.4
-
-# ╔═╡ 8f28b8b5-8866-4d80-84a5-468db7dbcb21
-function wind_speed_input(directions::Vector)
-	
-	return combine() do Child
-		
-		inputs = [
-			md""" $(name): $(
-				Child(name, Slider(1:100))
-			)"""
-			
-			for name in directions
-		]
-		
-		md"""
-		#### Wind speeds
-		$(inputs)
-		"""
-	end
-end
-
-# ╔═╡ 594ff5a8-6c04-42e5-b0ff-62d0351b9e77
-@bind speeds wind_speed_input(["North", "East", "South", "West"])
+#CSV.write("E:\\Tillman\\Doktorarbeit\\Arbeit\\Labor\\Messdaten\\RXI-5SilMS05\\FAMES\\Brehmer2022_lnk_T_Rxi5SilMS_beta125_2.csv", File)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -2198,153 +2232,155 @@ version = "1.4.1+0"
 """
 
 # ╔═╡ Cell order:
+# ╟─fec530e6-d675-4bb9-8b5a-6aa607574a81
+# ╟─313457f3-85fd-4274-9b96-fceb277eaae4
 # ╟─5861512e-a14b-11ec-3c6b-9bd2953bf909
-# ╠═c28cca6a-fdf3-4edf-9534-5c4f677c2889
-# ╠═b7be7b57-7e69-4cc9-af54-db9465f18d05
+# ╟─77ec770e-bcd4-4f8a-8e37-cd7a518debc7
+# ╟─e92ee318-9f88-40f2-81cf-e2d60bf2f45a
+# ╠═3b9c6610-6839-4012-aa0b-219a347ca52f
+# ╟─d26fc674-ace5-43ef-af1d-855dfc21eba5
+# ╟─979d0e68-135a-4570-a835-8be8e7095326
+# ╟─3d0b0729-c7a6-408a-8e2c-b5255347a65e
+# ╠═9634b96c-18f1-479e-b28b-3d614893ce7c
+# ╟─8397c671-c0d1-4632-ae9a-55a6dccd1002
+# ╠═8bc510bf-b40a-4f7f-b5e9-05bdca6fe1a3
+# ╟─b2b6ef1c-ca2d-4a52-a586-b3c2b13b6bac
+# ╟─15735325-4827-45ee-bebc-e4b365cffb9c
+# ╟─93a5ed9f-64ce-4ee8-bee0-ecd2ff2dcbb8
+# ╟─0be26332-63de-412f-b97c-975f10afd59f
+# ╟─97d4ff70-092c-40db-90a2-6a8994ad920c
+# ╟─7c95815d-11e5-4de5-8d83-a7ef8518751c
+# ╟─d28a4b20-af06-4613-810b-dafb9a5f0ccd
+# ╟─c28cca6a-fdf3-4edf-9534-5c4f677c2889
+# ╟─91d21ca2-5657-4f9b-ae66-629fa77236f1
+# ╟─7eb28537-4d9e-4529-b6f7-b0407bce814c
+# ╟─d460b5e1-9060-4fe5-bcea-8c63a0ea071e
+# ╟─17387b6a-e126-4923-ac14-229d980ed9ad
+# ╟─0e559fd4-5fef-4375-9e7a-1e052cf61b7a
+# ╟─8287590e-0e6d-4591-a616-0b64d84ca767
+# ╟─ef518fe9-1920-4c95-9ef3-2b2542621fc0
 # ╠═5cf8c59b-f927-4904-bc26-21048ae3d252
-# ╠═8397c671-c0d1-4632-ae9a-55a6dccd1002
-# ╠═abc5bab1-66c6-4ae8-95a8-3ba6d7eecbf5
-# ╠═c99ca5d6-7f7d-4462-afab-e11154370054
 # ╠═ff046879-3607-47e4-afe3-b42bb1738b9f
 # ╠═31a4dc3a-0b29-45b1-9876-47bd082e72bb
-# ╠═7c95815d-11e5-4de5-8d83-a7ef8518751c
 # ╠═47138dbf-5c60-4cdc-b484-ff168d11055f
 # ╠═a50d4f05-0f4a-4ae0-ba5d-a27bad3869e0
-# ╠═81ccb3e6-dcca-4b66-9be6-a1fb63f7e056
-# ╟─9634b96c-18f1-479e-b28b-3d614893ce7c
-# ╠═3b9c6610-6839-4012-aa0b-219a347ca52f
-# ╠═d26fc674-ace5-43ef-af1d-855dfc21eba5
+# ╠═b7be7b57-7e69-4cc9-af54-db9465f18d05
+# ╟─81ccb3e6-dcca-4b66-9be6-a1fb63f7e056
 # ╠═3eeea8dd-de5c-4c73-8d82-4bdb4979d2b0
-# ╠═4129a813-51b6-4790-9f20-a0d5e188b5c7
 # ╠═4a73771a-3adc-4fad-8d6a-148dcf9cc3c4
-# ╠═453cbd8f-8f98-4bc7-8577-877455d8354e
+# ╠═46c27c29-69d1-45bd-bfe1-b230ec20a0c9
 # ╠═fa394ad0-055e-4c8f-a3cf-931cd421cb7e
-# ╠═91370172-405b-4204-b248-0330436f08e2
-# ╠═5ee8d8f2-3c3c-4d4a-a14d-e9a0f23c3ef5
-# ╠═1b8f3f28-e612-40d0-9b09-136543cbb126
+# ╠═baa8a3ad-edda-47cd-8e7a-35926cf43975
+# ╠═8ce7d078-f5f2-4062-97b5-356d79f98466
 # ╠═1d23d9a9-996a-4c88-9bef-2fcc55fd5b44
+# ╠═5ee8d8f2-3c3c-4d4a-a14d-e9a0f23c3ef5
 # ╠═54a2712b-d696-4097-8522-f5e1a87ecbec
-# ╠═5d719450-b016-4cb5-b4a7-2f0e71eba5f3
-# ╟─e74f1990-5dd2-4062-a8d0-345a5005d0c2
-# ╠═560c76d6-9e50-461a-9815-66b40b59e580
-# ╠═49ddd8eb-a833-43b8-9f62-18f4d5afaf10
-# ╠═f02137a4-75a1-49ac-81a3-a1f04bab9ca2
-# ╠═313457f3-85fd-4274-9b96-fceb277eaae4
-# ╠═8b0b5a9f-666a-43c2-bdab-3d771334f12b
-# ╠═46e16092-d952-4c4f-a952-c5201797fcd1
 # ╠═ccc85a17-690a-4fa4-9b14-9ca58a22e9c8
+# ╠═e74f1990-5dd2-4062-a8d0-345a5005d0c2
+# ╠═78cfb200-3935-40f1-b4ff-a14aec1949f8
+# ╠═7359cd1d-fd78-422f-b9fa-3b6f9d33860a
+# ╠═739a430d-6dc7-49e7-87b9-8befa0e6184f
+# ╠═46e16092-d952-4c4f-a952-c5201797fcd1
 # ╠═d619df94-5bb2-4349-a83d-ccfd13b95906
-# ╠═3c860294-55cd-4b8d-8fa2-46583793fe00
+# ╠═c6ea845e-52bf-4d5d-b042-8afbd2bfdc39
+# ╠═3a7fdea7-245c-404f-b101-b5a3718a511a
 # ╠═5356fd33-c959-40b0-bdf8-d1363a0726c9
-# ╟─80c784b2-35a6-4fc9-a1fd-7b1d6d89462f
-# ╠═a39e1661-4765-411c-a062-233a64770391
-# ╠═87a761c6-85ce-4342-a7d4-a13a378c6c45
-# ╠═aa7bd88a-4722-493b-9c1d-2e69cf4333f3
-# ╠═23e0cf31-1c67-48d1-b014-26c1b44e04a8
+# ╠═1c6fec9b-6719-4b11-8e5b-52d874920b8b
+# ╠═1e72ad83-50c4-4acc-8a35-39d6431dded8
+# ╠═823317eb-e0eb-465e-9bf5-a24e541445b8
 # ╠═b54b46bb-d420-42a7-acc4-000f2177860d
-# ╠═a56ed363-4cc7-4471-b0aa-34109d2dcb45
-# ╠═610d535a-2025-4419-b35b-8d28dbaa62b8
+# ╠═4b59a4a6-4036-4563-bc06-4b6942ef4d00
+# ╠═aa7bd88a-4722-493b-9c1d-2e69cf4333f3
+# ╠═311a09e1-7cfd-42bf-be24-0315b6727d2e
+# ╠═a39e1661-4765-411c-a062-233a64770391
+# ╟─42aeba5d-772d-4366-8bab-51a9c0875917
+# ╟─610d535a-2025-4419-b35b-8d28dbaa62b8
 # ╠═58c8bd1d-2e69-48ac-9cfc-bb525ebe79c8
-# ╠═326a0c21-454d-489f-b960-be356671e1db
 # ╠═4d44c3bf-910d-411e-b3b8-99c1c60d43b1
 # ╠═3ebdebe8-ad66-4721-b9ff-92da125bcf7c
 # ╠═390a66a8-e497-4a0f-b6c4-34487df787e9
 # ╠═76c115ae-8482-4e1d-a4ff-873beb68cb41
-# ╟─fda7f746-0f7e-4dff-b8e6-7765f580e542
-# ╠═3757151c-2244-4e45-985c-2ef869abd23d
-# ╟─917e88c6-cf5d-4d8f-93e5-f50ea2bb2cdc
-# ╠═4000c057-c75a-4bd8-93fd-dcfce907101c
-# ╟─93a5ed9f-64ce-4ee8-bee0-ecd2ff2dcbb8
-# ╟─b4044a75-03ad-4f75-a2ac-716b0c2c628f
-# ╠═fec530e6-d675-4bb9-8b5a-6aa607574a81
-# ╟─11de4e14-3b56-4238-bed8-c110f4de2d44
-# ╠═e34c35f8-1ec8-47ba-af8e-77f10cf2c27b
-# ╟─8d1c0954-ace2-4621-99aa-ce692936247b
-# ╠═a94f22a9-5332-429a-bd31-3c1799781ffe
+# ╠═917e88c6-cf5d-4d8f-93e5-f50ea2bb2cdc
+# ╠═bac7d9ef-d6bd-4955-b8e1-dfa6f6f7f038
 # ╠═baa7d024-ec90-4744-922d-830f40683abe
 # ╠═496b86c5-900e-4786-a254-082b8155c65b
 # ╠═a319c1af-33d4-443d-9270-5a0219e25c4c
 # ╠═9a09e9cb-26cf-4576-a581-7b832fbab775
-# ╠═bfc0bd73-94c2-4742-b334-e632933d6dfe
-# ╠═ba1c7f65-3e24-4b86-b2e2-521459993250
-# ╟─e17bf6fe-f3b6-4904-bb05-8b068fd9cf1f
-# ╠═eaed9fdd-d4a2-41f7-8e05-588869e12780
-# ╠═e9f134c3-25e7-45a8-a07e-a3cfdc6c027b
-# ╠═897c8de6-c042-49aa-98ee-e5b3762756b8
-# ╟─d24832da-ff7d-4d4c-af5d-6662eca846cf
-# ╠═070c0b3b-efa4-4f4d-a567-87ba4b7c936b
-# ╠═d5381c2d-1794-4af1-9ebb-5188334fc592
-# ╠═f51eb4f5-3529-4c5a-8e2d-1902242ab7af
-# ╠═6260e6e0-02e4-4c95-9889-020e5c3c2d60
-# ╠═e5b49869-2763-4ec9-ae7f-7b70164c0c67
-# ╠═6dac8047-1170-4b65-9cee-2c8db3b62d63
-# ╠═c7f1acaa-d53e-427e-b646-f3920a2ce6b7
-# ╠═32fd5862-e14b-4cea-b99c-0f26e0d8fbb5
+# ╟─fda7f746-0f7e-4dff-b8e6-7765f580e542
 # ╠═dd48df07-4bed-47ce-9799-05958e3adc7a
-# ╠═ef0c1872-da54-48b5-8212-634d7d91e9ac
+# ╠═50f1d5b3-2251-455a-8d7d-8bddfeed3611
+# ╟─fecbe30c-d7a9-41d2-8044-2ca4c4034ca3
+# ╟─87a761c6-85ce-4342-a7d4-a13a378c6c45
+# ╠═ba1c7f65-3e24-4b86-b2e2-521459993250
+# ╟─9290687e-26d1-4ccf-9603-d46b8ae9dcb7
+# ╠═eaed9fdd-d4a2-41f7-8e05-588869e12780
+# ╠═897c8de6-c042-49aa-98ee-e5b3762756b8
+# ╠═070c0b3b-efa4-4f4d-a567-87ba4b7c936b
+# ╟─ef0c1872-da54-48b5-8212-634d7d91e9ac
 # ╟─873b90e2-bc5d-4272-a90b-978bb4e1358d
+# ╟─d24832da-ff7d-4d4c-af5d-6662eca846cf
+# ╟─a94f22a9-5332-429a-bd31-3c1799781ffe
 # ╟─bc5f3e11-d5de-4343-b959-86431b8f04f1
 # ╟─23a8d4b2-dd8d-4a30-96ad-26de84f7c2a9
 # ╟─b846be08-4850-4bbd-9366-b7e2207bb370
 # ╟─7b39d781-b51c-4406-af76-ce9459b1cdb6
 # ╟─c365e82d-d5e5-4be0-81c9-c5a8097d4e8c
 # ╠═512ae246-792c-45c7-ae58-406bc70d47ff
-# ╟─36e6a92f-8729-4679-b733-b12fa29ac625
+# ╠═e945beeb-a9de-4a2d-bc8b-73c3f3dd37b1
+# ╠═20eb935e-c66d-46fe-b309-e4f37f29e667
+# ╠═b8c51d43-fd7d-440e-b516-a49a21cf44b8
+# ╟─015e4eb0-f60e-474f-9ab9-98f6c44b9d8f
+# ╠═bbaa8bd7-5b38-4fda-aab9-d97d0c14c410
 # ╠═44c3be0a-3376-4b51-bd07-683e96029d69
 # ╠═3996350d-940a-48db-9930-7c391b748b07
-# ╠═33ec66d1-2a25-45b6-936c-0acff05e624c
+# ╟─33ec66d1-2a25-45b6-936c-0acff05e624c
 # ╟─6729a636-aa06-4695-8fd6-2078322e2ffa
 # ╟─99c115a1-7bbf-4aa1-b526-6200e4d8a622
 # ╠═1d708017-f3d8-4126-9808-3cbc7bce0050
 # ╟─21277d27-7ea7-4adc-b1b8-4429c29cdf51
-# ╠═9b0d91eb-6672-4cf8-82e4-844becf699bb
-# ╟─3b0e9656-63e8-4fa3-8f06-33f8a2fcd4dc
-# ╠═4b5de04c-24ef-4f79-937a-f2816d7397d7
+# ╟─9b0d91eb-6672-4cf8-82e4-844becf699bb
+# ╠═3b0e9656-63e8-4fa3-8f06-33f8a2fcd4dc
+# ╠═ed134625-a178-48d8-856f-e8b25f57842d
+# ╠═2d89e6eb-4c6e-4c6f-8a82-55eaf66de976
+# ╟─4b5de04c-24ef-4f79-937a-f2816d7397d7
 # ╠═09b949bf-36b5-44a6-ab13-e0074b824756
+# ╠═13a8c60e-979b-47e6-bcdc-7a314fd27ebb
 # ╟─b5c0895f-1683-4f46-960b-9463819610a1
-# ╠═492fabbd-c84a-421e-a169-4229cf444e11
+# ╟─492fabbd-c84a-421e-a169-4229cf444e11
 # ╟─80745a29-6a58-47c8-a176-e6f58a858d82
 # ╟─333ffd2d-d4db-46fd-b3f3-5cbffeb5243d
 # ╟─fc4a5a98-f1ab-45b5-9c2d-44693ad35313
 # ╟─bf9adfcc-5baf-486d-b606-4f1a8d935a17
-# ╟─421e55ec-a18b-4aba-9c88-0e53cdcef75d
+# ╠═421e55ec-a18b-4aba-9c88-0e53cdcef75d
 # ╠═fb2bf9b6-e7e2-4b5f-8013-e6db5d779f85
+# ╠═715bd7c8-dccf-471e-a0a7-25de1be7aab4
 # ╠═156b9224-3714-4039-aa49-ecc6b04d38dc
 # ╠═202ab200-b358-4b3b-8bd9-da3a1c158d39
-# ╟─f687a423-bf8f-4c5f-b98e-f8afc5c4ee9e
-# ╟─455548e2-b4f8-4b70-90f7-0c64552f62bc
-# ╟─391282b0-f684-4e3d-b4ba-1eba0689fe5e
-# ╟─7ed2478c-7635-48dd-9357-900bc376829d
-# ╠═0a3c98ea-8e40-4508-9b75-9280f118567e
-# ╠═94ca7430-8b87-4a6e-97fc-37d742fae6c4
-# ╠═687713db-b78e-42e6-b3d5-01581b9d4f0a
-# ╠═1a967a90-d016-4c1b-b02d-b8b32bd999eb
-# ╟─41962cb0-951e-4547-82bf-4309148343ec
-# ╟─f20591bb-c98c-4e6f-b186-9e4444dec8d9
+# ╠═f687a423-bf8f-4c5f-b98e-f8afc5c4ee9e
+# ╠═391282b0-f684-4e3d-b4ba-1eba0689fe5e
 # ╟─ad5312d2-43bb-42f6-8327-a3de2dfc1aae
-# ╟─4ec1f88e-d2e4-43c0-9e43-68322ab96e1c
-# ╟─534ec747-4b14-4c01-a837-7e6db2479381
-# ╟─982446df-5021-44ca-b7a8-2f0042baf88d
+# ╠═4ec1f88e-d2e4-43c0-9e43-68322ab96e1c
+# ╠═534ec747-4b14-4c01-a837-7e6db2479381
+# ╠═982446df-5021-44ca-b7a8-2f0042baf88d
 # ╠═b6fcf3bb-9b33-42ba-97fa-f0116ae0ec46
 # ╠═73611573-ae96-49d5-86be-8b646cd5c8bc
 # ╠═09806af8-d0d8-49a9-a2fe-4357992584b8
-# ╟─8a4541fc-7ebb-46f0-a652-10f7ba1ea689
-# ╟─52f944bf-2038-497a-ae39-a2ee95ad67d2
-# ╟─32471c63-a5c0-4ad9-b9e4-1701a8a9902b
+# ╠═8a4541fc-7ebb-46f0-a652-10f7ba1ea689
+# ╠═52f944bf-2038-497a-ae39-a2ee95ad67d2
+# ╠═32471c63-a5c0-4ad9-b9e4-1701a8a9902b
 # ╠═fb7017ab-b8bb-4175-8434-5f9c1e026509
 # ╠═0698e398-d204-448e-9460-5eb2a51a5d05
 # ╠═ff6f166d-6d18-44c1-8be3-8d6d40bcd738
-# ╠═62373423-ecf6-4928-a527-f13145c84301
+# ╟─62373423-ecf6-4928-a527-f13145c84301
+# ╟─4badc718-b4a0-4642-adcb-b88a55193280
 # ╠═00703bb9-21f6-4f93-95f4-45995d81ee5d
+# ╠═8f2f176e-cab0-4ab8-8d9c-f635d6e95460
+# ╠═c4de94c8-5a6c-4db2-8826-80e8555642b5
 # ╟─c00ded9a-6d20-4748-9dc6-789831820427
 # ╟─d175f8a5-9001-4d57-a8ca-715c19bbc94f
 # ╟─e2271c7c-a808-4e2e-b2e0-76393a4fcb67
 # ╟─0f8c585e-e2d3-4135-8d2a-81b10829131a
 # ╠═b5abad47-c35c-4763-958d-d1c0b6af6fae
 # ╠═b7dff30b-541b-45b6-831e-b00ed5125a44
-# ╠═594ff5a8-6c04-42e5-b0ff-62d0351b9e77
-# ╠═6913f8fc-4113-42b5-bf13-e5d54e99e5a1
-# ╠═c9c4e4f2-8762-49ed-84cb-e64f8e5cd7bb
-# ╠═8f28b8b5-8866-4d80-84a5-468db7dbcb21
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
