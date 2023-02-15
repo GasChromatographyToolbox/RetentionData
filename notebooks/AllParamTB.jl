@@ -457,12 +457,6 @@ md"""
 # ╔═╡ eaed9fdd-d4a2-41f7-8e05-588869e12780
 #CSV.write("../Databases/oldformat_$(parset).csv", old_db)
 
-# ╔═╡ 897c8de6-c042-49aa-98ee-e5b3762756b8
-# ╠═╡ disabled = true
-#=╠═╡
-
-  ╠═╡ =#
-
 # ╔═╡ 070c0b3b-efa4-4f4d-a567-87ba4b7c936b
 unique(alldata.Phase)
 
