@@ -1583,6 +1583,7 @@ function new_database_format(data; ParSet="Kcentric", filter_flag=true)
 								Tref=data.Tref,
 								phi0=1.0./(4.0.*data.beta0),
 								Source=data.Source
+								
 								)
 	end
 	if filter_flag == false
