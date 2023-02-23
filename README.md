@@ -1,8 +1,8 @@
 # RetentionData
 
 [![DOI](https://zenodo.org/badge/426138381.svg)](https://zenodo.org/badge/latestdoi/426138381)
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://JanLeppert.github.io/RetentionData.jl/stable)
-[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://JanLeppert.github.io/RetentionData.jl/dev)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://JanLeppert.github.io/RetentionData/stable)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://JanLeppert.github.io/RetentionData/dev)
 
 This github is a compilation of retention data in gas chromatography (GC).
 
