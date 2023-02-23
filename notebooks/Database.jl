@@ -140,6 +140,9 @@ else
 	db_filter = filter([:Phase, :phi0, :Source] => (x, y, z) -> x in select_phase && y in select_phi && z in select_source, db)
 end
 
+# ╔═╡ 321d298c-359c-4489-8a7d-b196f12c6eb5
+unique(db_filter.CAS)
+
 # ╔═╡ c05ff77f-369c-4afa-8e25-d81939ed9dc2
 md"""
 ## Save database
@@ -1487,6 +1490,7 @@ version = "1.4.1+0"
 # ╟─7c95815d-11e5-4de5-8d83-a7ef8518751c
 # ╟─5b1de655-4092-4a9c-b763-d3bdfae5f0e6
 # ╠═fe328e54-adaa-409c-8de8-7ba8686354b3
+# ╠═321d298c-359c-4489-8a7d-b196f12c6eb5
 # ╟─c05ff77f-369c-4afa-8e25-d81939ed9dc2
 # ╠═59689ce2-57a4-4a1f-925d-3bdd07c0572e
 # ╠═f090a29a-e69c-4c52-b7ae-fe92543b8564
