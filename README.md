@@ -1,7 +1,6 @@
 # RetentionData
 
 [![DOI](https://zenodo.org/badge/426138381.svg)](https://zenodo.org/badge/latestdoi/426138381)
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://JanLeppert.github.io/RetentionData/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://JanLeppert.github.io/RetentionData/dev)
 
 This github is a compilation of retention data in gas chromatography (GC).
@@ -11,7 +10,10 @@ This github is a compilation of retention data in gas chromatography (GC).
 ## Databases
 
 Different sets of parameters (A, B, C parameters, thermodynamic parameters or K-centric parameters) from different sources are compiled 
-in the folder `Databases`. For every source a separate folder is created containing the original data from the sources as comma separated files, reference information as a BibTex file and processed files (e.g. calculation of the other sets of parameters). In the sub-folder `Measurements` in the folder `Databases` measured retention data, which is not publicized yet, is collected.  
+in the folder `Databases`. For every source a separate folder is created containing the original data from the sources as comma separated files, reference information as a BibTex file and processed files (e.g. calculation of the other sets of parameters). In the sub-folder `Measurements` in the folder `Databases` measured retention data, which is not publicized yet, is collected. 
+
+**Link_to_latest_database**
+**Link_to_latest_database_without_flagged**
 
 ### Structure of filenames:
 
@@ -57,7 +59,7 @@ with:
 ## Overview of Notebooks of the Project _RetentionData_
 
 Several notebooks, written in the Julia programming language (https://julialang.org/) and using the Pluto.jl package (https://github.com/fonsp/Pluto.jl), are used to
-calculate the retention parameters from retention data (`Fit_lnk-T_data.jl`) or convert available sets of retention parameters into the other sets (`Convert_Parameters.jl`). These notebooks can be found in the folder `notebooks`. Functions, which are used in these notebooks can be found in the file `ThermodynamicData.jl` in the `src` folder. 
+calculate the retention parameters from retention data (`Fit_lnk-T_Outliertest.jl`) or convert available sets of retention parameters into the other sets (`Convert_Parameters.jl`). These notebooks can be found in the folder `notebooks`. Functions, which are used in these notebooks can be found in the file `RetentionData.jl` in the `src` folder. 
 
 - `Convert_Parameters.jl`:
   - Load all files with the keyword `Parameters` from a folder
@@ -65,24 +67,17 @@ calculate the retention parameters from retention data (`Fit_lnk-T_data.jl`) or 
   - ToDo: if no column for `CAS` number exists in the data, add one with the `CAS`-numbers from ChemicalIdentifiers.jl (also by using the file `shortname.csv`) resp. from the file `missing.csv` (chemical substances, which are not found in the database of ChemicalIdentifiers.jl)
   - optional: save the data of all three parameter sets into a file with the keyword `AllParam`
 
-- `Fit_lnk-T_data.jl`
+- `Fit_lnk-T_Outliertest.jl`
   - Load all files with the keyword `lnk-T` resp. `log10k-T` from a folder
   - fit of the ABC-model and the Kcentric model to the data and convert them to the third parameter set
   - export the parameter sets together with some statistics of the fits
   - ToDo: if no column for `CAS` number exists in the data, add one with the `CAS`-numbers from ChemicalIdentifiers.jl (also by using the file `shortname.csv`) resp. from the file `missing.csv` (chemical substances, which are not found in the database of ChemicalIdentifiers.jl)
   - optional: save the data of all three parameter sets into a file with the keyword `AllParam`
 
-- `AllParam.jl`: 
-  - Load all files with keyword `AllParam` from a folder
-  - combine the data of all these files in one dataframe
-  - flag substances with parameters which do not fulfill certain conditions
-  - plots of the parameter sets
-  - use of ChemicalIdentifiers.jl to identify CAS, formula, MW and smiles
-  - optional: save the dataset of the Kcentric model of all not-flagged substances into one database file, which could be used for the simulation of GC with the Julia package `GasChromatographySimulator.jl`.
+- `Notebook_PCA.jl`: 
 
-- `AllParam_FitPlane.jl`: 
-  - addition to `AllParam.jl`
-  - fit a 2-D plane to the 3D data of (A,B,C) resp. (Tchar,thetachar,DeltaCp) with different methods
+- `Database.jl`: 
+  
 
 
 
