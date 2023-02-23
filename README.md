@@ -13,7 +13,12 @@ Different sets of parameters (A, B, C parameters, thermodynamic parameters or K-
 in the folder `Databases`. For every source a separate folder is created containing the original data from the sources as comma separated files, reference information as a BibTex file and processed files (e.g. calculation of the other sets of parameters). In the sub-folder `Measurements` in the folder `Databases` measured retention data, which is not publicized yet, is collected. 
 
 **Link_to_latest_database**
+
 **Link_to_latest_database_without_flagged**
+
+### How to add data
+
+???
 
 ### Structure of filenames:
 
