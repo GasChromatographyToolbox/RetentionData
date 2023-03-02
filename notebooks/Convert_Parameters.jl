@@ -1,12 +1,26 @@
 ### A Pluto.jl notebook ###
-# v0.19.14
+# v0.19.19
 
 using Markdown
 using InteractiveUtils
 
+# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
+macro bind(def, element)
+    quote
+        local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
+        local el = $(esc(element))
+        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
+        el
+    end
+end
+
 # ╔═╡ ff3195db-9f37-4968-bc0a-8f6a6211bb60
 begin
-	using CSV, DataFrames, LambertW, Plots, ChemicalIdentifiers, LsqFit, Statistics, Measurements
+	root = dirname(@__FILE__)
+	project = dirname(root)
+	db_path = joinpath(project, "Databases")
+	
+	using CSV, DataFrames, LambertW, Plots, ChemicalIdentifiers, LsqFit, Statistics, Measurements, RAFF
 	include("/Users/janleppert/Documents/GitHub/RetentionData/src/RetentionData.jl")
 	using PlutoUI
 	TableOfContents()
@@ -15,34 +29,42 @@ end
 # ╔═╡ 94fa8bda-954a-11ec-0fde-5113f2e208d1
 md"""
 # Convert Parameters
-Convert given parameter set into other parameter set.
+Convert given parameter set into other parameter set. Only files of the name structure "\$Source\_Parameters\_...csv" are loaded and missing parameter sets are calculated from existing parameters. The complete, converted parameter sets can be exported into files with the name structure "\$Source\_AllParam\_\$Tablename\_\$statPhase(\_\$d)(\_\$gas).csv" in the same folder.  
 """
-# add description
-
-# ╔═╡ 08170327-65c0-478e-8931-e47bf1c9739b
-html"""
-	<style>
-	  main {
-		max-width: 1000px;
-	  }
-	</style>
-	"""
-
-# ╔═╡ 4708475e-5e9c-4666-b094-f42dc8aa9ba2
-db_path = "/Users/janleppert/Documents/GitHub/RetentionData/Databases"
 
 # ╔═╡ a5a4507a-3553-46f9-bfe1-c25456c23423
 data = RetentionData.load_parameter_data(db_path)
 
-# ╔═╡ 89814556-78e3-463b-b235-ba95f6df3d9e
-data.parameters[1]
+# ╔═╡ c56240be-9d25-4ff3-a486-ce7c3989f77f
+md"""
+## Inspect data
+Select data set: $(@bind select_dataset Slider(1:length(data.filename); show_value=true, default=11))
+"""
 
-# ╔═╡ ccb253b1-9805-43d6-b181-241b544fad8d
-data.data[35]
+# ╔═╡ 89814556-78e3-463b-b235-ba95f6df3d9e
+md"""
+Selected dataset: $(data.filename[select_dataset])
+
+**Original data:**
+$(embed_display(data.data[select_dataset]))
+
+**Converted data:**
+$(embed_display(data.parameters[select_dataset]))
+"""
+
+# ╔═╡ f3aa326b-d996-4a14-870a-f917f239d012
+md"""
+## Save Data
+
+Save all parameter data: $(@bind select_save CheckBox(default=false))
+"""
 
 # ╔═╡ 793dd685-660a-46f0-838a-b032cbf4c24d
-#ThermodynamicData.save_all_parameter_data(data)
-# add optional export using PlutoUI
+begin
+	if select_save == true
+		RetentionData.save_all_parameter_data(data)
+	end
+end
 
 # ╔═╡ d080abf1-1b9e-4aec-900a-d6d219c11672
 md"""
@@ -60,6 +82,7 @@ LsqFit = "2fda8390-95c7-5789-9bda-21331edee243"
 Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+RAFF = "4aa82a78-ed18-41f9-aee6-9d73ba3a0b42"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
@@ -71,6 +94,7 @@ LsqFit = "~0.12.1"
 Measurements = "~2.7.1"
 Plots = "~1.25.11"
 PlutoUI = "~0.7.35"
+RAFF = "~0.6.4"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -79,7 +103,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.2"
 manifest_format = "2.0"
-project_hash = "bb7cc62d6ab223daf72c3a98d9fec672be24ae9f"
+project_hash = "1eccdbf811d42c41d4e70dce9635d6c6b6af2afc"
 
 [[deps.AbstractPlutoDingetjes]]
 deps = ["Pkg"]
@@ -145,7 +169,7 @@ uuid = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 version = "0.10.2"
 
 [[deps.Cairo_jll]]
-deps = ["Artifacts", "Bzip2_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
+deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
 git-tree-sha1 = "4b859a208b2397a7a623a03449e4636bdb17bcf2"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.16.1+1"
@@ -635,9 +659,9 @@ version = "1.42.0+0"
 
 [[deps.Libiconv_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "42b62845d70a619f063a7da093d995ec8e15e778"
+git-tree-sha1 = "c7cb1f5d892775ba13767a87c7ada0b980ea0a71"
 uuid = "94ce4f54-9a6c-5748-9c1c-f9c7231a4531"
-version = "1.16.1+1"
+version = "1.16.1+2"
 
 [[deps.Libmount_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -879,6 +903,12 @@ deps = ["DataStructures", "LinearAlgebra"]
 git-tree-sha1 = "78aadffb3efd2155af139781b8a8df1ef279ea39"
 uuid = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
 version = "2.4.2"
+
+[[deps.RAFF]]
+deps = ["DelimitedFiles", "Distributed", "ForwardDiff", "LinearAlgebra", "Logging", "Printf", "Random", "SharedArrays", "Statistics", "Test"]
+git-tree-sha1 = "e716c75b85568625f4bd09aae9174e6f43aca981"
+uuid = "4aa82a78-ed18-41f9-aee6-9d73ba3a0b42"
+version = "0.6.4"
 
 [[deps.REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
@@ -1307,14 +1337,13 @@ version = "0.9.1+5"
 """
 
 # ╔═╡ Cell order:
-# ╠═94fa8bda-954a-11ec-0fde-5113f2e208d1
-# ╠═ff3195db-9f37-4968-bc0a-8f6a6211bb60
-# ╟─08170327-65c0-478e-8931-e47bf1c9739b
-# ╠═4708475e-5e9c-4666-b094-f42dc8aa9ba2
+# ╟─94fa8bda-954a-11ec-0fde-5113f2e208d1
 # ╠═a5a4507a-3553-46f9-bfe1-c25456c23423
-# ╠═89814556-78e3-463b-b235-ba95f6df3d9e
-# ╠═ccb253b1-9805-43d6-b181-241b544fad8d
-# ╠═793dd685-660a-46f0-838a-b032cbf4c24d
-# ╠═d080abf1-1b9e-4aec-900a-d6d219c11672
+# ╟─c56240be-9d25-4ff3-a486-ce7c3989f77f
+# ╟─89814556-78e3-463b-b235-ba95f6df3d9e
+# ╟─f3aa326b-d996-4a14-870a-f917f239d012
+# ╟─793dd685-660a-46f0-838a-b032cbf4c24d
+# ╟─d080abf1-1b9e-4aec-900a-d6d219c11672
+# ╟─ff3195db-9f37-4968-bc0a-8f6a6211bb60
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
