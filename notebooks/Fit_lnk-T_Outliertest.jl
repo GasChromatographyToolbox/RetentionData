@@ -165,17 +165,22 @@ begin
 	θchar = data.parameters[select_dataset].thetachar[select_substance]
 	ΔCp = data.parameters[select_dataset].DeltaCp[select_substance]
 	mini_Kcentric = Tchar + (Tchar+273.15)^2/(θchar*ΔCp/8.31446261815324)
-	mini_lnk_Kcentric = (ΔCp/8.31446261815324+(Tchar+273.15)/θchar)*((Tchar+273.15)/(mini_Kcentric+273.15)-1)+ΔCp/8.31446261815324*log((mini_Kcentric+273.15)/(Tchar+273.15))
+	mini_lnk_Kcentric = 
+		try
+			(ΔCp/8.31446261815324+(Tchar+273.15)/θchar)*((Tchar+273.15)/(mini_Kcentric+273.15)-1)+ΔCp/8.31446261815324*log((mini_Kcentric+273.15)/(Tchar+273.15))
+		catch
+			NaN
+		end
 	md"""
 	Fit result:
 
-	``T_{char} = `` $(round(Tchar; sigdigits=5)) K
+	``T_{char} = `` $(round(Tchar; sigdigits=5)) °C
 	
 	``θ_{char} = `` $(round(θchar; sigdigits=5)) °C
 
 	``ΔC_p = `` $(round(ΔCp; sigdigits=5)) J mol⁻¹ K⁻¹
 
-	``T_{min} = `` $(round(mini_Kcentric; sigdigits=5)) K
+	``T_{min} = `` $(round(mini_Kcentric; sigdigits=5)) °C
 
 	``\ln{k}_{min} = `` $(round(mini_lnk_Kcentric; sigdigits=5))
 	

@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.14
+# v0.19.19
 
 using Markdown
 using InteractiveUtils
@@ -14,306 +14,149 @@ macro bind(def, element)
     end
 end
 
-# ╔═╡ 0b608842-5672-44cc-bd70-c168c537667e
+# ╔═╡ fec530e6-d675-4bb9-8b5a-6aa607574a81
 begin
-	using CSV, DataFrames, LambertW, Plots, LsqFit, Statistics, ChemicalIdentifiers, Measurements
-	include("/Users/janleppert/Documents/GitHub/RetentionData/src/RetentionData.jl")
+	root = dirname(@__FILE__)
+	project = dirname(root)
+	db_path = joinpath(project, "Databases")
+	
+	using CSV, DataFrames, LambertW, Plots, LsqFit, Statistics, ChemicalIdentifiers, Measurements, RAFF
+	include(joinpath(project, "src", "RetentionData.jl"))
 	using PlutoUI
 	TableOfContents()
 end
 
-# ╔═╡ 6f0ac0bc-9a3f-11ec-0866-9f56a0d489dd
+# ╔═╡ 5861512e-a14b-11ec-3c6b-9bd2953bf909
 md"""
-# Fit lnk(T) data
-Fit the ABC-model and the K-centric model to the lnk(T) data loaded from the folder `db_path` (and its subfolders).
+# Database
+- Load all files with `AllParam`  from the folder `db_path = `$(db_path) (and its subfolders).
+- combine all data into one DataFrame/csv-file with options:
+
+only with CAS-number: $(@bind check_CAS CheckBox())
+
+filter out flagged substances: $(@bind check_flag CheckBox(true))
+
+database format: $(@bind select_format Select(["all", "ABC", "Kcentric", "TD", "old_format"]))
+
+- plots of the three parameters for all solutes 
+- export with filters
 """
 
-# ╔═╡ c8f6712d-84d7-45eb-bdcc-d6a3a7504df3
-db_path = "/Users/janleppert/Documents/GitHub/RetentionData/Databases"
+# ╔═╡ f4253f29-7268-42ae-a17a-25e860234b0b
+db, alldata = RetentionData.database(db_path; filter_CAS=check_CAS, filter_flag=check_flag, db_format=select_format)
 
-# ╔═╡ 4cf9351d-b5d0-4469-a543-8d428094884e
-# kann weg
+# ╔═╡ ce218b9c-5609-4526-bc1f-3f81139190fd
+db
+
+# ╔═╡ 8872c305-d663-4aa3-a0a0-85c54f8c5935
+alldata
+
+# ╔═╡ 93a5ed9f-64ce-4ee8-bee0-ecd2ff2dcbb8
 md"""
-## Settings
-
-- weighted: $(@bind weight CheckBox(default=false))
-
-- threshold: $(@bind bool_th CheckBox()) $(@bind threshold NumberField(0.0:0.01:10.0; default=0.025))
-
-lower bounds ABC-model:
-- `A-ln(β₀)`: $(@bind bool_lb_ABC1 CheckBox(default=false)) $(@bind lb_ABC1 NumberField(-1000:1:1000; default=-1000))
-- `B`: $(@bind bool_lb_ABC2 CheckBox(default=false)) $(@bind lb_ABC2 NumberField(-100000:1:100000; default=0))
-- `C`: $(@bind bool_lb_ABC3 CheckBox(default=false)) $(@bind lb_ABC3 NumberField(-1000:1:1000; default=0))
-
-upper bounds ABC-model:
-- `A-ln(β₀)`: $(@bind bool_ub_ABC1 CheckBox(default=false)) $(@bind ub_ABC1 NumberField(-1000:1:1000; default=0))
-- `B`: $(@bind bool_ub_ABC2 CheckBox(default=false)) $(@bind ub_ABC2 NumberField(-100000:1:100000; default=100000))
-- `C`: $(@bind bool_ub_ABC3 CheckBox(default=false)) $(@bind ub_ABC3 NumberField(-1000:1:1000; default=1000))
-
-lower bounds Kcentric-model:
-- `Tchar + Tst`: $(@bind bool_lb_Kc1 CheckBox(default=false)) $(@bind lb_Kc1 NumberField(0:1:10000; default=0))
-- `θchar`: $(@bind bool_lb_Kc2 CheckBox(default=false)) $(@bind lb_Kc2 NumberField(-1000:1:1000; default=0))
-- `C=ΔCp/R`: $(@bind bool_lb_Kc3 CheckBox(default=false)) $(@bind lb_Kc3 NumberField(-1000:1:1000; default=0))
-
-upper bounds ABC-model:
-- `Tchar + Tst`: $(@bind bool_ub_Kc1 CheckBox(default=false)) $(@bind ub_Kc1 NumberField(0:1:10000; default=10000))
-- `θchar`: $(@bind bool_ub_Kc2 CheckBox(default=false)) $(@bind ub_Kc2 NumberField(-1000:1:1000; default=1000))
-- `C=ΔCp/R`: $(@bind bool_ub_Kc3 CheckBox(default=false)) $(@bind ub_Kc3 NumberField(-1000:1:1000; default=500))
+## Plot parameters A, B, C
 """
 
-# ╔═╡ 363ee826-14d1-4e1c-a4b9-a2d00e8d48cc
-# kann weg
-begin
-	lb_ABC = [-Inf, -Inf, -Inf]
-	ub_ABC = [Inf, Inf, Inf]
-	lb_Kcentric = [-Inf, -Inf, -Inf]
-	ub_Kcentric = [Inf, Inf, Inf]
-	if bool_th == true
-		th = threshold
-	else
-		th = NaN
-	end
-	if bool_lb_ABC1 == false
-		lb_ABC[1] = -Inf
-	else
-		lb_ABC[1] = lb_ABC1
-	end
-	if bool_lb_ABC2 == false
-		lb_ABC[2] = -Inf
-	else
-		lb_ABC[2] = lb_ABC2
-	end
-	if bool_lb_ABC3 == false
-		lb_ABC[3] = -Inf
-	else
-		lb_ABC[3] = lb_ABC3
-	end
-	if bool_ub_ABC1 == false
-		ub_ABC[1] = Inf
-	else
-		ub_ABC[1] = ub_ABC1
-	end
-	if bool_ub_ABC2 == false
-		ub_ABC[2] = Inf
-	else
-		ub_ABC[2] = ub_ABC2
-	end
-	if bool_ub_ABC3 == false
-		ub_ABC[3] = Inf
-	else
-		ub_ABC[3] = ub_ABC3
-	end
-	if bool_lb_Kc1 == false
-		lb_Kcentric[1] = -Inf
-	else
-		lb_Kcentric[1] = lb_Kc1
-	end
-	if bool_lb_Kc2 == false
-		lb_Kcentric[2] = -Inf
-	else
-		lb_Kcentric[2] = lb_Kc2
-	end
-	if bool_lb_Kc3 == false
-		lb_Kcentric[3] = -Inf
-	else
-		lb_Kcentric[3] = lb_Kc3
-	end
-	if bool_ub_Kc1 == false
-		ub_Kcentric[1] = Inf
-	else
-		ub_Kcentric[1] = ub_Kc1
-	end
-	if bool_ub_Kc2 == false
-		ub_Kcentric[2] = Inf
-	else
-		ub_Kcentric[2] = ub_Kc2
-	end
-	if bool_ub_Kc3 == false
-		ub_Kcentric[3] = Inf
-	else
-		ub_Kcentric[3] = ub_Kc3
-	end
-	weight, th, lb_ABC, ub_ABC, lb_Kcentric, ub_Kcentric
-end
-
-# ╔═╡ c037a761-f192-4a3b-a617-b6024ac6cd61
-begin
-	data = RetentionData.load_lnkT_data(db_path)
-	RetentionData.fit_models!(data; weighted=weight, threshold=th, lb_ABC=lb_ABC, ub_ABC=ub_ABC, lb_Kcentric=lb_Kcentric, ub_Kcentric=ub_Kcentric)
-end;
-
-# ╔═╡ ae6986cd-33f3-48b1-9f8b-71535670bf27
-md"""
-## Plot lnk(T) and fit
-Select data set: $(@bind select_dataset Slider(1:length(data.fitting); show_value=true))
-"""
-
-# ╔═╡ 3bac9f60-8749-425b-8e87-ba1d7442ca93
-md"""
-Select substance: $(@bind select_substance Slider(1:length(data.fitting[select_dataset].Name); show_value=true))
-"""
-
-# ╔═╡ b8cb55b5-c40d-4f9b-96fe-580c41cbf3d6
-data.filename[select_dataset]
-
-# ╔═╡ cd5d0b6c-6e76-4293-80a0-b07ea94a05d8
-begin
-	plnk = RetentionData.plot_lnk_fit(data.fitting, select_dataset, select_substance)
-	preslnk = RetentionData.plot_res_lnk_fit(data.fitting, select_dataset, select_substance)
-	pl = plot(plnk, preslnk)
-	md"""
-	$(embed_display(pl))
-	### Observation
-	For n=3 the results of ABC-model and K-centric model are different (but similar). For n>3 the results of both models are identical.
-	"""
-end
-
-# ╔═╡ fe359675-8279-40dc-b4c2-a0b9021c746a
-data
-
-# ╔═╡ 02a29dc5-e3c2-450f-b052-289b90e43d4f
-begin
-	B = data.parameters[select_dataset].B[select_substance];
-	C = data.parameters[select_dataset].C[select_substance];
-	Tchar = data.parameters[select_dataset].Tchar[select_substance];
-	θchar = data.parameters[select_dataset].thetachar[select_substance];
-	ΔCp = data.parameters[select_dataset].DeltaCp[select_substance];
-end;
-
-# ╔═╡ 9ba32dff-3be6-493a-b9b4-abe025bb1dad
-mini_ABC = B/C - 273.15
-
-# ╔═╡ d1ef794d-dd55-4cf4-8fde-f0a03ea2e2cd
-mini_Kcentric = Tchar + (Tchar+273.15)^2/(θchar*ΔCp/8.31446261815324)
-
-# ╔═╡ 6c250c7e-c95a-4bc1-a523-299b96e43584
-mini_lnk_Kcentric = (ΔCp/8.31446261815324+(Tchar+273.15)/θchar)*((Tchar+273.15)/(mini_Kcentric+273.15)-1)+ΔCp/8.31446261815324*log((mini_Kcentric+273.15)/(Tchar+273.15))
-
-# ╔═╡ d7a5f461-33e1-4602-b803-0223ef9a4484
-maxi_μ_Kcentric = 1/(1+exp(mini_lnk_Kcentric))
-
-# ╔═╡ 388801a7-2ebb-44cf-8154-320e514ceb2d
-B
-
-# ╔═╡ cd26abc7-244c-4535-9db9-8530053471dd
-C
-
-# ╔═╡ 8587abf6-b962-4e9c-a8b4-2d9ba5a25e51
-Tchar
-
-# ╔═╡ ca984e5b-2e1f-40ce-ad65-453171b402dc
-θchar
-
-# ╔═╡ 6493101e-d266-4cff-a72b-7e2829d158ce
-ΔCp
-
-# ╔═╡ 2d7ed692-9524-428c-92cf-d4ecabe8278e
-test = ["name", "60", "70", "Cat", "Cat_b"]
-
-# ╔═╡ faa843f7-ef50-47ab-a5a4-9d32265b7e5a
-test[findall(occursin.("Cat", test).==false)[2:end]]
-
-# ╔═╡ dbf47c68-709f-45b5-9ae1-b75fe2e76c5f
-Tindex = findall(occursin.("Cat", test).==false)[2:end]
-
-# ╔═╡ 2fd4d728-9068-415c-b006-26f93dddce28
-md"""
-## Compare parameters
-"""
-
-# ╔═╡ f57fc4ec-9522-401f-91de-9495ca50bbb9
-RetentionData.extract_parameters_from_fit!(data);
-
-# ╔═╡ a65c584d-a669-4dfe-8deb-03ce2fd3a0c0
-data.parameters[2]
-
-# ╔═╡ 8a0d3816-b114-42e3-8bef-cda7b63af509
+# ╔═╡ 560c76d6-9e50-461a-9815-66b40b59e580
 begin
 	plotly()
-	pABC = scatter(Measurements.value.(data.parameters[1].A), Measurements.value.(data.parameters[1].B), Measurements.value.(data.parameters[1].C), label=1, xlabel="A", ylabel="B", zlabel="C")
-	for i=2:length(data.parameters)
-		scatter!(pABC, Measurements.value.(data.parameters[i].A), Measurements.value.(data.parameters[i].B), Measurements.value.(data.parameters[i].C), label=i)
-	end
+	pABC = scatter(db.A, db.B, db.C, label="", xlabel="A", ylabel="B", zlabel="C")
+	#scatter!(pABC, fl.A, fl.B, fl.C, label="flagged", c=:red, m=:cross)
 	pABC
 end
 
-# ╔═╡ baba96bf-b0fb-43a3-8f58-954343b918fd
+# ╔═╡ 49ddd8eb-a833-43b8-9f62-18f4d5afaf10
+md"""
+## Plot parameters Tchar, θchar, ΔCp
+"""
+
+# ╔═╡ c99ca5d6-7f7d-4462-afab-e11154370054
 begin
-	plotly()
-	pKcentric = scatter(Measurements.value.(data.parameters[1].Tchar), Measurements.value.(data.parameters[1].thetachar), Measurements.value.(data.parameters[1].DeltaCp), label=1, xlabel="Tchar in °C", ylabel="θchar in °C", zlabel="ΔCp in J mol⁻¹ K⁻¹")
-	for i=2:length(data.parameters)
-		scatter!(pKcentric, Measurements.value.(data.parameters[i].Tchar), Measurements.value.(data.parameters[i].thetachar), Measurements.value.(data.parameters[i].DeltaCp), label=i)
-	end
+	pKcentric = scatter(db.Tchar, db.thetachar, db.DeltaCp, label="", xlabel="Tchar", ylabel="thetachar", zlabel="DeltaCp")
 	pKcentric
 end
 
-# ╔═╡ 4a2c19cb-0321-4d64-91a5-51127f31ce9d
+# ╔═╡ b4044a75-03ad-4f75-a2ac-716b0c2c628f
+md"""
+## Plot parameters ΔHref, ΔSref, ΔCp
+"""
+
+# ╔═╡ 80c784b2-35a6-4fc9-a1fd-7b1d6d89462f
 begin
-	plotly()
-	pKcentric_ = scatter(Measurements.value.(data.parameters[1].Tchar), Measurements.value.(data.parameters[1].thetachar), Measurements.value.(data.parameters[1].DeltaCp), label=1, xlabel="Tchar in °C", ylabel="θchar in °C", zlabel="ΔCp in J mol⁻¹ K⁻¹")
-	for i=2:length(data.parameters)
-		if i!=3
-			scatter!(pKcentric_, Measurements.value.(data.parameters[i].Tchar), Measurements.value.(data.parameters[i].thetachar), Measurements.value.(data.parameters[i].DeltaCp), label=i)
-		end
-	end
-	pKcentric_
+	pTD = scatter(db.DeltaHref, db.DeltaSref, db.DeltaCp, label="", xlabel="DeltaHref", ylabel="DeltaSref", zlabel="DeltaCp")
+	pTD
 end
 
-# ╔═╡ 47c7be28-de48-41a6-ae5d-51bcb9879beb
-data.filename
-
-# ╔═╡ 68963b1a-b636-42c4-bb22-ae71df4e80f4
-data.filename[18]
-
-# ╔═╡ 98c5dbba-2e8f-4aad-a4f3-db1ced28c841
-data.parameters[19]
-
-# ╔═╡ 09ca298c-0893-4868-898b-669dbcb889ca
-Measurements.value.(data.parameters[19].Tchar)
-
-# ╔═╡ 4dd4f07a-4654-4fd5-99f1-0fab845a545d
-begin
-	plotly()
-	pEntalpie = scatter(Measurements.value.(data.parameters[1].DeltaHref), Measurements.value.(data.parameters[1].DeltaSref), Measurements.value.(data.parameters[1].DeltaCp), label=1, xlabel="ΔHref in ", ylabel="ΔSref in", zlabel="ΔCp in J mol⁻¹ K⁻¹")
-	for i=2:length(data.parameters)
-		if i!=3
-			scatter!(pEntalpie, Measurements.value.(data.parameters[i].DeltaHref), Measurements.value.(data.parameters[i].DeltaSref), Measurements.value.(data.parameters[i].DeltaCp), label=i)
-		end
+# ╔═╡ 7c95815d-11e5-4de5-8d83-a7ef8518751c
+begin 
+	pTD_ = plot(xlabel="DeltaHref", ylabel="DeltaSref", zlabel="DeltaCp")
+	source = unique(db.Source)
+	for i=1:length(source)
+		db_filter = filter([:Source] => x -> x == source[i], db)
+		scatter!(pTD_, db_filter.DeltaHref, db_filter.DeltaSref, db_filter.DeltaCp, label=source[i])
 	end
-	pEntalpie
+	pTD_
 end
 
-# ╔═╡ 8eb557fa-8e94-49fd-8fc5-17f8d42943c6
+# ╔═╡ 5b1de655-4092-4a9c-b763-d3bdfae5f0e6
 begin
-	p_R2_ABC = scatter(data.parameters[1].R²_ABC, title="R², ABC-model", ylabel="R²", label=1)
-	for i=2:length(data.parameters)
-		scatter!(p_R2_ABC, data.parameters[i].R²_ABC, label=i)
+	cats = Array{Union{Missing,String}}(undef, 0)#[missing, ""]
+	for i=1:length(findall(occursin.("Cat", names(db))))
+		append!(cats, db[!, "Cat_$i"])
 	end
-
-	p_R2_Kcentric = scatter(data.parameters[1].R²_Kcentric, title="R², Kcentric-model", ylabel="R²", label=1)
-	for i=2:length(data.parameters)
-		scatter!(p_R2_Kcentric, data.parameters[i].R²_Kcentric, label=i)
-	end
+	md"""
+	## Additional Filters
 	
-	p_χ2_ABC = scatter(data.parameters[1].χ²_ABC, title="χ², ABC-model", ylabel="χ²", label=1)
-	for i=2:length(data.parameters)
-		scatter!(p_χ2_ABC, data.parameters[i].χ²_ABC, label=i)
-	end
+	- stationary phase: 
 	
-	p_χ2_Kcentric = scatter(data.parameters[1].χ²_Kcentric, title="χ², Kcentric-model", ylabel="χ²", label=1)
-	for i=2:length(data.parameters)
-		scatter!(p_χ2_Kcentric, data.parameters[i].χ²_Kcentric, label=i)
-	end
-	plot(p_R2_ABC, p_R2_Kcentric, p_χ2_ABC, p_χ2_Kcentric)
+	$(@bind select_phase confirm(MultiSelect(unique(db.Phase); default=unique(db.Phase))))
+	
+	- dimensionless film thickness: 
+	
+	$(@bind select_phi confirm(MultiSelect(unique(db.phi0); default=unique(db.phi0))))
+	
+	- source: 
+	
+	$(@bind select_source confirm(MultiSelect(unique(db.Source); default=unique(db.Source))))
+	
+	- categories: $(@bind check_cat confirm(CheckBox()))
+	
+	$(@bind select_cat confirm(MultiSelect(collect(skipmissing(unique(cats))); default=collect(skipmissing(unique(cats))))))
+	"""
 end
 
-# ╔═╡ d57b2b89-9763-4998-8434-465de994ce54
-#RetentionData.save_all_parameter_data(data)
+# ╔═╡ fe328e54-adaa-409c-8de8-7ba8686354b3
+if check_cat == true
+	db_filter = RetentionData.filter_Cat(filter([:Phase, :phi0, :Source] => (x, y, z) -> x in select_phase && y in select_phi && z in select_source, db), select_cat)
+else
+	db_filter = filter([:Phase, :phi0, :Source] => (x, y, z) -> x in select_phase && y in select_phi && z in select_source, db)
+end
 
-# ╔═╡ 91c46525-43f9-4ef2-98f4-35fb3974d64f
+# ╔═╡ c05ff77f-369c-4afa-8e25-d81939ed9dc2
+md"""
+## Save database
+
+$(DownloadButton(sprint(CSV.write, db_filter), "database.csv"))
+"""
+
+# ╔═╡ 59689ce2-57a4-4a1f-925d-3bdd07c0572e
 md"""
 # End
 """
+
+# ╔═╡ f090a29a-e69c-4c52-b7ae-fe92543b8564
+scatter(db.Tchar, db.DeltaCp)
+
+# ╔═╡ 16cbb035-e52d-4c43-8e70-8fc794053d92
+model_ΔCp_Tchar(x,p) = p[1] .+ p[2].*x
+
+# ╔═╡ e1f0837c-bb51-4ce1-8cae-bb4d241915a0
+fit_ΔCp_Tchar = curve_fit(model_ΔCp_Tchar, db.Tchar.+273.15, db.DeltaCp, [0.0, 1.0])
+
+# ╔═╡ e270769e-60d8-4690-b976-e003295a7d23
+begin
+	scatter(db.Tchar.+273.15, db.DeltaCp)
+	plot!(db.Tchar.+273.15, model_ΔCp_Tchar(db.Tchar.+273.15, fit_ΔCp_Tchar.param))
+end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -326,17 +169,19 @@ LsqFit = "2fda8390-95c7-5789-9bda-21331edee243"
 Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+RAFF = "4aa82a78-ed18-41f9-aee6-9d73ba3a0b42"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
-CSV = "~0.10.2"
+CSV = "~0.10.3"
 ChemicalIdentifiers = "~0.1.5"
 DataFrames = "~1.3.2"
 LambertW = "~0.4.5"
 LsqFit = "~0.12.1"
 Measurements = "~2.7.1"
-Plots = "~1.26.0"
-PlutoUI = "~0.7.35"
+Plots = "~1.26.1"
+PlutoUI = "~0.7.37"
+RAFF = "~0.6.4"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -345,7 +190,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.2"
 manifest_format = "2.0"
-project_hash = "1e1f32992007934ea0909ba249bfb1abb6c3c0d3"
+project_hash = "359207d168781a37124e207566250fe9ac9d0c6f"
 
 [[deps.AbstractPlutoDingetjes]]
 deps = ["Pkg"]
@@ -365,9 +210,9 @@ version = "1.1.1"
 
 [[deps.ArrayInterface]]
 deps = ["Compat", "IfElse", "LinearAlgebra", "Requires", "SparseArrays", "Static"]
-git-tree-sha1 = "71ddf4d8d056d1fad792e308e04b13b8571cda19"
+git-tree-sha1 = "440d0e5dc0f1b229708dc8c0c348e606e1c153bb"
 uuid = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
-version = "5.0.0"
+version = "5.0.2"
 
 [[deps.Arrow]]
 deps = ["ArrowTypes", "BitIntegers", "CodecLz4", "CodecZstd", "DataAPI", "Dates", "Mmap", "PooledArrays", "SentinelArrays", "Tables", "TimeZones", "UUIDs"]
@@ -406,12 +251,12 @@ version = "0.4.1"
 
 [[deps.CSV]]
 deps = ["CodecZlib", "Dates", "FilePathsBase", "InlineStrings", "Mmap", "Parsers", "PooledArrays", "SentinelArrays", "Tables", "Unicode", "WeakRefStrings"]
-git-tree-sha1 = "9519274b50500b8029973d241d32cfbf0b127d97"
+git-tree-sha1 = "9310d9495c1eb2e4fa1955dd478660e2ecab1fbb"
 uuid = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
-version = "0.10.2"
+version = "0.10.3"
 
 [[deps.Cairo_jll]]
-deps = ["Artifacts", "Bzip2_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
+deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
 git-tree-sha1 = "4b859a208b2397a7a623a03449e4636bdb17bcf2"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.16.1+1"
@@ -484,9 +329,9 @@ version = "0.3.0"
 
 [[deps.Compat]]
 deps = ["Base64", "Dates", "DelimitedFiles", "Distributed", "InteractiveUtils", "LibGit2", "Libdl", "LinearAlgebra", "Markdown", "Mmap", "Pkg", "Printf", "REPL", "Random", "SHA", "Serialization", "SharedArrays", "Sockets", "SparseArrays", "Statistics", "Test", "UUIDs", "Unicode"]
-git-tree-sha1 = "44c37b4636bc54afac5c574d2d02b625349d6582"
+git-tree-sha1 = "96b0bc6c52df76506efc8a441c6cf1adcb1babc4"
 uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
-version = "3.41.0"
+version = "3.42.0"
 
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
@@ -575,9 +420,9 @@ version = "1.6.0"
 
 [[deps.DualNumbers]]
 deps = ["Calculus", "NaNMath", "SpecialFunctions"]
-git-tree-sha1 = "84f04fe68a3176a583b864e492578b9466d87f1e"
+git-tree-sha1 = "90b158083179a6ccbce2c7eb1446d5bf9d7ae571"
 uuid = "fa6b7ba4-c1ee-5f82-b5fc-ecf0adba8f74"
-version = "0.6.6"
+version = "0.6.7"
 
 [[deps.EarCut_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -619,9 +464,9 @@ uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 
 [[deps.FillArrays]]
 deps = ["LinearAlgebra", "Random", "SparseArrays", "Statistics"]
-git-tree-sha1 = "4c7d3757f3ecbcb9055870351078552b7d1dbd2d"
+git-tree-sha1 = "0dbc5b9683245f905993b51d2814202d75b34f1a"
 uuid = "1a297f60-69ca-5386-bcde-b61e274b549b"
-version = "0.13.0"
+version = "0.13.1"
 
 [[deps.FiniteDiff]]
 deps = ["ArrayInterface", "LinearAlgebra", "Requires", "SparseArrays", "StaticArrays"]
@@ -689,9 +534,9 @@ version = "0.64.0+0"
 
 [[deps.GeometryBasics]]
 deps = ["EarCut_jll", "IterTools", "LinearAlgebra", "StaticArrays", "StructArrays", "Tables"]
-git-tree-sha1 = "58bcdf5ebc057b085e58d95c138725628dd7453c"
+git-tree-sha1 = "83ea630384a13fc4f002b77690bc0afeb4255ac9"
 uuid = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
-version = "0.4.1"
+version = "0.4.2"
 
 [[deps.Gettext_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Libiconv_jll", "Pkg", "XML2_jll"]
@@ -773,9 +618,9 @@ uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 
 [[deps.InverseFunctions]]
 deps = ["Test"]
-git-tree-sha1 = "a7254c0acd8e62f1ac75ad24d5db43f5f19f3c65"
+git-tree-sha1 = "91b5dcf362c5add98049e6c29ee756910b03051d"
 uuid = "3587e190-3f89-42d0-90ee-14403ec27112"
-version = "0.1.2"
+version = "0.1.3"
 
 [[deps.InvertedIndices]]
 git-tree-sha1 = "bee5f1ef5bf65df56bdd2e40447590b272a5471f"
@@ -845,9 +690,9 @@ version = "0.4.5"
 
 [[deps.Latexify]]
 deps = ["Formatting", "InteractiveUtils", "LaTeXStrings", "MacroTools", "Markdown", "Printf", "Requires"]
-git-tree-sha1 = "a6552bfeab40de157a297d84e03ade4b8177677f"
+git-tree-sha1 = "4f00cc36fede3c04b8acf9b2e2763decfdcecfa6"
 uuid = "23fbe1c1-3f47-55db-b15f-69d7ec21a316"
-version = "0.15.12"
+version = "0.15.13"
 
 [[deps.LazyArtifacts]]
 deps = ["Artifacts", "Pkg"]
@@ -901,9 +746,9 @@ version = "1.42.0+0"
 
 [[deps.Libiconv_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "42b62845d70a619f063a7da093d995ec8e15e778"
+git-tree-sha1 = "c7cb1f5d892775ba13767a87c7ada0b980ea0a71"
 uuid = "94ce4f54-9a6c-5748-9c1c-f9c7231a4531"
-version = "1.16.1+1"
+version = "1.16.1+2"
 
 [[deps.Libmount_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -929,9 +774,9 @@ uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [[deps.LogExpFunctions]]
 deps = ["ChainRulesCore", "ChangesOfVariables", "DocStringExtensions", "InverseFunctions", "IrrationalConstants", "LinearAlgebra"]
-git-tree-sha1 = "e5718a00af0ab9756305a0392832c8952c7426c1"
+git-tree-sha1 = "3f7cb7157ef860c637f3f4929c8ed5d9716933c6"
 uuid = "2ab3a3ac-af41-5b50-aa03-7779005ae688"
-version = "0.3.6"
+version = "0.3.7"
 
 [[deps.Logging]]
 uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
@@ -1073,9 +918,9 @@ version = "0.11.6"
 
 [[deps.Parsers]]
 deps = ["Dates"]
-git-tree-sha1 = "13468f237353112a01b2d6b32f3d0f80219944aa"
+git-tree-sha1 = "85b5da0fa43588c75bb1ff986493443f821c70b7"
 uuid = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
-version = "2.2.2"
+version = "2.2.3"
 
 [[deps.Pixman_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1101,16 +946,16 @@ uuid = "995b91a9-d308-5afd-9ec6-746e21dbc043"
 version = "1.1.3"
 
 [[deps.Plots]]
-deps = ["Base64", "Contour", "Dates", "Downloads", "FFMPEG", "FixedPointNumbers", "GR", "GeometryBasics", "JSON", "Latexify", "LinearAlgebra", "Measures", "NaNMath", "PlotThemes", "PlotUtils", "Printf", "REPL", "Random", "RecipesBase", "RecipesPipeline", "Reexport", "Requires", "Scratch", "Showoff", "SparseArrays", "Statistics", "StatsBase", "UUIDs", "UnicodeFun", "Unzip"]
-git-tree-sha1 = "23d109aad5d225e945c813c6ebef79104beda955"
+deps = ["Base64", "Contour", "Dates", "Downloads", "FFMPEG", "FixedPointNumbers", "GR", "GeometryBasics", "JSON", "Latexify", "LinearAlgebra", "Measures", "NaNMath", "Pkg", "PlotThemes", "PlotUtils", "Printf", "REPL", "Random", "RecipesBase", "RecipesPipeline", "Reexport", "Requires", "Scratch", "Showoff", "SparseArrays", "Statistics", "StatsBase", "UUIDs", "UnicodeFun", "Unzip"]
+git-tree-sha1 = "2f041202ab4e47f4a3465e3993929538ea71bd48"
 uuid = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
-version = "1.26.0"
+version = "1.26.1"
 
 [[deps.PlutoUI]]
 deps = ["AbstractPlutoDingetjes", "Base64", "ColorTypes", "Dates", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "JSON", "Logging", "Markdown", "Random", "Reexport", "UUIDs"]
-git-tree-sha1 = "85bf3e4bd279e405f91489ce518dedb1e32119cb"
+git-tree-sha1 = "bf0a1121af131d9974241ba53f601211e9303a9e"
 uuid = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
-version = "0.7.35"
+version = "0.7.37"
 
 [[deps.PooledArrays]]
 deps = ["DataAPI", "Future"]
@@ -1120,9 +965,9 @@ version = "1.4.0"
 
 [[deps.Preferences]]
 deps = ["TOML"]
-git-tree-sha1 = "de893592a221142f3db370f48290e3a2ef39998f"
+git-tree-sha1 = "d3538e7f8a790dc8903519090857ef8e1283eecd"
 uuid = "21216c6a-2e73-6563-6e65-726566657250"
-version = "1.2.4"
+version = "1.2.5"
 
 [[deps.PrettyTables]]
 deps = ["Crayons", "Formatting", "Markdown", "Reexport", "Tables"]
@@ -1145,6 +990,12 @@ deps = ["DataStructures", "LinearAlgebra"]
 git-tree-sha1 = "78aadffb3efd2155af139781b8a8df1ef279ea39"
 uuid = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
 version = "2.4.2"
+
+[[deps.RAFF]]
+deps = ["DelimitedFiles", "Distributed", "ForwardDiff", "LinearAlgebra", "Logging", "Printf", "Random", "SharedArrays", "Statistics", "Test"]
+git-tree-sha1 = "e716c75b85568625f4bd09aae9174e6f43aca981"
+uuid = "4aa82a78-ed18-41f9-aee6-9d73ba3a0b42"
+version = "0.6.4"
 
 [[deps.REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
@@ -1298,10 +1149,10 @@ uuid = "3783bdb8-4a98-5b6b-af9a-565f29a5fe9c"
 version = "1.0.1"
 
 [[deps.Tables]]
-deps = ["DataAPI", "DataValueInterfaces", "IteratorInterfaceExtensions", "LinearAlgebra", "TableTraits", "Test"]
-git-tree-sha1 = "bb1064c9a84c52e277f1096cf41434b675cd368b"
+deps = ["DataAPI", "DataValueInterfaces", "IteratorInterfaceExtensions", "LinearAlgebra", "OrderedCollections", "TableTraits", "Test"]
+git-tree-sha1 = "5ce79ce186cc678bbb5c5681ca3379d1ddae11a1"
 uuid = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
-version = "1.6.1"
+version = "1.7.0"
 
 [[deps.Tar]]
 deps = ["ArgTools", "SHA"]
@@ -1361,9 +1212,9 @@ version = "1.25.0+0"
 
 [[deps.WeakRefStrings]]
 deps = ["DataAPI", "InlineStrings", "Parsers"]
-git-tree-sha1 = "c69f9da3ff2f4f02e811c3323c22e5dfcb584cfa"
+git-tree-sha1 = "b1be2855ed9ed8eac54e5caff2afcdb442d52c23"
 uuid = "ea10d353-3f73-51f8-a26c-33c1cb351aa5"
-version = "1.4.1"
+version = "1.4.2"
 
 [[deps.XML2_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Libiconv_jll", "Pkg", "Zlib_jll"]
@@ -1573,43 +1424,25 @@ version = "0.9.1+5"
 """
 
 # ╔═╡ Cell order:
-# ╟─6f0ac0bc-9a3f-11ec-0866-9f56a0d489dd
-# ╠═0b608842-5672-44cc-bd70-c168c537667e
-# ╠═c8f6712d-84d7-45eb-bdcc-d6a3a7504df3
-# ╠═4cf9351d-b5d0-4469-a543-8d428094884e
-# ╠═363ee826-14d1-4e1c-a4b9-a2d00e8d48cc
-# ╠═ae6986cd-33f3-48b1-9f8b-71535670bf27
-# ╠═3bac9f60-8749-425b-8e87-ba1d7442ca93
-# ╠═b8cb55b5-c40d-4f9b-96fe-580c41cbf3d6
-# ╠═cd5d0b6c-6e76-4293-80a0-b07ea94a05d8
-# ╠═fe359675-8279-40dc-b4c2-a0b9021c746a
-# ╠═02a29dc5-e3c2-450f-b052-289b90e43d4f
-# ╟─9ba32dff-3be6-493a-b9b4-abe025bb1dad
-# ╟─d1ef794d-dd55-4cf4-8fde-f0a03ea2e2cd
-# ╟─6c250c7e-c95a-4bc1-a523-299b96e43584
-# ╟─d7a5f461-33e1-4602-b803-0223ef9a4484
-# ╠═388801a7-2ebb-44cf-8154-320e514ceb2d
-# ╠═cd26abc7-244c-4535-9db9-8530053471dd
-# ╠═8587abf6-b962-4e9c-a8b4-2d9ba5a25e51
-# ╠═ca984e5b-2e1f-40ce-ad65-453171b402dc
-# ╠═6493101e-d266-4cff-a72b-7e2829d158ce
-# ╠═c037a761-f192-4a3b-a617-b6024ac6cd61
-# ╠═2d7ed692-9524-428c-92cf-d4ecabe8278e
-# ╠═faa843f7-ef50-47ab-a5a4-9d32265b7e5a
-# ╠═dbf47c68-709f-45b5-9ae1-b75fe2e76c5f
-# ╟─2fd4d728-9068-415c-b006-26f93dddce28
-# ╠═f57fc4ec-9522-401f-91de-9495ca50bbb9
-# ╠═a65c584d-a669-4dfe-8deb-03ce2fd3a0c0
-# ╟─8a0d3816-b114-42e3-8bef-cda7b63af509
-# ╠═baba96bf-b0fb-43a3-8f58-954343b918fd
-# ╠═4a2c19cb-0321-4d64-91a5-51127f31ce9d
-# ╠═47c7be28-de48-41a6-ae5d-51bcb9879beb
-# ╠═68963b1a-b636-42c4-bb22-ae71df4e80f4
-# ╠═98c5dbba-2e8f-4aad-a4f3-db1ced28c841
-# ╠═09ca298c-0893-4868-898b-669dbcb889ca
-# ╠═4dd4f07a-4654-4fd5-99f1-0fab845a545d
-# ╟─8eb557fa-8e94-49fd-8fc5-17f8d42943c6
-# ╠═d57b2b89-9763-4998-8434-465de994ce54
-# ╟─91c46525-43f9-4ef2-98f4-35fb3974d64f
+# ╠═fec530e6-d675-4bb9-8b5a-6aa607574a81
+# ╠═5861512e-a14b-11ec-3c6b-9bd2953bf909
+# ╠═f4253f29-7268-42ae-a17a-25e860234b0b
+# ╠═ce218b9c-5609-4526-bc1f-3f81139190fd
+# ╠═8872c305-d663-4aa3-a0a0-85c54f8c5935
+# ╟─93a5ed9f-64ce-4ee8-bee0-ecd2ff2dcbb8
+# ╟─560c76d6-9e50-461a-9815-66b40b59e580
+# ╟─49ddd8eb-a833-43b8-9f62-18f4d5afaf10
+# ╟─c99ca5d6-7f7d-4462-afab-e11154370054
+# ╟─b4044a75-03ad-4f75-a2ac-716b0c2c628f
+# ╟─80c784b2-35a6-4fc9-a1fd-7b1d6d89462f
+# ╟─7c95815d-11e5-4de5-8d83-a7ef8518751c
+# ╟─5b1de655-4092-4a9c-b763-d3bdfae5f0e6
+# ╠═fe328e54-adaa-409c-8de8-7ba8686354b3
+# ╟─c05ff77f-369c-4afa-8e25-d81939ed9dc2
+# ╠═59689ce2-57a4-4a1f-925d-3bdd07c0572e
+# ╠═f090a29a-e69c-4c52-b7ae-fe92543b8564
+# ╠═16cbb035-e52d-4c43-8e70-8fc794053d92
+# ╠═e1f0837c-bb51-4ce1-8cae-bb4d241915a0
+# ╠═e270769e-60d8-4690-b976-e003295a7d23
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
