@@ -7,6 +7,7 @@ makedocs(
     #modules = [RetentionData]
     pages = Any[
                 "Home" => "index.md",
+                "File structure" => "filestructure.md"
                 "Docstrings" => "docstrings.md"
             ]
 )
