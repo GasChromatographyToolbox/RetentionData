@@ -29,7 +29,7 @@ end
 # ╔═╡ 6f0ac0bc-9a3f-11ec-0866-9f56a0d489dd
 md"""
 # Fit lnk(T) data
-Fit the K-centric model to the lnk(T) data loaded from the folder `db_path` (and its subfolders). Test for Outliers. 
+Fit the K-centric model to the lnk(T) data loaded from the folder `db_path=`$(db_path) (and its subfolders). Test for Outliers. 
 """
 
 # ╔═╡ 2fd4d728-9068-415c-b006-26f93dddce28
@@ -1605,7 +1605,7 @@ version = "1.4.1+0"
 # ╟─4dd4f07a-4654-4fd5-99f1-0fab845a545d
 # ╟─8eb557fa-8e94-49fd-8fc5-17f8d42943c6
 # ╟─bebf0dbc-96de-4e16-90ae-206930a106ee
-# ╠═d57b2b89-9763-4998-8434-465de994ce54
+# ╟─d57b2b89-9763-4998-8434-465de994ce54
 # ╟─91c46525-43f9-4ef2-98f4-35fb3974d64f
 # ╟─0b608842-5672-44cc-bd70-c168c537667e
 # ╟─c037a761-f192-4a3b-a617-b6024ac6cd61
