@@ -581,7 +581,7 @@ function dataframe_of_all(meta_data)
 	DeltaSref = Float64[]
 	Tref = Float64[]
 	beta0 = Float64[]
-	#lambertw_x = Float64[]
+	N = Float64[]
 	d = Any[]
 	gas = Any[]
 	for i=1:length(meta_data.data)
@@ -600,7 +600,10 @@ function dataframe_of_all(meta_data)
 			push!(DeltaSref, meta_data.data[i].DeltaSref[j])
 			push!(Tref, meta_data.data[i].Tref[j])
 			push!(beta0, meta_data.data[i].beta0[j])
-			#push!(lambertw_x, meta_data.parameters[i].lambertw_x[j])
+			if "n_Kcentric" in names(meta_data.data[i])
+				push!(N, meta_data.data[i].n_Kcentric[j])
+			else push!(N, NaN)
+			end
 			push!(d, meta_data.d[i])
 			push!(gas, meta_data.gas[i])
 		end
@@ -609,7 +612,7 @@ function dataframe_of_all(meta_data)
 						A=A, B=B, C=C,
 						Tchar=Tchar, thetachar=thetachar, DeltaCp=DeltaCp,
 						DeltaHref=DeltaHref, DeltaSref=DeltaSref, Tref=Tref,
-						beta0=beta0, d=d, gas=gas)
+						beta0=beta0, d=d, gas=gas, N=N)
 	# add categories
 	cat = collect_categories(meta_data)
 	for j=1:size(cat)[2]
@@ -706,6 +709,9 @@ function flag(data)
 		end
 		if data.thetachar[i] < 0
 			push!(fl, "θchar < 0")
+		end
+		if data.thetachar[i] > 100
+			push!(fl, "θchar > 100 °C")
 		end
 		flag[i] = fl
 	end
@@ -1545,7 +1551,9 @@ function new_database_format(data; ParSet="Kcentric", filter_flag=true)
 								B=data.B,
 								C=data.C,
 								phi0=1.0./(4.0.*data.beta0),
+								N=data.N,
 								Source=data.Source
+								
 								)
 	elseif ParSet=="Kcentric"
 		newformat = DataFrame(Name=data.Name,
@@ -1555,6 +1563,7 @@ function new_database_format(data; ParSet="Kcentric", filter_flag=true)
 								thetachar=data.thetachar,
 								DeltaCp=data.DeltaCp,
 								phi0=1.0./(4.0.*data.beta0),
+								N=data.N,
 								Source=data.Source
 								)
 	elseif ParSet=="TD"
@@ -1566,7 +1575,9 @@ function new_database_format(data; ParSet="Kcentric", filter_flag=true)
 								DeltaCp=data.DeltaCp,
 								Tref=data.Tref,
 								phi0=1.0./(4.0.*data.beta0),
+								N=data.N,
 								Source=data.Source
+								
 								)
 	elseif ParSet=="all"
 		newformat = DataFrame(Name=data.Name,
@@ -1582,6 +1593,7 @@ function new_database_format(data; ParSet="Kcentric", filter_flag=true)
 								DeltaSref=data.DeltaSref,
 								Tref=data.Tref,
 								phi0=1.0./(4.0.*data.beta0),
+								N=data.N,
 								Source=data.Source
 								
 								)
