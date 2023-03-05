@@ -13,7 +13,7 @@ using RAFF
 const R = 8.31446261815324
 const Tst = 273.15
 const T0 = 90.0
-
+const custom_database_url = "https://raw.githubusercontent.com/JanLeppert/RetentionData/main/data/add_CI_db.tsv"
 
 """
 	collect_csv_paths(folder)
@@ -734,6 +734,18 @@ function flagged_data(alldata::DataFrame)
 end
 
 """
+	load_custom_CI_database(custom_database_url)
+
+Load a custom database for ChemicalIdentifiers.jl from the location `custom_database_url`, if the custom database is not already loaded.	
+"""
+function load_custom_CI_database(custom_database_url)
+	#if !(:custom in keys(ChemicalIdentifiers.DATA_DB))
+		ChemicalIdentifiers.load_data!(:custom, url = custom_database_url)
+		ChemicalIdentifiers.load_db!(:custom)
+	#end
+end
+
+"""
 	substance_identification(data::DataFrame)
 
 Look up the substance name from the `data` dataframe with ChemicalIdentifiers.jl to find the `CAS`-number, the `formula`, the molecular weight `MW` and the `smiles`-identifier. If the name is not found in the database of ChemicalIdentifiers.jl a list with alternative names (`shortnames.csv`) is used. If there are still no matches, `missing` is used.
@@ -743,7 +755,8 @@ function substance_identification(data::DataFrame)
 	project = dirname(root)
 	shortnames = DataFrame(CSV.File(joinpath(project, "data", "shortnames.csv")))#DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/RetentionData/data/shortnames.csv"))
 	missing_subs = DataFrame(CSV.File(joinpath(project, "data", "missing.csv")))#DataFrame(CSV.File("/Users/janleppert/Documents/GitHub/RetentionData/data/missing.csv"))
-	
+	load_custom_CI_database(custom_database_url)
+
 	CAS = Array{Union{Missing,AbstractString}}(missing, length(data.Name))
 	formula = Array{Union{Missing,AbstractString}}(missing, length(data.Name))
 	MW = Array{Union{Missing,Float64}}(missing, length(data.Name))
@@ -1564,6 +1577,16 @@ function new_database_format(data; ParSet="Kcentric", filter_flag=true)
 								DeltaCp=data.DeltaCp,
 								phi0=1.0./(4.0.*data.beta0),
 								N=data.N,
+								Source=data.Source
+								)
+	elseif ParSet=="GasChromatographySimulator"
+		newformat = DataFrame(Name=data.Name,
+								CAS=data.CAS,
+								Phase=data.Phase,
+								Tchar=data.Tchar,
+								thetachar=data.thetachar,
+								DeltaCp=data.DeltaCp,
+								phi0=1.0./(4.0.*data.beta0),
 								Source=data.Source
 								)
 	elseif ParSet=="TD"
