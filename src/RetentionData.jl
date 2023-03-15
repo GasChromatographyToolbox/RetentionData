@@ -523,7 +523,8 @@ end
 
 Save the `data` in the `meta_data` dataframe in new .csv-files in the same folder as the original data using the new filename `Source_AllParam_Tablename_statPhase(_d)(_gas).csv`. `Source` is the name of the source of the original data, `statPhase` is the stationary phase corresponding to the data and `Tablename` the name of the table of the original data. The optional entrys `d` and `gas` stand for the column diameter and the gas of the mobile phase. 
 """
-function save_all_parameter_data(meta_data::DataFrame; rounding=true, sigdigits=5) # ?add options for rounding resp. for Measurements.value()
+function save_all_parameter_data(meta_data::DataFrame; rounding=true, sigdigits=5, errors=true) # ?add options for rounding resp. for Measurements.value()
+	#param_df = Array{Any}(undef, length(meta_data.data))
 	for i=1:length(meta_data.data)
 		tablename = split(meta_data.filename[i], "_")[3]
 		if ismissing(meta_data.d[i]) && ismissing(meta_data.gas[i])
@@ -537,14 +538,32 @@ function save_all_parameter_data(meta_data::DataFrame; rounding=true, sigdigits=
 		end
 		# add a round for significant digits
 		#if contains(meta_data.filename[i], "Parameters")
-		header = names(meta_data.parameters[i])
+		if errors == true
+			header = [names(meta_data.parameters[i]); ["err_A", "err_B", "err_C", "err_Tchar", "err_thetachar", "err_DeltaCp", "err_DeltaHref", "err_DeltaSref"]]
+		else
+			header = names(meta_data.parameters[i])
+		end
+		j0 = length(names(meta_data.parameters[i]))
+		jj = 1
 		param = DataFrame()
-		for j=1:length(header)
+		for j=1:j0#length(header)
 			if typeof(meta_data.parameters[i][!, j]) == Array{Measurement{Float64}, 1}
-				if rounding == true # information about std-errors for fits is lost here
-					param[!, header[j]] = round.(Measurements.value.(meta_data.parameters[i][!, j]); sigdigits=sigdigits)
-				else
+				if rounding == true && errors == false# information about std-errors for fits is lost here
+					##if errors == true && j > j0
+					##	param[!, header[j]] = round.(Measurements.uncertainty.(meta_data.parameters[i][!, j]))
+					##else
+						param[!, header[j]] = round.(Measurements.value.(meta_data.parameters[i][!, j]); sigdigits=sigdigits)
+					##end
+				elseif rounding == false && errors == false
 					param[!, header[j]] = Measurements.value.(meta_data.parameters[i][!, j])
+				elseif rounding == true && errors == true
+					param[!, header[j]] = round.(Measurements.value.(meta_data.parameters[i][!, j]); sigdigits=sigdigits)
+					param[!, header[j0+jj]] = round.(Measurements.uncertainty.(meta_data.parameters[i][!, j]); sigdigits=sigdigits)
+					jj = jj + 1
+				elseif rounding == false && errors == true
+					param[!, header[j]] = Measurements.value.(meta_data.parameters[i][!, j])
+					param[!, header[j0+jj]] = Measurements.uncertainty.(meta_data.parameters[i][!, j])
+					jj = jj + 1
 				end
 			elseif typeof(meta_data.parameters[i][!, j]) == Array{Float64, 1}
 				if rounding == true
@@ -557,8 +576,9 @@ function save_all_parameter_data(meta_data::DataFrame; rounding=true, sigdigits=
 			end
 		end
 		CSV.write(joinpath(meta_data.path[i], new_filename), param)
+		#param_df[i] = param
 	end
-	
+	#return param_df
 end
 
 """
@@ -571,17 +591,28 @@ function dataframe_of_all(meta_data)
 	Phase = String[]
 	Source = String[]
 	dataset = String[]
-	A = Float64[]
-	B = Float64[]
-	C = Float64[]
-	Tchar = Float64[]
-	thetachar = Float64[]
-	DeltaCp = Float64[]
-	DeltaHref = Float64[]
-	DeltaSref = Float64[]
+	A = Float64[]#Union{Measurement{Float64},Float64}[]#Float64[]
+	err_A = Float64[]
+	B = Float64[]#Union{Measurement{Float64},Float64}[]#Float64[]
+	err_B = Float64[]
+	C = Float64[]#Union{Measurement{Float64},Float64}[]#Float64[]
+	err_C = Float64[]
+	Tchar = Float64[]#Union{Measurement{Float64},Float64}[]#Float64[]
+	err_Tchar = Float64[]#
+	thetachar = Float64[]#Union{Measurement{Float64},Float64}[]#Float64[]
+	err_thetachar = Float64[]
+	DeltaCp = Float64[]#Union{Measurement{Float64},Float64}[]#Float64[]
+	err_DeltaCp = Float64[]
+	DeltaHref = Float64[]#Union{Measurement{Float64},Float64}[]#Float64[]
+	err_DeltaHref = Float64[]
+	DeltaSref = Float64[]#Union{Measurement{Float64},Float64}[]#Float64[]
+	err_DeltaSref = Float64[]
 	Tref = Float64[]
 	beta0 = Float64[]
 	N = Float64[]
+	R² = Float64[]
+	χ² = Float64[]
+	χ̄² = Float64[]
 	d = Any[]
 	gas = Any[]
 	for i=1:length(meta_data.data)
@@ -591,28 +622,72 @@ function dataframe_of_all(meta_data)
 			push!(Source, meta_data.source[i])
 			push!(dataset, meta_data.filename[i])
 			push!(A, meta_data.data[i].A[j])
+			if "err_A" in names(meta_data.data[i])
+				push!(err_A, meta_data.data[i].err_A[j])
+			else push!(err_A, NaN)
+			end
 			push!(B, meta_data.data[i].B[j])
+			if "err_B" in names(meta_data.data[i])
+				push!(err_B, meta_data.data[i].err_B[j])
+			else push!(err_B, NaN)
+			end
 			push!(C, meta_data.data[i].C[j])
+			if "err_C" in names(meta_data.data[i])
+				push!(err_C, meta_data.data[i].err_C[j])
+			else push!(err_C, NaN)
+			end
 			push!(Tchar, meta_data.data[i].Tchar[j])
+			if "err_Tchar" in names(meta_data.data[i])
+				push!(err_Tchar, meta_data.data[i].err_Tchar[j])
+			else push!(err_Tchar, NaN)
+			end
 			push!(thetachar, meta_data.data[i].thetachar[j])
+			if "err_thetachar" in names(meta_data.data[i])
+				push!(err_thetachar, meta_data.data[i].err_thetachar[j])
+			else push!(err_thetachar, NaN)
+			end
 			push!(DeltaCp, meta_data.data[i].DeltaCp[j])
+			if "err_DeltaCp" in names(meta_data.data[i])
+				push!(err_DeltaCp, meta_data.data[i].err_DeltaCp[j])
+			else push!(err_DeltaCp, NaN)
+			end
 			push!(DeltaHref, meta_data.data[i].DeltaHref[j])
+			if "err_DeltaHref" in names(meta_data.data[i])
+				push!(err_DeltaHref, meta_data.data[i].err_DeltaHref[j])
+			else push!(err_DeltaHref, NaN)
+			end
 			push!(DeltaSref, meta_data.data[i].DeltaSref[j])
+			if "err_DeltaSref" in names(meta_data.data[i])
+				push!(err_DeltaSref, meta_data.data[i].err_DeltaSref[j])
+			else push!(err_DeltaSref, NaN)
+			end
 			push!(Tref, meta_data.data[i].Tref[j])
 			push!(beta0, meta_data.data[i].beta0[j])
 			if "n_Kcentric" in names(meta_data.data[i])
 				push!(N, meta_data.data[i].n_Kcentric[j])
 			else push!(N, NaN)
 			end
+			if "R²_Kcentric" in names(meta_data.data[i])
+				push!(R², meta_data.data[i].R²_Kcentric[j])
+			else push!(R², NaN)
+			end
+			if "χ²_Kcentric" in names(meta_data.data[i])
+				push!(χ², meta_data.data[i].χ²_Kcentric[j])
+			else push!(χ², NaN)
+			end
+			if "χ̄²_Kcentric" in names(meta_data.data[i])
+				push!(χ̄², meta_data.data[i].χ̄²_Kcentric[j])
+			else push!(χ̄², NaN)
+			end
 			push!(d, meta_data.d[i])
 			push!(gas, meta_data.gas[i])
 		end
 	end
 	dfall = DataFrame(Name=Name, Phase=Phase, Source=Source, DataSet=dataset,
-						A=A, B=B, C=C,
-						Tchar=Tchar, thetachar=thetachar, DeltaCp=DeltaCp,
-						DeltaHref=DeltaHref, DeltaSref=DeltaSref, Tref=Tref,
-						beta0=beta0, d=d, gas=gas, N=N)
+						A=A, err_A=err_A, B=B, err_B=err_B, C=C, err_C=err_C,
+						Tchar=Tchar, err_Tchar=err_Tchar, thetachar=thetachar, err_thetachar=err_thetachar, DeltaCp=DeltaCp, err_DeltaCp=err_DeltaCp,
+						DeltaHref=DeltaHref, err_DeltaHref=err_DeltaHref, DeltaSref=DeltaSref, err_DeltaSref=err_DeltaSref, Tref=Tref,
+						beta0=beta0, d=d, gas=gas, N=N, R²=R², χ²=χ², χ̄²=χ̄²)
 	# add categories
 	cat = collect_categories(meta_data)
 	for j=1:size(cat)[2]
@@ -1561,10 +1636,16 @@ function new_database_format(data; ParSet="Kcentric", filter_flag=true)
 								CAS=data.CAS,
 								Phase=data.Phase,
 								A=data.A,
+								err_A=data.err_A,
 								B=data.B,
+								err_B=data.err_B,
 								C=data.C,
+								err_C=data.err_C,
 								phi0=1.0./(4.0.*data.beta0),
 								N=data.N,
+								R²=data.R²,
+								χ²=data.χ²,
+								χ̄²=data.χ̄²,
 								Source=data.Source
 								
 								)
@@ -1573,10 +1654,16 @@ function new_database_format(data; ParSet="Kcentric", filter_flag=true)
 								CAS=data.CAS,
 								Phase=data.Phase,
 								Tchar=data.Tchar,
+								err_Tchar=data.err_Tchar,
 								thetachar=data.thetachar,
+								err_thetachar=data.err_thetachar,
 								DeltaCp=data.DeltaCp,
+								err_DeltaCp=data.err_DeltaCp,
 								phi0=1.0./(4.0.*data.beta0),
 								N=data.N,
+								R²=data.R²,
+								χ²=data.χ²,
+								χ̄²=data.χ̄²,
 								Source=data.Source
 								)
 	elseif ParSet=="GasChromatographySimulator"
@@ -1594,11 +1681,17 @@ function new_database_format(data; ParSet="Kcentric", filter_flag=true)
 								CAS=data.CAS,
 								Phase=data.Phase,
 								DeltaHref=data.DeltaHref,
+								err_DeltaHref=data.err_DeltaHref,
 								DeltaSref=data.DeltaSref,
+								err_DeltaSref=data.err_DeltaSref,
 								DeltaCp=data.DeltaCp,
+								err_DeltaCp=data.err_DeltaCp,
 								Tref=data.Tref,
 								phi0=1.0./(4.0.*data.beta0),
 								N=data.N,
+								R²=data.R²,
+								χ²=data.χ²,
+								χ̄²=data.χ̄²,
 								Source=data.Source
 								
 								)
@@ -1607,16 +1700,27 @@ function new_database_format(data; ParSet="Kcentric", filter_flag=true)
 								CAS=data.CAS,
 								Phase=data.Phase,
 								A=data.A,
+								err_A=data.err_A,
 								B=data.B,
+								err_B=data.err_B,
 								C=data.C,
+								err_C=data.err_C,
 								Tchar=data.Tchar,
+								err_Tchar=data.err_Tchar,
 								thetachar=data.thetachar,
+								err_thetachar=data.err_thetachar,
 								DeltaCp=data.DeltaCp,
+								err_DeltaCp=data.err_DeltaCp,
 								DeltaHref=data.DeltaHref,
+								err_DeltaHref=data.err_DeltaHref,
 								DeltaSref=data.DeltaSref,
+								err_DeltaSref=data.err_DeltaSref,
 								Tref=data.Tref,
 								phi0=1.0./(4.0.*data.beta0),
 								N=data.N,
+								R²=data.R²,
+								χ²=data.χ²,
+								χ̄²=data.χ̄²,
 								Source=data.Source
 								
 								)
