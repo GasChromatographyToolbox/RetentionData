@@ -28,3 +28,16 @@ RetentionData.extract_parameters_from_fit!(data)
 
 # save the estimated parameters:
 RetentionData.save_all_parameter_data(data; rounding=true, sigdigits=5, errors=true)
+
+
+# database_all
+db_all = RetentionData.database(db_path; filter_CAS=false, filter_flag=false, db_format="all")[1]
+CSV.write(joinpath(db_path, "database_all.csv"), db_all)
+
+# database_nonflag
+db_nonflag = RetentionData.database(db_path; filter_CAS=false, filter_flag=true, db_format="all")[1]
+CSV.write(joinpath(db_path, "database_nonflag.csv"), db_nonflag)
+
+# GCSim_database_nonflag
+db_GCSim_nonflag = RetentionData.database(db_path; filter_CAS=false, filter_flag=true, db_format="GasChromatographySimulator")[1]
+CSV.write(joinpath(db_path, "GCSim_database_nonflag.csv"), db_GCSim_nonflag)
