@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.14
+# v0.19.19
 
 using Markdown
 using InteractiveUtils
@@ -68,10 +68,31 @@ Select substance: $(@bind select_substance Slider(1:length(data.data[select_data
 # ╔═╡ b8cb55b5-c40d-4f9b-96fe-580c41cbf3d6
 data.filename[select_dataset], data.data[select_dataset][!,1][select_substance]
 
+# ╔═╡ 3255e7c9-a833-4203-acc2-a4742f1eeb5f
+data.data[select_dataset]
+
+# ╔═╡ d7b3c617-bcdc-44e1-beaf-82493bc7f8e7
+data.filename[3]
+
+# ╔═╡ 3c36c7bc-de62-49d5-a53c-b0c41821be8f
+data.fitting[3].Name[1], data.fitting[3].Name[6], data.fitting[3].Name[11]
+
+# ╔═╡ aa657a95-9038-4dcb-9410-d594c2e1f6fd
+data.filename[21]
+
+# ╔═╡ 814c8917-c226-4c98-9968-7dfea1305b47
+data.fitting[21].Name[19]
+
+# ╔═╡ e72ce7e8-b0fd-4a65-89b9-dc15e0d187d3
+data.filename[43]
+
+# ╔═╡ caf7d3bf-a82e-49ec-8392-358f41ed4d6b
+data.fitting[43].Name[5]
+
 # ╔═╡ d57b2b89-9763-4998-8434-465de994ce54
 begin
 	if select_save == true
-		RetentionData.save_all_parameter_data(data)
+		RetentionData.save_all_parameter_data(data; errors=true)
 	end
 end
 
@@ -142,11 +163,10 @@ begin
 	CheckBase = Array{Any}(undef, size(data.filename)[1])
 	for i=1:size(data.filename)[1]
 		if isfile(joinpath(project, "OutlierCheck", string("Check_",data.filename[i])))
-			CheckBase[i] = CSV.File(joinpath(project, "OutlierCheck", string("Check_",data.filename[i]))).OutlierTest
+			CheckBase[i] = CSV.File(joinpath(project, "OutlierCheck", string("Check_",data.filename[i])); types=[String, Bool]).OutlierTest
 		else 
 			CheckBase[i] = trues(size(data.data[i])[1])	
 		end
-		
 	end	
 	#RetentionData.fit_models!(data, CheckBase);	
 	fitting = RetentionData.fit_models(data.data, CheckBase)
@@ -255,6 +275,29 @@ begin
 	plot(p_R2_Kcentric, p_χ2_Kcentric)
 end
 
+# ╔═╡ f32244ac-2842-481d-87fa-af9e8dc5703f
+begin
+	CheckBase
+	n = Array{Int}(undef, length(data.parameters))
+	n[1] = length(data.parameters[1].χ̄²_Kcentric)
+	p_rmse_Kcentric = scatter(1:n[1], sqrt.(data.parameters[1].χ̄²_Kcentric), title="rmse, Kcentric-model", ylabel="rmse = √Χ̄²", label=1, size=(800, 400))
+	for i=2:length(data.parameters)
+		n[i] = length(data.parameters[i].χ̄²_Kcentric)
+		scatter!(p_rmse_Kcentric, (sum(n[1:(i-1)])+1):sum(n[1:i]), sqrt.(data.parameters[i].χ̄²_Kcentric), label=i)
+	end
+	p_rmse_Kcentric
+end
+
+# ╔═╡ dd4e8c71-b536-4062-8cdd-c04df2bbf7b7
+begin
+	CheckBase
+	p_R²_Χ̄²_Kcentric = scatter(data.parameters[1].R²_Kcentric, (data.parameters[1].χ̄²_Kcentric), title="Kcentric-model", xlabel="R²", ylabel="Χ̄²", label=1, size=(800, 400))
+	for i=2:length(data.parameters)
+		scatter!(p_R²_Χ̄²_Kcentric, data.parameters[i].R²_Kcentric, (data.parameters[i].χ̄²_Kcentric), label=i)
+	end
+	p_R²_Χ̄²_Kcentric
+end
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -285,8 +328,9 @@ RAFF = "~0.6.4"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.7.1"
+julia_version = "1.8.2"
 manifest_format = "2.0"
+project_hash = "2b1659f32ab573908b0840d2390058736b30f255"
 
 [[deps.AbstractPlutoDingetjes]]
 deps = ["Pkg"]
@@ -302,6 +346,7 @@ version = "3.6.1"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
+version = "1.1.1"
 
 [[deps.ArrayInterface]]
 deps = ["Adapt", "LinearAlgebra", "Requires", "SnoopPrecompile", "SparseArrays", "SuiteSparse"]
@@ -437,6 +482,7 @@ version = "4.6.0"
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
+version = "0.5.2+0"
 
 [[deps.ConstructionBase]]
 deps = ["LinearAlgebra"]
@@ -520,8 +566,9 @@ uuid = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 version = "0.9.3"
 
 [[deps.Downloads]]
-deps = ["ArgTools", "LibCURL", "NetworkOptions"]
+deps = ["ArgTools", "FileWatching", "LibCURL", "NetworkOptions"]
 uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
+version = "1.6.0"
 
 [[deps.DualNumbers]]
 deps = ["Calculus", "NaNMath", "SpecialFunctions"]
@@ -568,6 +615,9 @@ deps = ["Compat", "Dates", "Mmap", "Printf", "Test", "UUIDs"]
 git-tree-sha1 = "e27c4ebe80e8699540f2d6c805cc12203b614f12"
 uuid = "48062228-2e41-5def-b9a4-89aafe57970f"
 version = "0.9.20"
+
+[[deps.FileWatching]]
+uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 
 [[deps.FillArrays]]
 deps = ["LinearAlgebra", "Random", "SparseArrays", "Statistics"]
@@ -816,10 +866,12 @@ uuid = "4af54fe1-eca0-43a8-85a7-787d91b784e3"
 [[deps.LibCURL]]
 deps = ["LibCURL_jll", "MozillaCACerts_jll"]
 uuid = "b27032c2-a3e7-50c8-80cd-2d36dbcbfd21"
+version = "0.6.3"
 
 [[deps.LibCURL_jll]]
 deps = ["Artifacts", "LibSSH2_jll", "Libdl", "MbedTLS_jll", "Zlib_jll", "nghttp2_jll"]
 uuid = "deac9b47-8bc7-5906-a0fe-35ac56dc84c0"
+version = "7.84.0+0"
 
 [[deps.LibGit2]]
 deps = ["Base64", "NetworkOptions", "Printf", "SHA"]
@@ -828,6 +880,7 @@ uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
 [[deps.LibSSH2_jll]]
 deps = ["Artifacts", "Libdl", "MbedTLS_jll"]
 uuid = "29816b5a-b9ab-546f-933c-edad1886dfa8"
+version = "1.10.2+0"
 
 [[deps.Libdl]]
 uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
@@ -935,6 +988,7 @@ version = "1.1.7"
 [[deps.MbedTLS_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "c8ffd9c3-330d-5841-b78e-0817d7145fa1"
+version = "2.28.0+0"
 
 [[deps.Measurements]]
 deps = ["Calculus", "LinearAlgebra", "Printf", "RecipesBase", "Requires"]
@@ -964,6 +1018,7 @@ version = "0.7.6"
 
 [[deps.MozillaCACerts_jll]]
 uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
+version = "2022.2.1"
 
 [[deps.NLSolversBase]]
 deps = ["DiffResults", "Distributed", "FiniteDiff", "ForwardDiff"]
@@ -979,6 +1034,7 @@ version = "1.0.2"
 
 [[deps.NetworkOptions]]
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
+version = "1.2.0"
 
 [[deps.Ogg_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -989,10 +1045,12 @@ version = "1.3.5+1"
 [[deps.OpenBLAS_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
 uuid = "4536629a-c528-5b80-bd46-f80d51c5b363"
+version = "0.3.20+0"
 
 [[deps.OpenLibm_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "05823500-19ac-5b8b-9628-191a04bc5112"
+version = "0.8.1+0"
 
 [[deps.OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1026,6 +1084,7 @@ version = "1.4.1"
 [[deps.PCRE2_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "efcefdf7-47ab-520b-bdef-62a2eaa19f15"
+version = "10.40.0+0"
 
 [[deps.PDMats]]
 deps = ["LinearAlgebra", "SparseArrays", "SuiteSparse"]
@@ -1048,6 +1107,7 @@ version = "0.40.1+0"
 [[deps.Pkg]]
 deps = ["Artifacts", "Dates", "Downloads", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+version = "1.8.0"
 
 [[deps.PlotThemes]]
 deps = ["PlotUtils", "Requires", "Statistics"]
@@ -1164,6 +1224,7 @@ version = "0.4.0+0"
 
 [[deps.SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
+version = "0.7.0"
 
 [[deps.Scratch]]
 deps = ["Dates"]
@@ -1267,6 +1328,7 @@ uuid = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
 [[deps.TOML]]
 deps = ["Dates"]
 uuid = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
+version = "1.0.0"
 
 [[deps.TableTraits]]
 deps = ["IteratorInterfaceExtensions"]
@@ -1283,6 +1345,7 @@ version = "1.10.0"
 [[deps.Tar]]
 deps = ["ArgTools", "SHA"]
 uuid = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
+version = "1.10.1"
 
 [[deps.TensorCore]]
 deps = ["LinearAlgebra"]
@@ -1498,6 +1561,7 @@ version = "1.4.0+3"
 [[deps.Zlib_jll]]
 deps = ["Libdl"]
 uuid = "83775a58-1f1d-513f-b197-d71354ab007a"
+version = "1.2.12+3"
 
 [[deps.Zstd_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -1520,6 +1584,7 @@ version = "0.15.1+0"
 [[deps.libblastrampoline_jll]]
 deps = ["Artifacts", "Libdl", "OpenBLAS_jll"]
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
+version = "5.1.1+0"
 
 [[deps.libfdk_aac_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1542,10 +1607,12 @@ version = "1.3.7+1"
 [[deps.nghttp2_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "8e850ede-7688-5339-a07c-302acd2aaf8d"
+version = "1.48.0+0"
 
 [[deps.p7zip_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
+version = "17.4.0+0"
 
 [[deps.x264_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1572,14 +1639,23 @@ version = "1.4.1+0"
 # ╟─3bac9f60-8749-425b-8e87-ba1d7442ca93
 # ╟─b8cb55b5-c40d-4f9b-96fe-580c41cbf3d6
 # ╟─cd5d0b6c-6e76-4293-80a0-b07ea94a05d8
+# ╟─3255e7c9-a833-4203-acc2-a4742f1eeb5f
 # ╟─49a1e6d9-b939-4795-8c7f-61e92dc09ee8
 # ╟─53c1de7f-fe4e-47d2-ba06-8ff9cf20bc87
 # ╟─2fd4d728-9068-415c-b006-26f93dddce28
-# ╟─a65c584d-a669-4dfe-8deb-03ce2fd3a0c0
+# ╠═a65c584d-a669-4dfe-8deb-03ce2fd3a0c0
 # ╟─8a0d3816-b114-42e3-8bef-cda7b63af509
 # ╟─baba96bf-b0fb-43a3-8f58-954343b918fd
 # ╟─4dd4f07a-4654-4fd5-99f1-0fab845a545d
 # ╟─8eb557fa-8e94-49fd-8fc5-17f8d42943c6
+# ╟─f32244ac-2842-481d-87fa-af9e8dc5703f
+# ╠═d7b3c617-bcdc-44e1-beaf-82493bc7f8e7
+# ╠═3c36c7bc-de62-49d5-a53c-b0c41821be8f
+# ╠═aa657a95-9038-4dcb-9410-d594c2e1f6fd
+# ╠═814c8917-c226-4c98-9968-7dfea1305b47
+# ╠═e72ce7e8-b0fd-4a65-89b9-dc15e0d187d3
+# ╠═caf7d3bf-a82e-49ec-8392-358f41ed4d6b
+# ╟─dd4e8c71-b536-4062-8cdd-c04df2bbf7b7
 # ╟─bebf0dbc-96de-4e16-90ae-206930a106ee
 # ╟─d57b2b89-9763-4998-8434-465de994ce54
 # ╟─91c46525-43f9-4ef2-98f4-35fb3974d64f
