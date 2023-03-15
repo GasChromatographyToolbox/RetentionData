@@ -1,2 +1,2 @@
-Name,A,B,C,Tchar,thetachar,DeltaCp,DeltaHref,DeltaSref,beta0,Tref,R²_Kcentric,χ²_Kcentric,χ̄²_Kcentric,n_Kcentric,Cat_1
-2-Pentadecanone,-111.18,13868.0,14.252,212.89,34.033,118.49,-72274.0,-107.37,250.0,90.0,0.99998,0.00015525,3.105e-5,8,ketone
+Name,A,err_A,B,err_B,C,err_C,Tchar,err_Tchar,thetachar,err_thetachar,DeltaCp,err_DeltaCp,DeltaHref,err_DeltaHref,DeltaSref,err_DeltaSref,beta0,Tref,R²_Kcentric,χ²_Kcentric,χ̄²_Kcentric,n_Kcentric,Cat_1
+2-Pentadecanone,-111.18,11.875,13868.0,808.46,14.252,1.6522,212.89,0.26843,34.033,0.45579,118.49,13.737,-72274.0,1859.1,-107.37,4.3101,250.0,90.0,0.99998,0.00015525,3.105e-5,8,ketone
