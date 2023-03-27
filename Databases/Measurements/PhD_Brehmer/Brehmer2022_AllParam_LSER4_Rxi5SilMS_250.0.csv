@@ -1,2 +1,2 @@
-Name,A,err_A,B,err_B,C,err_C,Tchar,err_Tchar,thetachar,err_thetachar,DeltaCp,err_DeltaCp,DeltaHref,err_DeltaHref,DeltaSref,err_DeltaSref,beta0,Tref,R²_Kcentric,χ²_Kcentric,χ̄²_Kcentric,n_Kcentric
-2-Nitrophenol,-65.114,1.1638,8321.8,68.122,8.3681,0.16586,137.04,0.037747,34.413,0.022637,69.577,1.3791,-43925.0,70.894,-61.672,0.18086,250.0,90.0,1.0,8.404e-5,7.64e-6,14
+Name,A,err_A,B,err_B,C,err_C,Tchar,err_Tchar,thetachar,err_thetachar,DeltaCp,err_DeltaCp,DeltaHchar,err_DeltaHchar,DeltaSchar,err_DeltaSchar,DeltaHref,err_DeltaHref,DeltaSref,err_DeltaSref,Tref,beta0,R²_Kcentric,χ²_Kcentric,χ̄²_Kcentric,n_Kcentric
+2-Nitrophenol,-65.114,1.1638,8321.8,68.122,8.3681,0.16586,137.04,0.037747,34.413,0.022637,69.577,1.3791,-40652.0,27.768,-53.196,0.065826,-43925.0,70.894,-61.672,0.18086,90.0,250.0,1.0,8.404e-5,7.64e-6,14
