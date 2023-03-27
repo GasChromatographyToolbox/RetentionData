@@ -1,2 +1,2 @@
-Name,A,err_A,B,err_B,C,err_C,Tchar,err_Tchar,thetachar,err_thetachar,DeltaCp,err_DeltaCp,DeltaHref,err_DeltaHref,DeltaSref,err_DeltaSref,beta0,Tref,R²_Kcentric,χ²_Kcentric,χ̄²_Kcentric,n_Kcentric,Cat_1
-PCB 138 Std,-78.115,4.9879,13193.0,382.16,9.4938,0.68065,286.76,0.061599,39.799,0.14292,78.936,5.6592,-81023.0,1138.2,-105.24,2.486,250.0,90.0,0.99999,6.3226e-5,1.0538e-5,9,PCB
+Name,A,err_A,B,err_B,C,err_C,Tchar,err_Tchar,thetachar,err_thetachar,DeltaCp,err_DeltaCp,DeltaHchar,err_DeltaHchar,DeltaSchar,err_DeltaSchar,DeltaHref,err_DeltaHref,DeltaSref,err_DeltaSref,Tref,beta0,R²_Kcentric,χ²_Kcentric,χ̄²_Kcentric,n_Kcentric,Cat_1
+PCB 138 Std,-78.115,4.9879,13193.0,382.16,9.4938,0.68065,286.76,0.061599,39.799,0.14292,78.936,5.6592,-65492.0,235.62,-71.062,0.42023,-81023.0,1138.2,-105.24,2.486,90.0,250.0,0.99999,6.3226e-5,1.0538e-5,9,PCB

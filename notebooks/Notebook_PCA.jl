@@ -4,16 +4,6 @@
 using Markdown
 using InteractiveUtils
 
-# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
-macro bind(def, element)
-    quote
-        local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
-        local el = $(esc(element))
-        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
-        el
-    end
-end
-
 # ╔═╡ fec530e6-d675-4bb9-8b5a-6aa607574a81
 begin
 	root = dirname(@__FILE__)
@@ -93,6 +83,21 @@ begin
 	"""
 end
 
+# ╔═╡ a99434a3-2c53-4e26-bb5c-87a65b6f9b6e
+begin 
+	plotly()
+	_pTD_nfl_ = plot(xlabel="DeltaHchar", ylabel="DeltaSchar", zlabel="DeltaCp")
+	for i=1:length(source)
+		nfl_filter = filter([:Source] => x -> x == source[i], nfl)
+		scatter!(_pTD_nfl_, nfl_filter.DeltaHchar, nfl_filter.DeltaSchar, nfl_filter.DeltaCp, label=source[i])
+	end
+	md"""
+	## Plot parameters ΔHchar, ΔSchar, ΔCp
+
+	$(embed_display(_pTD_nfl_))
+	"""
+end
+
 # ╔═╡ 7c95815d-11e5-4de5-8d83-a7ef8518751c
 begin 
 	plotly()
@@ -140,6 +145,18 @@ begin
 	"""
 end
 
+# ╔═╡ 95e8b2c2-d48d-428d-9b97-6c9e4f25c76c
+begin
+	plotly()
+	_pTD = scatter(nfl.DeltaHchar, nfl.DeltaSchar, nfl.DeltaCp, label="not flagged", xlabel="DeltaHchar", ylabel="DeltaSchar", zlabel="DeltaCp")
+	scatter!(_pTD, fl.DeltaHchar, fl.DeltaSchar, fl.DeltaCp, label="flagged", c=:red, m=:cross)
+	md"""
+	## Plot parameters ΔHchar, ΔSchar, ΔCp
+
+	$(embed_display(_pTD))
+	"""
+end
+
 # ╔═╡ ef518fe9-1920-4c95-9ef3-2b2542621fc0
 begin
 	plotly()
@@ -152,11 +169,6 @@ begin
 	"""
 end
 
-# ╔═╡ 917e88c6-cf5d-4d8f-93e5-f50ea2bb2cdc
-md"""
-# Find duplicates
-"""
-
 # ╔═╡ 873b90e2-bc5d-4272-a90b-978bb4e1358d
 md"""# Investigate Compound Influence"""
 
@@ -165,7 +177,7 @@ md"""Can we found systematical influences of the compound category to the parame
 
 # ╔═╡ d24832da-ff7d-4d4c-af5d-6662eca846cf
 begin
-	scatter(nfl.Tchar, nfl.thetachar, label="not flagged", xlabel="T_{char}", ylabel="θ_{char}", ylims=(0,80))
+	scatter(nfl.Tchar, nfl.thetachar, label="not flagged", xlabel="T_{char}", ylabel="θ_{char}", ylims=(0,100), legend=:topleft)
 end	
 
 # ╔═╡ a94f22a9-5332-429a-bd31-3c1799781ffe
@@ -252,11 +264,17 @@ md"""## PCA ABC Model"""
 # ╔═╡ 4ec1f88e-d2e4-43c0-9e43-68322ab96e1c
 nfl
 
+# ╔═╡ 78445ca2-7fd9-4a91-a393-d045af189f6f
+index_ABC = [5, 7, 9]
+
+# ╔═╡ 518f62df-6b03-4e69-b876-2eb153cd6cba
+index_Kcentric = [11, 13, 15]
+
 # ╔═╡ 534ec747-4b14-4c01-a837-7e6db2479381
-ABC_Training=Matrix(nfl[1:2:end-1,5:7])'
+ABC_Training=Matrix(nfl[1:2:end-1,index_ABC])'
 
 # ╔═╡ 982446df-5021-44ca-b7a8-2f0042baf88d
- ABC_Testing=Matrix(nfl[2:2:end,5:7])'
+ ABC_Testing=Matrix(nfl[2:2:end,index_ABC])'
 
 # ╔═╡ b6fcf3bb-9b33-42ba-97fa-f0116ae0ec46
 PCA_ABC=fit(PCA, ABC_Training; maxoutdim=2)
@@ -271,10 +289,10 @@ reconstruct(PCA_ABC, ABC_Y)
 md"""## PCA K-centric Model"""
 
 # ╔═╡ 52f944bf-2038-497a-ae39-a2ee95ad67d2
-kcentric_Training=Matrix(nfl[1:2:end-1,8:10])'
+kcentric_Training=Matrix(nfl[1:2:end-1,index_Kcentric])'
 
 # ╔═╡ 32471c63-a5c0-4ad9-b9e4-1701a8a9902b
-kcentric_Testing=Matrix(nfl[2:2:end,8:10])'
+kcentric_Testing=Matrix(nfl[2:2:end,index_Kcentric])'
 
 # ╔═╡ fb7017ab-b8bb-4175-8434-5f9c1e026509
 PCA_kcentric=fit(PCA, kcentric_Training; maxoutdim=2)
@@ -317,81 +335,6 @@ begin # for duplicates
 	alldata_f_ = RetentionData.align_categories(alldata_f);
 	RetentionData.add_group_to_Cat!(alldata_f_);
 end;
-
-# ╔═╡ 46e15b57-5192-45bf-837c-4c2b9adc5d4f
-begin
-	# duplicated data (same substances on same stationary phase)
-	dup_data, dup_entry = RetentionData.duplicated_data(alldata_f_)
-	
-	selected_dup_data = DataFrame()
-	
-	for i=1:length(dup_data)
-		sources = unique(dup_data[i].Source)
-		cols = names(dup_data[i])
-		if "Blumberg2017" in sources # use Blumberg2017 data
-			j = findfirst(dup_data[i].Source.=="Blumberg2017")
-			push!(selected_dup_data, dup_data[i][j,cols], promote=true)
-		elseif ["Marquart2020"] == sources || ["Brehmer2022"] == sources # use all data, if only duplicates from Marquart (different isomers) or from Brehemer (different df)
-			append!(selected_dup_data, dup_data[i][!,cols], promote=true)
-		elseif ["McGinitie2011"] == sources # different gases, use "He"
-			j = findfirst(dup_data[i].gas.=="He")
-			push!(selected_dup_data, dup_data[i][j,cols], promote=true)
-		elseif "McGinitie2011" in sources && "McGinitie2014a" in sources # different diameters, use d=0.25mm
-			j = findfirst(dup_data[i].d.==0.25)
-			push!(selected_dup_data, dup_data[i][j,cols], promote=true)
-		elseif length(sources) == 1 # duplicates from the same source
-			# choose first
-			if i == 1
-				selected_dup_data =DataFrame(dup_data[i][1,cols])
-			else
-				push!(selected_dup_data, dup_data[i][1,cols], promote=true) 
-			end
-		else # not decided cases
-			append!(selected_dup_data, dup_data[i][!,cols], promote=true) # choose all
-			#push!(selected_dup_data, dup_data[i][1,cols]) # choose first -> error
-		end
-	end
-	selected_dup_data
-
-	nondup_data = alldata_f_[findall(dup_entry.==false),Not([:d, :gas, :flag])];
-# 2nd filter the duplicate data dup_data according to decisions
-# change the rule, if needed 
-
-	dup_data_1, dup_entry_1 = RetentionData.duplicated_data(selected_dup_data)
-# -> remaining cases of duplicates (some will stay, e.g. Marquart2020);
-# 1st take only the entrys without duplicates, delete columns 'd', 'gas' and 'flag'
-end;
-
-# ╔═╡ 87a761c6-85ce-4342-a7d4-a13a378c6c45
-md"""
-### Plot of duplicates
-$(@bind select_dup Slider(1:length(dup_data); show_value=true))
-"""
-
-# ╔═╡ ba1c7f65-3e24-4b86-b2e2-521459993250
-begin
-	T = 0.0:1.0:400.0
-	Tst = 273.15
-	R = 8.31446261815324
-	lnk = Array{Float64}(undef, length(T), size(dup_data[select_dup])[1])
-	plnk_dup = plot(xlabel="temperature in °C", ylabel="lnk")
-	for j=1:size(dup_data[select_dup])[1]
-		for i=1:length(T)
-			par = [dup_data[select_dup].Tchar[j]+Tst, dup_data[select_dup].thetachar[j], dup_data[select_dup].DeltaCp[j]/R]
-			lnk[i,j] = RetentionData.Kcentric(T[i]+Tst, par)
-		end
-		plot!(plnk_dup, T, lnk[:,j], title="duplicated data, $(dup_data[select_dup].Name[1]), $(dup_data[select_dup].Phase[1])", label=dup_data[select_dup].Source[j])
-	end
-	pABC_dup = scatter(dup_data[select_dup].A, dup_data[select_dup].B, dup_data[select_dup].C, title="duplicated data, $(dup_data[select_dup].Name[1]), $(dup_data[select_dup].Phase[1])", label="", xlabel="A", ylabel="B", zlabel="C")
-	
-	pKcentric_dup = scatter(dup_data[select_dup].Tchar, dup_data[select_dup].thetachar, dup_data[select_dup].DeltaCp, title="duplicated data, $(dup_data[select_dup].Name[1]), $(dup_data[select_dup].Phase[1])", label="", xlabel="Tchar", ylabel="θchar", zlabel="ΔCp")
-	
-	md"""
-	$(embed_display(plnk_dup))
-	$(embed_display(pABC_dup))
-	$(embed_display(pKcentric_dup))
-	"""
-end
 
 # ╔═╡ 5f83d618-1d7b-4c88-947a-88ffbaf74a43
 function add_homologous_to_Cat!(newdata)
@@ -549,7 +492,9 @@ begin
 		end	
 		Predict=predict(PCA_kcentric,Matrix(SubstanceFilter[i][!,8:10])')
 		Plots.scatter!(KcentricPCA_Plot, Predict[1,:],Predict[2,:], label=Name, legend=:outerright, markers=Plots.supported_markers()[i], title="Compounds",dpi=500, size=(800,400), minorgrid=true)
-	end		
+	end	
+#ylims!(-300,0)
+#xlims!(-500,200)
 KcentricPCA_Plot
 end
 
@@ -1986,15 +1931,13 @@ version = "1.4.1+0"
 # ╠═b2b6ef1c-ca2d-4a52-a586-b3c2b13b6bac
 # ╟─84fc7b22-2362-4b99-8fd9-3a779d706a4b
 # ╟─1e912349-d26d-45ea-9167-21b0b4165060
+# ╟─a99434a3-2c53-4e26-bb5c-87a65b6f9b6e
 # ╟─7c95815d-11e5-4de5-8d83-a7ef8518751c
 # ╟─c28cca6a-fdf3-4edf-9534-5c4f677c2889
 # ╟─d460b5e1-9060-4fe5-bcea-8c63a0ea071e
 # ╟─0e559fd4-5fef-4375-9e7a-1e052cf61b7a
+# ╟─95e8b2c2-d48d-428d-9b97-6c9e4f25c76c
 # ╟─ef518fe9-1920-4c95-9ef3-2b2542621fc0
-# ╟─917e88c6-cf5d-4d8f-93e5-f50ea2bb2cdc
-# ╟─46e15b57-5192-45bf-837c-4c2b9adc5d4f
-# ╟─87a761c6-85ce-4342-a7d4-a13a378c6c45
-# ╟─ba1c7f65-3e24-4b86-b2e2-521459993250
 # ╟─873b90e2-bc5d-4272-a90b-978bb4e1358d
 # ╟─d7acb6b7-539a-4d4a-bbff-d066e6535ff6
 # ╟─d24832da-ff7d-4d4c-af5d-6662eca846cf
@@ -2017,6 +1960,8 @@ version = "1.4.1+0"
 # ╠═391282b0-f684-4e3d-b4ba-1eba0689fe5e
 # ╟─ad5312d2-43bb-42f6-8327-a3de2dfc1aae
 # ╠═4ec1f88e-d2e4-43c0-9e43-68322ab96e1c
+# ╠═78445ca2-7fd9-4a91-a393-d045af189f6f
+# ╠═518f62df-6b03-4e69-b876-2eb153cd6cba
 # ╠═534ec747-4b14-4c01-a837-7e6db2479381
 # ╠═982446df-5021-44ca-b7a8-2f0042baf88d
 # ╠═b6fcf3bb-9b33-42ba-97fa-f0116ae0ec46
@@ -2028,7 +1973,7 @@ version = "1.4.1+0"
 # ╠═fb7017ab-b8bb-4175-8434-5f9c1e026509
 # ╠═0698e398-d204-448e-9460-5eb2a51a5d05
 # ╠═ff6f166d-6d18-44c1-8be3-8d6d40bcd738
-# ╟─00703bb9-21f6-4f93-95f4-45995d81ee5d
+# ╠═00703bb9-21f6-4f93-95f4-45995d81ee5d
 # ╟─c00ded9a-6d20-4748-9dc6-789831820427
 # ╠═e2271c7c-a808-4e2e-b2e0-76393a4fcb67
 # ╟─bc5f3e11-d5de-4343-b959-86431b8f04f1
