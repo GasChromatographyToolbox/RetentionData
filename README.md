@@ -3,7 +3,7 @@
 [![DOI](https://zenodo.org/badge/426138381.svg)](https://zenodo.org/badge/latestdoi/426138381)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://JanLeppert.github.io/RetentionData/dev)
 
-This github is a compilation of retention data in gas chromatography (GC).
+This github is a compilation of retention data in gas chromatography (GC). A corresponding publication is submitted. Supplemental material for this publication can be found [here](https://github.com/JanLeppert/RetentionData/tree/main/Supplemental%20Materials).
 
 **Short introduction to retention factor and the 3 models**
 
@@ -12,9 +12,11 @@ This github is a compilation of retention data in gas chromatography (GC).
 Different sets of parameters (A, B, C parameters, thermodynamic parameters or K-centric parameters) from different sources are compiled 
 in the folder `Databases`. For every source a separate folder is created containing the original data from the sources as comma separated files, reference information as a BibTex file and processed files (e.g. calculation of the other sets of parameters). In the sub-folder `Measurements` in the folder `Databases` measured retention data, which is not publicized yet, is collected. 
 
-[Latest database](https://raw.githubusercontent.com/JanLeppert/RetentionData/main/Databases/database_all.csv)
+[Latest database](https://github.com/JanLeppert/RetentionData/blob/main/Databases/database_all.csv)
 
-[Latest database without flagged substances](https://raw.githubusercontent.com/JanLeppert/RetentionData/main/Databases/database_nonflag.csv)
+[Latest database without flagged substances](https://github.com/JanLeppert/RetentionData/blob/main/Databases/database_nonflag.csv)
+
+[Latest database for GasChromatographySimulator.jl](https://github.com/JanLeppert/RetentionData/blob/main/Databases/GCSim_database_nonflag.csv)
 
 ### How to add data
 _preliminary_
