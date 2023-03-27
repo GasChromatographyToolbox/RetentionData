@@ -36,7 +36,7 @@ only with CAS-number: $(@bind check_CAS CheckBox())
 
 filter out flagged substances: $(@bind check_flag CheckBox(true))
 
-database format: $(@bind select_format Select(["all", "ABC", "Kcentric", "TD", "GasChromatographySimulator", "old_format"]))
+database format: $(@bind select_format Select(["all", "ABC", "Kcentric", "TD", "TDchar", "GasChromatographySimulator", "old_format"]))
 
 - plots of the three parameters for all solutes 
 - export with filters
@@ -47,6 +47,15 @@ db, alldata = RetentionData.database(db_path; filter_CAS=check_CAS, filter_flag=
 
 # ╔═╡ 81858157-fb56-4544-b9eb-c7da27b39aa7
 db
+
+# ╔═╡ efbf42f3-c045-42a0-8e03-e7474cfc3fc5
+function unique_cat(db) 
+	i_Cat = findall(occursin.("Cat", names(db)))
+	return unique(reshape(Array(db[!,i_Cat]), (size(Array(db[!,i_Cat]))[1]*size(Array(db[!,i_Cat]))[2], 1)))
+end
+
+# ╔═╡ 40ddfb90-0642-46a4-8fcd-bf0eee779ed6
+unique_cat(db) 
 
 # ╔═╡ 34c77b59-0943-4925-8e1f-8a6db72701ee
 alldata
@@ -64,6 +73,26 @@ begin
 	pABC
 end
 
+# ╔═╡ 7674bac3-5378-44b8-8866-006a15ede770
+begin 
+	pABC_ = plot(xlabel="A", ylabel="B", zlabel="C")
+	for i=1:length(unique(db.Source))
+		db_filter = filter([:Source] => x -> x == unique(db.Source)[i], db)
+		scatter!(pABC_, db_filter.A, db_filter.B, db_filter.C, label=unique(db.Source)[i])
+	end
+	pABC_
+end
+
+# ╔═╡ b02e72d9-214f-4f70-8d76-81d76b27fdd0
+begin 
+	pABC__ = plot(xlabel="A", ylabel="B", zlabel="C")
+	for i=1:length(unique(db.Phase))
+		db_filter = filter([:Phase] => x -> x == unique(db.Phase)[i], db)
+		scatter!(pABC__, db_filter.A, db_filter.B, db_filter.C, label=unique(db.Phase)[i])
+	end
+	pABC__
+end
+
 # ╔═╡ 49ddd8eb-a833-43b8-9f62-18f4d5afaf10
 md"""
 ## Plot parameters Tchar, θchar, ΔCp
@@ -73,6 +102,57 @@ md"""
 begin
 	pKcentric = scatter(db.Tchar, db.thetachar, db.DeltaCp, label="", xlabel="Tchar", ylabel="thetachar", zlabel="DeltaCp")
 	pKcentric
+end
+
+# ╔═╡ 31b9db02-55b4-49fa-83f4-f160fd72f2e4
+begin 
+	pKcentric_ = plot(xlabel="Tchar", ylabel="thetachar", zlabel="DeltaCp")
+	for i=1:length(unique(db.Source))
+		db_filter = filter([:Source] => x -> x == unique(db.Source)[i], db)
+		scatter!(pKcentric_, db_filter.Tchar, db_filter.thetachar, db_filter.DeltaCp, label=unique(db.Source)[i])
+	end
+	pKcentric_
+end
+
+# ╔═╡ 5893dbeb-8dfb-47a5-965c-158901fc464b
+begin 
+	pKcentric__ = plot(xlabel="Tchar", ylabel="thetachar", zlabel="DeltaCp")
+	for i=1:length(unique(db.Phase))
+		db_filter = filter([:Phase] => x -> x == unique(db.Phase)[i], db)
+		scatter!(pKcentric__, db_filter.Tchar, db_filter.thetachar, db_filter.DeltaCp, label=unique(db.Phase)[i])
+	end
+	pKcentric__
+end
+
+# ╔═╡ 13c9bf7c-5d65-4027-b229-9c04cce7f7e4
+md"""
+## Plot parameters ΔHchar, ΔSchar, ΔCp
+"""
+
+# ╔═╡ 39022372-ebeb-477a-b60a-0ac3f2fbf3ce
+begin
+	_pTD = scatter(alldata.DeltaHchar, alldata.DeltaSchar, alldata.DeltaCp, label="", xlabel="DeltaHchar", ylabel="DeltaSchar", zlabel="DeltaCp")
+	_pTD
+end
+
+# ╔═╡ 19f9438c-a54a-4506-a80e-02996c518c8b
+begin 
+	_pTD_ = plot(xlabel="DeltaHchar", ylabel="DeltaSchar", zlabel="DeltaCp")
+	for i=1:length(unique(alldata.Source))
+		db_filter = filter([:Source] => x -> x == unique(alldata.Source)[i], alldata)
+		scatter!(_pTD_, db_filter.DeltaHchar, db_filter.DeltaSchar, db_filter.DeltaCp, label=unique(alldata.Source)[i])
+	end
+	_pTD_
+end
+
+# ╔═╡ 64214fd0-d654-49b4-b2c1-3fa0040e6633
+begin 
+	_pTD__ = plot(xlabel="DeltaHchar", ylabel="DeltaSchar", zlabel="DeltaCp")
+	for i=1:length(unique(alldata.Phase))
+		db_filter = filter([:Phase] => x -> x == unique(alldata.Phase)[i], alldata)
+		scatter!(_pTD__, db_filter.DeltaHchar, db_filter.DeltaSchar, db_filter.DeltaCp, label=unique(alldata.Phase)[i])
+	end
+	_pTD__
 end
 
 # ╔═╡ b4044a75-03ad-4f75-a2ac-716b0c2c628f
@@ -89,12 +169,21 @@ end
 # ╔═╡ 7c95815d-11e5-4de5-8d83-a7ef8518751c
 begin 
 	pTD_ = plot(xlabel="DeltaHref", ylabel="DeltaSref", zlabel="DeltaCp")
-	source = unique(db.Source)
-	for i=1:length(source)
-		db_filter = filter([:Source] => x -> x == source[i], db)
-		scatter!(pTD_, db_filter.DeltaHref, db_filter.DeltaSref, db_filter.DeltaCp, label=source[i])
+	for i=1:length(unique(db.Source))
+		db_filter = filter([:Source] => x -> x == unique(db.Source)[i], db)
+		scatter!(pTD_, db_filter.DeltaHref, db_filter.DeltaSref, db_filter.DeltaCp, label=unique(db.Source)[i])
 	end
 	pTD_
+end
+
+# ╔═╡ 51def521-ded9-45ec-a383-1f28d8de885b
+begin 
+	pTD__ = plot(xlabel="DeltaHref", ylabel="DeltaSref", zlabel="DeltaCp")
+	for i=1:length(unique(db.Phase))
+		db_filter = filter([:Phase] => x -> x == unique(db.Phase)[i], db)
+		scatter!(pTD__, db_filter.DeltaHref, db_filter.DeltaSref, db_filter.DeltaCp, label=unique(db.Phase)[i])
+	end
+	pTD__
 end
 
 # ╔═╡ 5b1de655-4092-4a9c-b763-d3bdfae5f0e6
@@ -110,7 +199,7 @@ begin
 	
 	$(@bind select_phase confirm(MultiSelect(unique(db.Phase); default=unique(db.Phase))))
 	
-	- dimensionless film thickness: 
+	- phase ratio: 
 	
 	$(@bind select_phi confirm(MultiSelect(unique(db.phi0); default=unique(db.phi0))))
 	
@@ -1503,19 +1592,30 @@ version = "1.4.1+0"
 
 # ╔═╡ Cell order:
 # ╟─fec530e6-d675-4bb9-8b5a-6aa607574a81
-# ╟─5861512e-a14b-11ec-3c6b-9bd2953bf909
+# ╠═5861512e-a14b-11ec-3c6b-9bd2953bf909
 # ╠═f4253f29-7268-42ae-a17a-25e860234b0b
 # ╠═81858157-fb56-4544-b9eb-c7da27b39aa7
+# ╠═efbf42f3-c045-42a0-8e03-e7474cfc3fc5
+# ╠═40ddfb90-0642-46a4-8fcd-bf0eee779ed6
 # ╠═34c77b59-0943-4925-8e1f-8a6db72701ee
 # ╟─93a5ed9f-64ce-4ee8-bee0-ecd2ff2dcbb8
-# ╟─560c76d6-9e50-461a-9815-66b40b59e580
+# ╠═560c76d6-9e50-461a-9815-66b40b59e580
+# ╠═7674bac3-5378-44b8-8866-006a15ede770
+# ╠═b02e72d9-214f-4f70-8d76-81d76b27fdd0
 # ╟─49ddd8eb-a833-43b8-9f62-18f4d5afaf10
-# ╟─c99ca5d6-7f7d-4462-afab-e11154370054
+# ╠═c99ca5d6-7f7d-4462-afab-e11154370054
+# ╠═31b9db02-55b4-49fa-83f4-f160fd72f2e4
+# ╠═5893dbeb-8dfb-47a5-965c-158901fc464b
+# ╠═13c9bf7c-5d65-4027-b229-9c04cce7f7e4
+# ╠═39022372-ebeb-477a-b60a-0ac3f2fbf3ce
+# ╠═19f9438c-a54a-4506-a80e-02996c518c8b
+# ╠═64214fd0-d654-49b4-b2c1-3fa0040e6633
 # ╟─b4044a75-03ad-4f75-a2ac-716b0c2c628f
 # ╟─80c784b2-35a6-4fc9-a1fd-7b1d6d89462f
 # ╟─7c95815d-11e5-4de5-8d83-a7ef8518751c
-# ╟─5b1de655-4092-4a9c-b763-d3bdfae5f0e6
-# ╟─fe328e54-adaa-409c-8de8-7ba8686354b3
+# ╠═51def521-ded9-45ec-a383-1f28d8de885b
+# ╠═5b1de655-4092-4a9c-b763-d3bdfae5f0e6
+# ╠═fe328e54-adaa-409c-8de8-7ba8686354b3
 # ╟─c05ff77f-369c-4afa-8e25-d81939ed9dc2
 # ╟─59689ce2-57a4-4a1f-925d-3bdd07c0572e
 # ╟─e270769e-60d8-4690-b976-e003295a7d23
