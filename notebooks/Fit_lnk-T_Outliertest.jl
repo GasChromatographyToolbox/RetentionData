@@ -71,24 +71,6 @@ data.filename[select_dataset], data.data[select_dataset][!,1][select_substance]
 # ╔═╡ 3255e7c9-a833-4203-acc2-a4742f1eeb5f
 data.data[select_dataset]
 
-# ╔═╡ d7b3c617-bcdc-44e1-beaf-82493bc7f8e7
-data.filename[3]
-
-# ╔═╡ 3c36c7bc-de62-49d5-a53c-b0c41821be8f
-data.fitting[3].Name[1], data.fitting[3].Name[6], data.fitting[3].Name[11]
-
-# ╔═╡ aa657a95-9038-4dcb-9410-d594c2e1f6fd
-data.filename[21]
-
-# ╔═╡ 814c8917-c226-4c98-9968-7dfea1305b47
-data.fitting[21].Name[19]
-
-# ╔═╡ e72ce7e8-b0fd-4a65-89b9-dc15e0d187d3
-data.filename[43]
-
-# ╔═╡ caf7d3bf-a82e-49ec-8392-358f41ed4d6b
-data.fitting[43].Name[5]
-
 # ╔═╡ d57b2b89-9763-4998-8434-465de994ce54
 begin
 	if select_save == true
@@ -203,7 +185,7 @@ begin
 	``T_{min} = `` $(round(mini_Kcentric; sigdigits=5)) °C
 
 	``\ln{k}_{min} = `` $(round(mini_lnk_Kcentric; sigdigits=5))
-	
+
 	$(embed_display(pl))
 	"""
 end
@@ -247,6 +229,19 @@ begin
 		end
 	end
 	pEntalpie
+end
+
+# ╔═╡ f6dd93ea-d6e8-4e9f-a480-b777ee6d24cc
+begin
+	CheckBase
+	plotly()
+	pEntalpie_ = scatter(Measurements.value.(data.parameters[1].DeltaHchar), Measurements.value.(data.parameters[1].DeltaSchar), Measurements.value.(data.parameters[1].DeltaCp), label=1, xlabel="ΔHchar in ", ylabel="ΔSchar in", zlabel="ΔCp in J mol⁻¹ K⁻¹")
+	for i=2:length(data.parameters)
+		if i!=3
+			scatter!(pEntalpie_, Measurements.value.(data.parameters[i].DeltaHchar), Measurements.value.(data.parameters[i].DeltaSchar), Measurements.value.(data.parameters[i].DeltaCp), label=i)
+		end
+	end
+	pEntalpie_
 end
 
 # ╔═╡ 8eb557fa-8e94-49fd-8fc5-17f8d42943c6
@@ -1638,23 +1633,18 @@ version = "1.4.1+0"
 # ╟─ae6986cd-33f3-48b1-9f8b-71535670bf27
 # ╟─3bac9f60-8749-425b-8e87-ba1d7442ca93
 # ╟─b8cb55b5-c40d-4f9b-96fe-580c41cbf3d6
-# ╟─cd5d0b6c-6e76-4293-80a0-b07ea94a05d8
+# ╠═cd5d0b6c-6e76-4293-80a0-b07ea94a05d8
 # ╟─3255e7c9-a833-4203-acc2-a4742f1eeb5f
-# ╟─49a1e6d9-b939-4795-8c7f-61e92dc09ee8
-# ╟─53c1de7f-fe4e-47d2-ba06-8ff9cf20bc87
+# ╠═49a1e6d9-b939-4795-8c7f-61e92dc09ee8
+# ╠═53c1de7f-fe4e-47d2-ba06-8ff9cf20bc87
 # ╟─2fd4d728-9068-415c-b006-26f93dddce28
 # ╠═a65c584d-a669-4dfe-8deb-03ce2fd3a0c0
 # ╟─8a0d3816-b114-42e3-8bef-cda7b63af509
 # ╟─baba96bf-b0fb-43a3-8f58-954343b918fd
 # ╟─4dd4f07a-4654-4fd5-99f1-0fab845a545d
+# ╟─f6dd93ea-d6e8-4e9f-a480-b777ee6d24cc
 # ╟─8eb557fa-8e94-49fd-8fc5-17f8d42943c6
 # ╟─f32244ac-2842-481d-87fa-af9e8dc5703f
-# ╠═d7b3c617-bcdc-44e1-beaf-82493bc7f8e7
-# ╠═3c36c7bc-de62-49d5-a53c-b0c41821be8f
-# ╠═aa657a95-9038-4dcb-9410-d594c2e1f6fd
-# ╠═814c8917-c226-4c98-9968-7dfea1305b47
-# ╠═e72ce7e8-b0fd-4a65-89b9-dc15e0d187d3
-# ╠═caf7d3bf-a82e-49ec-8392-358f41ed4d6b
 # ╟─dd4e8c71-b536-4062-8cdd-c04df2bbf7b7
 # ╟─bebf0dbc-96de-4e16-90ae-206930a106ee
 # ╟─d57b2b89-9763-4998-8434-465de994ce54
