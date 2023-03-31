@@ -309,7 +309,7 @@ plotly()
 	KcentricPCA_Plot_beta=Array{Any}(undef, size(PhiFilter)[1])
 		KcentricPCA_Plot_beta=Plots.scatter(xlabel="PC1", ylabel="PC2")
 	for i=1:size(PhiFilter)[1]
-		Predict=predict(PCA_kcentric,Matrix(PhiFilter[i][!,8:10])')
+		Predict=predict(PCA_kcentric,Matrix(PhiFilter[i][!,index_Kcentric])')
 		Plots.scatter!(KcentricPCA_Plot_beta, Predict[1,:],Predict[2,:], label=PhiFilter[i].beta0[1], legend=:outerright, markers=Plots.supported_markers()[i], xlims=(), title="Phase Ratio")
 	end		
 KcentricPCA_Plot_beta
@@ -490,7 +490,7 @@ begin
 		else
 		Name=SubstanceFilter[i].Cat_1[1]	
 		end	
-		Predict=predict(PCA_kcentric,Matrix(SubstanceFilter[i][!,8:10])')
+		Predict=predict(PCA_kcentric,Matrix(SubstanceFilter[i][!,index_Kcentric])')
 		Plots.scatter!(KcentricPCA_Plot, Predict[1,:],Predict[2,:], label=Name, legend=:outerright, markers=Plots.supported_markers()[i], title="Compounds",dpi=500, size=(800,400), minorgrid=true)
 	end	
 #ylims!(-300,0)
@@ -1974,7 +1974,7 @@ version = "1.4.1+0"
 # ╠═0698e398-d204-448e-9460-5eb2a51a5d05
 # ╠═ff6f166d-6d18-44c1-8be3-8d6d40bcd738
 # ╠═00703bb9-21f6-4f93-95f4-45995d81ee5d
-# ╟─c00ded9a-6d20-4748-9dc6-789831820427
+# ╠═c00ded9a-6d20-4748-9dc6-789831820427
 # ╠═e2271c7c-a808-4e2e-b2e0-76393a4fcb67
 # ╟─bc5f3e11-d5de-4343-b959-86431b8f04f1
 # ╟─23a8d4b2-dd8d-4a30-96ad-26de84f7c2a9
