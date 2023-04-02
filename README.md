@@ -25,13 +25,13 @@ in the folder `Databases`. For every source a separate folder is created contain
 * Fork the Github project and submit additional data as a new branch.
 
 * New data in form of parameter sets can be added in a sub-folder of folder `Databases`:
-  * (``A,B,C``), [example file](https://github.com/JanLeppert/RetentionData/blob/main/Databases/Gaida2021/Gaida2021_Parameters_TableS1_Rxi5ms_beta250.csv) 
-  * (``T_{char}``, ``\theta_{char}``, ``\Delta C_p``) [example file](https://github.com/JanLeppert/RetentionData/blob/main/Databases/Leppert2020b/Leppert2020b_Parameters_TableS1_FS5ms_beta250.csv)
-  * (``\Delta S_{ref}``, ``\Delta H_{ref}``, ``\Delta C_p``, ``T_{ref}``) [example file](https://github.com/JanLeppert/RetentionData/blob/main/Databases/McGinitie2012a/McGinitie2012a_Parameters_Table1_Wax_beta250_Tref90.csv)
+  * ($A,B,C$), [example file](https://github.com/JanLeppert/RetentionData/blob/main/Databases/Gaida2021/Gaida2021_Parameters_TableS1_Rxi5ms_beta250.csv) 
+  * ($T_{char}$, $\theta_{char}$, $\Delta C_p$) [example file](https://github.com/JanLeppert/RetentionData/blob/main/Databases/Leppert2020b/Leppert2020b_Parameters_TableS1_FS5ms_beta250.csv)
+  * ($\Delta S_{ref}$, $\Delta H_{ref}$, $\Delta C_p$, $T_{ref}$) [example file](https://github.com/JanLeppert/RetentionData/blob/main/Databases/McGinitie2012a/McGinitie2012a_Parameters_Table1_Wax_beta250_Tref90.csv)
   * running the notebook [Convert_Parameters.jl](https://github.com/JanLeppert/RetentionData/blob/main/notebooks/Convert_Parameters.jl) converts the given parameter set into the other and saves them in a  `AllParam` file.
 
-* New data in form of ``\ln(k)`` over ``T`` [example file](https://github.com/JanLeppert/RetentionData/blob/main/Databases/Measurements/PhD_Brehmer/Brehmer2022_lnk-T_BTEX_Rxi17SilMS_beta250.csv) or as ``\log_{10}(k)`` over ``T`` [example file](https://github.com/JanLeppert/RetentionData/blob/main/Databases/Boswell2012/Boswell2012_log10k-T_TabelS1_DB5ms_beta250.csv) can be added in a sub-folder of folder `Databases`.
-  * running the notebook [Fit_lnk-T_Outliers.jl](https://github.com/JanLeppert/RetentionData/blob/main/notebooks/Fit_lnk-T_Outliertest.jl) makes a fit of the ``K``-centric model to the data, which can be inspected in this notebook, and converts the parameters into the other parameter sets and saves them in a `AllParam` file.
+* New data in form of $\ln(k)$ over $T$ [example file](https://github.com/JanLeppert/RetentionData/blob/main/Databases/Measurements/PhD_Brehmer/Brehmer2022_lnk-T_BTEX_Rxi17SilMS_beta250.csv) or as $\log_{10}(k)$ over $T$ [example file](https://github.com/JanLeppert/RetentionData/blob/main/Databases/Boswell2012/Boswell2012_log10k-T_TabelS1_DB5ms_beta250.csv) can be added in a sub-folder of folder `Databases`.
+  * running the notebook [Fit_lnk-T_Outliers.jl](https://github.com/JanLeppert/RetentionData/blob/main/notebooks/Fit_lnk-T_Outliertest.jl) makes a fit of the $K$-centric model to the data, which can be inspected in this notebook, and converts the parameters into the other parameter sets and saves them in a `AllParam` file.
 
 * alternative: add the data in folders as described above 
   * run the script file [script.jl](https://github.com/JanLeppert/RetentionData/blob/main/scripts/script.jl)
