@@ -19,17 +19,23 @@ in the folder `Databases`. For every source a separate folder is created contain
 [Latest database for GasChromatographySimulator.jl](https://github.com/JanLeppert/RetentionData/blob/main/Databases/GCSim_database_nonflag.csv)
 
 ### How to add data
-_preliminary_
 
-* contact us
+* Contact us.
  
-* fork the Github
+* Fork the Github project and submit additional data as a new branch.
 
-* New data in form of parameter sets (A,B,C) and/or (Tchar, thetachar, DeltaCp) and/or (DeltaS, DeltaH, DeltaCp, Tref) -> data in certain structure? and folders -> notebook 'Convert_Parameters.jl' and save 'AllParam' files
+* New data in form of parameter sets can be added in a sub-folder of folder `Databases`:
+  * (``A,B,C``), [example file](https://github.com/JanLeppert/RetentionData/blob/main/Databases/Gaida2021/Gaida2021_Parameters_TableS1_Rxi5ms_beta250.csv) 
+  * (``T_{char}``, ``\theta_{char}``, ``\Delta C_p``) [example file](https://github.com/JanLeppert/RetentionData/blob/main/Databases/Leppert2020b/Leppert2020b_Parameters_TableS1_FS5ms_beta250.csv)
+  * (``\Delta S_{ref}``, ``\Delta H_{ref}``, ``\Delta C_p``, ``T_{ref}``) [example file](https://github.com/JanLeppert/RetentionData/blob/main/Databases/McGinitie2012a/McGinitie2012a_Parameters_Table1_Wax_beta250_Tref90.csv)
+  * running the notebook [Convert_Parameters.jl](https://github.com/JanLeppert/RetentionData/blob/main/notebooks/Convert_Parameters.jl) converts the given parameter set into the other and saves them in a  `AllParam` file.
 
-* New data in form of ln(k) over T: ...
+* New data in form of ``\ln(k)`` over ``T`` [example file](https://github.com/JanLeppert/RetentionData/blob/main/Databases/Measurements/PhD_Brehmer/Brehmer2022_lnk-T_BTEX_Rxi17SilMS_beta250.csv) or as ``\log_{10}(k)`` over ``T`` [example file](https://github.com/JanLeppert/RetentionData/blob/main/Databases/Boswell2012/Boswell2012_log10k-T_TabelS1_DB5ms_beta250.csv) can be added in a sub-folder of folder `Databases`.
+  * running the notebook [Fit_lnk-T_Outliers.jl](https://github.com/JanLeppert/RetentionData/blob/main/notebooks/Fit_lnk-T_Outliertest.jl) makes a fit of the ``K``-centric model to the data, which can be inspected in this notebook, and converts the parameters into the other parameter sets and saves them in a `AllParam` file.
 
-* alternative: add the data in folders with structure ... -> run script.jl -> new database constructed (two files, one with and one without flagged substances)
+* alternative: add the data in folders as described above 
+  * run the script file [script.jl](https://github.com/JanLeppert/RetentionData/blob/main/scripts/script.jl)
+  * fit of all the data is done resp. the conversion of all data is done and the three databases `database_all.csv`, `database_nonflag.csv` and `GCSim_database_nonflag.csv` are constructed.
 
 ### Structure of filenames and files:
 
@@ -54,10 +60,14 @@ calculate the retention parameters from retention data (`Fit_lnk-T_Outliertest.j
   - optional: save the data of all three parameter sets into a file with the keyword `AllParam`
 
 - `Notebook_PCA.jl`: 
-  - ...
+  - Loads all `AllParam` files in the `Databases`-folder and its sub-folders
+  - compiles a database from all datasets
+  - a PCA over the whole dataset is run
 
 - `Database.jl`: 
-  - ...
+  - Loads all `AllParam` file in the `Databases`-folder and its sub-folders
+  - complies a database from all datasets
+  - using optional filters a sub-database can be created in a selected format and can be saved in a .csv file
   
 
 
