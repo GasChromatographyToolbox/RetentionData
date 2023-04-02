@@ -317,7 +317,7 @@ A new array of dataframes. The dataframes have the following columns:
 - `A`: parameter `A` of the `ABC` set
 - `B`: parameter `B` of the `ABC` set
 - `C`: parameter `B` of the `ABC` set
-- `Tchar`: parameter `Tchar` of the `K-centric` set
+- `Tchar`: parameter `Tchar` of the `K-centric` set in °C
 - `thetachar`: parameter `θchar` of the `K-centric` set
 - `DeltaCp`: parameter `ΔCp` of the `K-centric` and `TD` set
 - `DeltaHref`: parameter `ΔHref` of the `TD` set
@@ -337,7 +337,9 @@ function all_parameters(data::Array{DataFrame,1}, paramset::Array{Array{String,1
 		ΔCp = Array{Float64}(undef, length(data[i][!, 1]))
 		ΔHref = Array{Float64}(undef, length(data[i][!, 1]))
 		ΔSref = Array{Float64}(undef, length(data[i][!, 1]))
-		#Tref = Array{Float64}(undef, length(data[i][!, 1]))
+		ΔHchar = Array{Float64}(undef, length(data[i][!,1])) # modJL
+		ΔSchar = Array{Float64}(undef, length(data[i][!,1])) # modJL
+ 		#Tref = Array{Float64}(undef, length(data[i][!, 1]))
 		#beta0 = Array{Float64}(undef, length(data[i][!, 1]))
 		beta0 = β0[i].*ones(length(data[i][!, 1]))
 		W_x = Array{Float64}(undef, length(data[i][!, 1]))
@@ -420,9 +422,11 @@ function all_parameters(data::Array{DataFrame,1}, paramset::Array{Array{String,1
 				Tchar[j] = Kcentric[1]
 				θchar[j] = Kcentric[2]
 			end
+			ΔHchar[j], ΔSchar[j] = ABC_to_TD(A[j], B[j], C[j], Tchar[j])[1:2] # modJL
 			W_x[j] = lambertw_x(A[j], B[j], C[j], beta0[j])
 		end
-		new_data[i] = DataFrame(Name=data[i][!, 1], A=A, B=B, C=C, Tchar=Tchar, thetachar=θchar, DeltaCp=ΔCp, DeltaHref=ΔHref, DeltaSref=ΔSref, Tref=Tref, beta0=beta0, lambertw_x=W_x)
+		#new_data[i] = DataFrame(Name=data[i][!, 1], A=A, B=B, C=C, Tchar=Tchar, thetachar=θchar, DeltaCp=ΔCp, DeltaHref=ΔHref, DeltaSref=ΔSref, Tref=Tref, beta0=beta0, lambertw_x=W_x)
+		new_data[i] = DataFrame(Name=data[i][!, 1], A=A, B=B, C=C, Tchar=Tchar, thetachar=θchar, DeltaCp=ΔCp, DeltaHchar=ΔHchar, DeltaSchar=ΔSchar, DeltaHref=ΔHref, DeltaSref=ΔSref, Tref=Tref, beta0=beta0, lambertw_x=W_x) # modJL
 		# add columns with "Cat" in column name
 		i_cat = findall(occursin.("Cat", names(data[i])))
 		for j=1:length(i_cat)
@@ -536,7 +540,17 @@ function save_all_parameter_data(meta_data::DataFrame; rounding=true, sigdigits=
 		end
 		# add a round for significant digits
 		#if contains(meta_data.filename[i], "Parameters")
+<<<<<<< Updated upstream
 		header = names(meta_data.parameters[i])
+=======
+		if errors == true
+			header = [names(meta_data.parameters[i]); ["err_A", "err_B", "err_C", "err_Tchar", "err_thetachar", "err_DeltaCp", "err_DeltaHchar", "err_DeltaSchar", "err_DeltaHref", "err_DeltaSref"]]
+		else
+			header = names(meta_data.parameters[i])
+		end
+		j0 = length(names(meta_data.parameters[i]))
+		jj = 1
+>>>>>>> Stashed changes
 		param = DataFrame()
 		for j=1:length(header)
 			if typeof(meta_data.parameters[i][!, j]) == Array{Measurement{Float64}, 1}
@@ -570,6 +584,7 @@ function dataframe_of_all(meta_data)
 	Phase = String[]
 	Source = String[]
 	dataset = String[]
+<<<<<<< Updated upstream
 	A = Float64[]
 	B = Float64[]
 	C = Float64[]
@@ -578,6 +593,28 @@ function dataframe_of_all(meta_data)
 	DeltaCp = Float64[]
 	DeltaHref = Float64[]
 	DeltaSref = Float64[]
+=======
+	A = Float64[]#Union{Measurement{Float64},Float64}[]#Float64[]
+	err_A = Float64[]
+	B = Float64[]#Union{Measurement{Float64},Float64}[]#Float64[]
+	err_B = Float64[]
+	C = Float64[]#Union{Measurement{Float64},Float64}[]#Float64[]
+	err_C = Float64[]
+	Tchar = Float64[]#Union{Measurement{Float64},Float64}[]#Float64[]
+	err_Tchar = Float64[]#
+	thetachar = Float64[]#Union{Measurement{Float64},Float64}[]#Float64[]
+	err_thetachar = Float64[]
+	DeltaCp = Float64[]#Union{Measurement{Float64},Float64}[]#Float64[]
+	err_DeltaCp = Float64[]
+	DeltaHref = Float64[]#Union{Measurement{Float64},Float64}[]#Float64[]
+	err_DeltaHref = Float64[]
+	DeltaSref = Float64[]#Union{Measurement{Float64},Float64}[]#Float64[]
+	err_DeltaSref = Float64[]
+	DeltaHchar = Float64[]#Union{Measurement{Float64},Float64}[]#Float64[]
+	err_DeltaHchar = Float64[]
+	DeltaSchar = Float64[]#Union{Measurement{Float64},Float64}[]#Float64[]
+	err_DeltaSchar = Float64[]
+>>>>>>> Stashed changes
 	Tref = Float64[]
 	beta0 = Float64[]
 	#lambertw_x = Float64[]
@@ -597,6 +634,23 @@ function dataframe_of_all(meta_data)
 			push!(DeltaCp, meta_data.data[i].DeltaCp[j])
 			push!(DeltaHref, meta_data.data[i].DeltaHref[j])
 			push!(DeltaSref, meta_data.data[i].DeltaSref[j])
+<<<<<<< Updated upstream
+=======
+			if "err_DeltaSref" in names(meta_data.data[i])
+				push!(err_DeltaSref, meta_data.data[i].err_DeltaSref[j])
+			else push!(err_DeltaSref, NaN)
+			end
+			push!(DeltaHchar, meta_data.data[i].DeltaHchar[j])
+			if "err_DeltaHchar" in names(meta_data.data[i])
+				push!(err_DeltaHchar, meta_data.data[i].err_DeltaHchar[j])
+			else push!(err_DeltaHchar, NaN)
+			end
+			push!(DeltaSchar, meta_data.data[i].DeltaSchar[j])
+			if "err_DeltaSchar" in names(meta_data.data[i])
+				push!(err_DeltaSchar, meta_data.data[i].err_DeltaSchar[j])
+			else push!(err_DeltaSchar, NaN)
+			end
+>>>>>>> Stashed changes
 			push!(Tref, meta_data.data[i].Tref[j])
 			push!(beta0, meta_data.data[i].beta0[j])
 			#push!(lambertw_x, meta_data.parameters[i].lambertw_x[j])
@@ -605,10 +659,18 @@ function dataframe_of_all(meta_data)
 		end
 	end
 	dfall = DataFrame(Name=Name, Phase=Phase, Source=Source, DataSet=dataset,
+<<<<<<< Updated upstream
 						A=A, B=B, C=C,
 						Tchar=Tchar, thetachar=thetachar, DeltaCp=DeltaCp,
 						DeltaHref=DeltaHref, DeltaSref=DeltaSref, Tref=Tref,
 						beta0=beta0, d=d, gas=gas)
+=======
+						A=A, err_A=err_A, B=B, err_B=err_B, C=C, err_C=err_C,
+						Tchar=Tchar, err_Tchar=err_Tchar, thetachar=thetachar, err_thetachar=err_thetachar, DeltaCp=DeltaCp, err_DeltaCp=err_DeltaCp,
+						DeltaHchar=DeltaHchar, err_DeltaHchar=err_DeltaHchar, DeltaSchar=DeltaSchar, err_DeltaSchar=err_DeltaSchar,
+						DeltaHref=DeltaHref, err_DeltaHref=err_DeltaHref, DeltaSref=DeltaSref, err_DeltaSref=err_DeltaSref, 
+						Tref=Tref, beta0=beta0, d=d, gas=gas, N=N, R²=R², χ²=χ², χ̄²=χ̄²)
+>>>>>>> Stashed changes
 	# add categories
 	cat = collect_categories(meta_data)
 	for j=1:size(cat)[2]
@@ -1149,6 +1211,8 @@ function extract_parameters_from_fit(fit, β0)
 		ΔCp = Array{Measurement{Float64}}(undef, length(fit[i].Name))
 		ΔHref = Array{Measurement{Float64}}(undef, length(fit[i].Name))
 		ΔSref = Array{Measurement{Float64}}(undef, length(fit[i].Name))
+		ΔHchar = Array{Measurement{Float64}}(undef, length(fit[i].Name)) # modJL
+		ΔSchar = Array{Measurement{Float64}}(undef, length(fit[i].Name)) # modJL
 		beta0 = β0[i].*ones(length(fit[i].Name))
 		Tref = T0.*ones(length(fit[i].Name))
 		n_ABC = Array{Int}(undef, length(fit[i].Name))
@@ -1156,6 +1220,7 @@ function extract_parameters_from_fit(fit, β0)
 		approx_equal = Array{Bool}(undef, length(fit[i].Name))
 		WLS = Array{Bool}(undef, length(fit[i].Name))
 		for j=1:length(fit[i].Name)
+<<<<<<< Updated upstream
 			A[j] = (fit[i].fitABC[j].param[1] ± stderror(fit[i].fitABC[j])[1]) + log(β0[i])
 			B[j] = fit[i].fitABC[j].param[2] ± stderror(fit[i].fitABC[j])[2]
 			C[j] = fit[i].fitABC[j].param[3] ± stderror(fit[i].fitABC[j])[3]
@@ -1163,11 +1228,44 @@ function extract_parameters_from_fit(fit, β0)
 			Tchar[j] = (fit[i].fitKcentric[j].param[1] ± stderror(fit[i].fitKcentric[j])[1]) - Tst
 			θchar[j] = fit[i].fitKcentric[j].param[2] ± stderror(fit[i].fitKcentric[j])[2]
 			ΔCp[j] = (fit[i].fitKcentric[j].param[3] ± stderror(fit[i].fitKcentric[j])[3]) * R
+=======
+			#A[j] = (fit[i].fitABC[j].param[1] ± stderror(fit[i].fitABC[j])[1]) + log(β0[i])
+			#B[j] = fit[i].fitABC[j].param[2] ± stderror(fit[i].fitABC[j])[2]
+			#C[j] = fit[i].fitABC[j].param[3] ± stderror(fit[i].fitABC[j])[3]
+			Tchar_err = try
+				stderror(fit[i].fitKcentric[j])[1]
+			catch
+				NaN
+			end
+			θchar_err = try
+				stderror(fit[i].fitKcentric[j])[2]
+			catch
+				NaN
+			end
+			ΔCp_err = try
+				stderror(fit[i].fitKcentric[j])[3]
+			catch
+				NaN
+			end
+			Tchar[j] = (fit[i].fitKcentric[j].param[1] ± Tchar_err) - Tst
+			θchar[j] = fit[i].fitKcentric[j].param[2] ± θchar_err
+			ΔCp[j] = (fit[i].fitKcentric[j].param[3] ± ΔCp_err) * R
+			A[j], B[j], C[j] = RetentionData.Kcentric_to_ABC(Tchar[j], θchar[j], ΔCp[j], β0[i])
+
+>>>>>>> Stashed changes
 			TD = RetentionData.ABC_to_TD(A[j], B[j], C[j], T0)
 			ΔHref[j] = TD[1]
 			ΔSref[j] = TD[2]
 
+<<<<<<< Updated upstream
 			n_ABC[j] = length(fit[i].fitABC[j].resid)
+=======
+			TD_ = RetentionData.ABC_to_TD(A[j], B[j], C[j], Tchar[j]) # modJL
+			ΔHchar[j] = TD_[1] # modJL
+			ΔSchar[j] = TD_[2] # modJL
+
+			#n_ABC[j] = length(fit[i].fitABC[j].resid)
+>>>>>>> Stashed changes
 			n_Kcentric[j] = length(fit[i].fitKcentric[j].resid)
 			if round(fit[i].χ²_ABC[j]; sigdigits=5) == round(fit[i].χ²_Kcentric[j]; sigdigits=5)
 				approx_equal[j] = true
@@ -1180,6 +1278,7 @@ function extract_parameters_from_fit(fit, β0)
 				WLS[j] = true
 			end
 		end
+<<<<<<< Updated upstream
 		Par[i] = DataFrame(Name=fit[i].Name, A=A, B=B, C=C, Tchar=Tchar, thetachar=θchar, DeltaCp=ΔCp, DeltaHref=ΔHref, DeltaSref=ΔSref,
 							beta0=beta0, Tref=Tref, 
 							R²_ABC=fit[i].R²_ABC, R²_Kcentric=fit[i].R²_Kcentric,
@@ -1187,6 +1286,29 @@ function extract_parameters_from_fit(fit, β0)
 							χ̄²_ABC=fit[i].χ̄²_ABC, χ̄²_Kcentric=fit[i].χ̄²_Kcentric,
 							n_ABC=n_ABC, n_Kcentric=n_Kcentric,
 							approx_equal=approx_equal, WLS=WLS)
+=======
+		#Par[i] = DataFrame(Name=fit[i].Name, A=A, B=B, C=C, Tchar=Tchar, thetachar=θchar, DeltaCp=ΔCp, DeltaHref=ΔHref, DeltaSref=ΔSref,
+		#					beta0=beta0, Tref=Tref, 
+		#					R²_ABC=fit[i].R²_ABC, R²_Kcentric=fit[i].R²_Kcentric,
+		#					χ²_ABC=fit[i].χ²_ABC, χ²_Kcentric=fit[i].χ²_Kcentric,
+		#					χ̄²_ABC=fit[i].χ̄²_ABC, χ̄²_Kcentric=fit[i].χ̄²_Kcentric,
+		#					n_ABC=n_ABC, n_Kcentric=n_Kcentric,
+		#					approx_equal=approx_equal, WLS=WLS)
+
+		#Par[i] = DataFrame(Name=fit[i].Name, A=A, B=B, C=C, Tchar=Tchar, thetachar=θchar, DeltaCp=ΔCp, DeltaHref=ΔHref, DeltaSref=ΔSref,
+		#					beta0=beta0, Tref=Tref, 
+		#					R²_Kcentric=fit[i].R²_Kcentric,
+		#					χ²_Kcentric=fit[i].χ²_Kcentric,
+		#					χ̄²_Kcentric=fit[i].χ̄²_Kcentric,
+		#					n_Kcentric=n_Kcentric)
+		Par[i] = DataFrame(Name=fit[i].Name, A=A, B=B, C=C, Tchar=Tchar, thetachar=θchar, DeltaCp=ΔCp, DeltaHchar=ΔHchar, DeltaSchar=ΔSchar, DeltaHref=ΔHref, DeltaSref=ΔSref,
+							Tref=Tref, 
+							beta0=beta0, 
+							R²_Kcentric=fit[i].R²_Kcentric,
+							χ²_Kcentric=fit[i].χ²_Kcentric,
+							χ̄²_Kcentric=fit[i].χ̄²_Kcentric,
+							n_Kcentric=n_Kcentric)
+>>>>>>> Stashed changes
 		# add columns with "Cat" in column name
 		i_cat = findall(occursin.("Cat", names(fit[i])))
 		for j=1:length(i_cat)
@@ -1392,6 +1514,26 @@ function new_database_format(data; ParSet="Kcentric", filter_flag=true)
 								phi0=1.0./(4.0.*data.beta0),
 								Source=data.Source
 								)
+	elseif ParSet=="TDchar"
+		newformat = DataFrame(Name=data.Name,
+								CAS=data.CAS,
+								Phase=data.Phase,
+								DeltaHchar=data.DeltaHchar,
+								err_DeltaHchar=data.err_DeltaHchar,
+								DeltaSchar=data.DeltaSchar,
+								err_DeltaSchar=data.err_DeltaSchar,
+								DeltaCp=data.DeltaCp,
+								err_DeltaCp=data.err_DeltaCp,
+								Tchar=data.Tchar,
+								err_Tchar=data.err_Tchar,
+								phi0=1.0./(4.0.*data.beta0),
+								N=data.N,
+								R²=data.R²,
+								χ²=data.χ²,
+								χ̄²=data.χ̄²,
+								Source=data.Source
+								
+								)
 	elseif ParSet=="all"
 		newformat = DataFrame(Name=data.Name,
 								CAS=data.CAS,
@@ -1402,6 +1544,14 @@ function new_database_format(data; ParSet="Kcentric", filter_flag=true)
 								Tchar=data.Tchar,
 								thetachar=data.thetachar,
 								DeltaCp=data.DeltaCp,
+<<<<<<< Updated upstream
+=======
+								err_DeltaCp=data.err_DeltaCp,
+								DeltaHchar=data.DeltaHchar,
+								err_DeltaHchar=data.err_DeltaHchar,
+								DeltaSchar=data.DeltaSchar,
+								err_DeltaSchar=data.err_DeltaSchar,
+>>>>>>> Stashed changes
 								DeltaHref=data.DeltaHref,
 								DeltaSref=data.DeltaSref,
 								Tref=data.Tref,
