@@ -1194,56 +1194,60 @@ the fit with LsqFit.jl. If `check` is `false` than the outliers found with RAFF.
 * `outlier` - the outliers found with RAFF.jl as a tuple of `(T, lnk)`
 """
 function fit(model, T, lnk; check=true, ftrusted=0.7)
-	# Kcentric model is prefered, using the ABC model the robust fit some times tends toward a nearly linear fit 
-	raffmodel(x, p) = if model == RetentionData.ABC
-		p[1] + p[2]/x[1] + p[3]*log(x[1])
-	elseif model == RetentionData.Kcentric
-		(p[3] + p[1]/p[2])*(p[1]/x[1] - 1) + p[3]*real(log(Complex(x[1]/p[1])))
-	end
-	if model == RetentionData.ABC
-		p0 = [-100.0, 10000.0, 10.0]
-	elseif model == RetentionData.Kcentric
-		Tchar0 = T[findfirst(minimum(abs.(lnk)).==abs.(lnk))] # estimator for Tchar -> Temperature with the smalles lnk-value
-		p0 = [Tchar0+273.15, 30.0, 10.0]
-	end
-	# first robust fitting with RAFF.jl
-	robust = raff(raffmodel, [collect(skipmissing(T)).+273.15 collect(skipmissing(lnk))], 3; initguess=p0, ftrusted=ftrusted)
-	# second least-square-fit with LsqFit.jl without the outliers
+	# test if at least 3 points are available
+	if length(T) < 3 || length(lnk) < 3
+		return throw(ErrorException("not enough points for the fit available. At least 3 data points are needed."))
+	else
+		# Kcentric model is prefered, using the ABC model the robust fit some times tends toward a nearly linear fit 
+		raffmodel(x, p) = if model == RetentionData.ABC
+			p[1] + p[2]/x[1] + p[3]*log(x[1])
+		elseif model == RetentionData.Kcentric
+			(p[3] + p[1]/p[2])*(p[1]/x[1] - 1) + p[3]*real(log(Complex(x[1]/p[1])))
+		end
+		if model == RetentionData.ABC
+			p0 = [-100.0, 10000.0, 10.0]
+		elseif model == RetentionData.Kcentric
+			Tchar0 = T[findfirst(minimum(abs.(lnk)).==abs.(lnk))] # estimator for Tchar -> Temperature with the smalles lnk-value
+			p0 = [Tchar0+273.15, 30.0, 10.0]
+		end
+		# first robust fitting with RAFF.jl
+		robust = raff(raffmodel, [collect(skipmissing(T)).+273.15 collect(skipmissing(lnk))], 3; initguess=p0, ftrusted=ftrusted)
+		# second least-square-fit with LsqFit.jl without the outliers
 
-	 	
-	if check==false
-		# use all data for lsq-fit
-		fit =curve_fit(model, T .+273.15, lnk, p0)
-	else	
-		# use only non-outlier data for lsq-fit
-		fit = curve_fit(model, T[Not(robust.outliers)].+273.15, lnk[Not(robust.outliers)], p0)
-	end	
-	
-	# residual of outliers to the lsq-result:
-	#res_outliers = model(T[robust.outliers] .+ 273.15, fit.param) .- lnk[robust.outliers]
-	# - if this residual is below a threshold (e.g. the highest residual of the used data), than this outlier is not a outlier anymore -> cleared outlier
-	#cleared_outliers = robust.outliers[findall(abs.(res_outliers).<maximum(abs.(fit.resid)))] # perhaps use here a more sufisticated methode -> test if this value belongs to the same distribution as the other values (normal distribution)
-	
-	#Create a Tuple of outliers
-	
-	#if !isempty(cleared_outliers)
-		# - re-run the lsq-fit now using the cleared outliers
-		# index remaining outlier
-	#	i_out = findall(!in(T[cleared_outliers]),T[robust.outliers])
-		# fit
-	#	lsq = curve_fit(model, T[Not(robust.outliers[])].+273.15, lnk[Not(robust.outliers[i_out])], fit.param)
-	#	Tuple = Array{Any}(undef, size(robust.outliers[i_out])[1])
-	#	for i=1:size(robust.outliers[i_out])[1]
-	#		Tuple[i]= (T[robust.outliers[i_out][i]], lnk[robust.outliers[i_out][i]])
-	#	end	
-	#	return lsq, robust, Tuple
-	#else
-	outlier = Array{Any}(undef, size(robust.outliers)[1])
-	for i=1:size(robust.outliers)[1]
-		outlier[i] = (T[robust.outliers[i]],lnk[robust.outliers[i]])
-	end	
-	return fit, robust, outlier
-	#end
+			
+		if check==false
+			# use all data for lsq-fit
+			fit =curve_fit(model, T .+273.15, lnk, p0)
+		else	
+			# use only non-outlier data for lsq-fit
+			fit = curve_fit(model, T[Not(robust.outliers)].+273.15, lnk[Not(robust.outliers)], p0)
+		end	
+		
+		# residual of outliers to the lsq-result:
+		#res_outliers = model(T[robust.outliers] .+ 273.15, fit.param) .- lnk[robust.outliers]
+		# - if this residual is below a threshold (e.g. the highest residual of the used data), than this outlier is not a outlier anymore -> cleared outlier
+		#cleared_outliers = robust.outliers[findall(abs.(res_outliers).<maximum(abs.(fit.resid)))] # perhaps use here a more sufisticated methode -> test if this value belongs to the same distribution as the other values (normal distribution)
+		
+		#Create a Tuple of outliers
+		
+		#if !isempty(cleared_outliers)
+			# - re-run the lsq-fit now using the cleared outliers
+			# index remaining outlier
+		#	i_out = findall(!in(T[cleared_outliers]),T[robust.outliers])
+			# fit
+		#	lsq = curve_fit(model, T[Not(robust.outliers[])].+273.15, lnk[Not(robust.outliers[i_out])], fit.param)
+		#	Tuple = Array{Any}(undef, size(robust.outliers[i_out])[1])
+		#	for i=1:size(robust.outliers[i_out])[1]
+		#		Tuple[i]= (T[robust.outliers[i_out][i]], lnk[robust.outliers[i_out][i]])
+		#	end	
+		#	return lsq, robust, Tuple
+		#else
+		outlier = Array{Any}(undef, size(robust.outliers)[1])
+		for i=1:size(robust.outliers)[1]
+			outlier[i] = (T[robust.outliers[i]],lnk[robust.outliers[i]])
+		end	
+		return fit, robust, outlier
+	end
 end	
 
 """
