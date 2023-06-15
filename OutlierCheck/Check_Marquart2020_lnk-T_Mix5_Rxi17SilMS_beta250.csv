@@ -1,9 +1,9 @@
 Name,OutlierTest
 Terpinolene,true
-Anethol,true
+Anethole,true
 alpha Damascone,true
-Santalol A,true
-Santalol B,true
-Amylcinnamylaldehyd,true
-Santalol C,true
-Santalol D,true
+(E)-alpha-Santalol,true
+(Z)-alpha-Santalol,true
+Amyl cinnamaldehyde,true
+(E)-beta-Santalol,true
+(Z)-beta-Santalol,true
