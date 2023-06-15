@@ -4,10 +4,10 @@ Name,OutlierTest
 propiophenone,true
 "2,3,5-trichlorophenol",true
 1-decanol,true
-methyl-2-naphthoate,true
+methyl 2-naphthoate,true
 1-naphthalen-1-yl acetate,true
-methyl-1-naphthoate,true
+methyl 1-naphthoate,true
 1-(2-hydroxynaphthalen-1-yl)ethanone,true
 naphthalen-2-yl acetate,true
 1-(1-hydroxynaphthalen-2-yl)ethanone,true
-2- phenoxyphenol,true
+2-phenoxyphenol,true
