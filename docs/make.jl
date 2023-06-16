@@ -8,7 +8,7 @@ makedocs(
     pages = Any[
                 "Home" => "index.md",
                 "File structure" => "filestructure.md",
-                "Naming convention" => "nameconvention.md"
+                "Naming convention" => "nameconvention.md",
                 "Docstrings" => "docstrings.md",
                 "Supplemental Materials" => "suppmat.md"
             ]
