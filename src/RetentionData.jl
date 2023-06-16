@@ -99,7 +99,7 @@ function load_csv_data(meta_data::DataFrame)
 		if typeof(data_[!, 2]) == Array{Float64, 1} || typeof(data_[!, 2]) == Array{Union{Missing,Float64}, 1} # no second header with units
 			data[i] = data_
 		else # second header with units 
-			data[i] = DataFrame(CSV.File(path, header=1:2))
+			data[i] = DataFrame(CSV.File(path, header=1:2, stringtype=String))
 		end
 		# if a column is DeltaHref and has a unit with kJ, than the values have to be multiplied by 1000
 		col_i = findfirst(occursin.("DeltaHref", names(data[i])))
