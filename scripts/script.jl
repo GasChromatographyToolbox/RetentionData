@@ -38,13 +38,13 @@ include(joinpath(project, "src", "RetentionData.jl"))
 	RetentionData.save_all_parameter_data(data_p)
 
 # database_all
-db_all = RetentionData.database(db_path; filter_CAS=false, filter_flag=false, db_format="all")[1]
-CSV.write(joinpath(db_path, "database_all.csv"), unique(db_all)) # without duplicated rows
+db_all = unique(RetentionData.database(db_path; filter_CAS=false, filter_flag=false, db_format="all")[1])
+CSV.write(joinpath(db_path, "database_all.csv"), db_all) # without duplicated rows
 
 # database_nonflag
-db_nonflag = RetentionData.database(db_path; filter_CAS=false, filter_flag=true, db_format="all")[1]
-CSV.write(joinpath(db_path, "database_nonflag.csv"), unique(db_nonflag)) # without duplicated rows
+db_nonflag = unique(RetentionData.database(db_path; filter_CAS=false, filter_flag=true, db_format="all")[1])
+CSV.write(joinpath(db_path, "database_nonflag.csv"), db_nonflag) # without duplicated rows
 
 # GCSim_database_nonflag
-db_GCSim_nonflag = RetentionData.database(db_path; filter_CAS=false, filter_flag=true, db_format="GasChromatographySimulator")[1]
-CSV.write(joinpath(db_path, "GCSim_database_nonflag.csv"), unique(db_GCSim_nonflag)) # without duplicated rows
+db_GCSim_nonflag = unique(RetentionData.database(db_path; filter_CAS=false, filter_flag=true, db_format="GasChromatographySimulator")[1])
+CSV.write(joinpath(db_path, "GCSim_database_nonflag.csv"), db_GCSim_nonflag) # without duplicated rows
