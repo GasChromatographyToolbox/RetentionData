@@ -1,9 +1,9 @@
 # RetentionData
 
 [![DOI](https://zenodo.org/badge/426138381.svg)](https://zenodo.org/badge/latestdoi/426138381)
-[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://JanLeppert.github.io/RetentionData/dev)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://GasChromatographyToolbox.github.io/RetentionData/dev)
 
-This github is a compilation of retention data in gas chromatography (GC). A corresponding publication is submitted. Supplemental material for this publication can be found [here](https://github.com/JanLeppert/RetentionData/tree/main/Supplemental%20Materials).
+This github is a compilation of retention data in gas chromatography (GC). A corresponding publication is submitted. Supplemental material for this publication can be found [here](https://github.com/GasChromatographyToolbox/RetentionData/tree/main/Supplemental%20Materials).
 
 **Short introduction to retention factor and the 3 models**
 
@@ -12,11 +12,11 @@ This github is a compilation of retention data in gas chromatography (GC). A cor
 Different sets of parameters (A, B, C parameters, thermodynamic parameters or K-centric parameters) from different sources are compiled 
 in the folder `Databases`. For every source a separate folder is created containing the original data from the sources as comma separated files, reference information as a BibTex file and processed files (e.g. calculation of the other sets of parameters). In the sub-folder `Measurements` in the folder `Databases` measured retention data, which is not publicized yet, is collected. 
 
-[Latest database](https://github.com/JanLeppert/RetentionData/blob/main/Databases/database_all.csv)
+[Latest database](https://github.com/GasChromatographyToolbox/RetentionData/blob/main/Databases/database_all.csv)
 
-[Latest database without flagged substances](https://github.com/JanLeppert/RetentionData/blob/main/Databases/database_nonflag.csv)
+[Latest database without flagged substances](https://github.com/GasChromatographyToolbox/RetentionData/blob/main/Databases/database_nonflag.csv)
 
-[Latest database for GasChromatographySimulator.jl](https://github.com/JanLeppert/RetentionData/blob/main/Databases/GCSim_database_nonflag.csv)
+[Latest database for GasChromatographySimulator.jl](https://github.com/GasChromatographyToolbox/RetentionData/blob/main/Databases/GCSim_database_nonflag.csv)
 
 ### How to add data
 
@@ -25,21 +25,21 @@ in the folder `Databases`. For every source a separate folder is created contain
 * Fork the Github project and submit additional data as a new branch.
 
 * New data in form of parameter sets can be added in a sub-folder of folder `Databases`:
-  * ($A,B,C$), [example file](https://github.com/JanLeppert/RetentionData/blob/main/Databases/Gaida2021/Gaida2021_Parameters_TableS1_Rxi5ms_beta250.csv) 
-  * ($T_{char}$, $\theta_{char}$, $\Delta C_p$) [example file](https://github.com/JanLeppert/RetentionData/blob/main/Databases/Leppert2020b/Leppert2020b_Parameters_TableS1_FS5ms_beta250.csv)
-  * ($\Delta S_{ref}$, $\Delta H_{ref}$, $\Delta C_p$, $T_{ref}$) [example file](https://github.com/JanLeppert/RetentionData/blob/main/Databases/McGinitie2012a/McGinitie2012a_Parameters_Table1_Wax_beta250_Tref90.csv)
-  * running the notebook [Convert_Parameters.jl](https://github.com/JanLeppert/RetentionData/blob/main/notebooks/Convert_Parameters.jl) converts the given parameter set into the other and saves them in a  `AllParam` file.
+  * ($A,B,C$), [example file](https://github.com/GasChromatographyToolbox/RetentionData/blob/main/Databases/Gaida2021/Gaida2021_Parameters_TableS1_Rxi5ms_beta250.csv) 
+  * ($T_{char}$, $\theta_{char}$, $\Delta C_p$) [example file](https://github.com/GasChromatographyToolbox/RetentionData/blob/main/Databases/Leppert2020b/Leppert2020b_Parameters_TableS1_FS5ms_beta250.csv)
+  * ($\Delta S_{ref}$, $\Delta H_{ref}$, $\Delta C_p$, $T_{ref}$) [example file](https://github.com/GasChromatographyToolbox/RetentionData/blob/main/Databases/McGinitie2012a/McGinitie2012a_Parameters_Table1_Wax_beta250_Tref90.csv)
+  * running the notebook [Convert_Parameters.jl](https://github.com/GasChromatographyToolbox/RetentionData/blob/main/notebooks/Convert_Parameters.jl) converts the given parameter set into the other and saves them in a  `AllParam` file.
 
-* New data in form of $\ln(k)$ over $T$ [example file](https://github.com/JanLeppert/RetentionData/blob/main/Databases/Measurements/PhD_Brehmer/Brehmer2022_lnk-T_BTEX_Rxi17SilMS_beta250.csv) or as $\log_{10}(k)$ over $T$ [example file](https://github.com/JanLeppert/RetentionData/blob/main/Databases/Boswell2012/Boswell2012_log10k-T_TabelS1_DB5ms_beta250.csv) can be added in a sub-folder of folder `Databases`.
-  * running the notebook [Fit_lnk-T_Outliers.jl](https://github.com/JanLeppert/RetentionData/blob/main/notebooks/Fit_lnk-T_Outliertest.jl) makes a fit of the $K$-centric model to the data, which can be inspected in this notebook, and converts the parameters into the other parameter sets and saves them in a `AllParam` file.
+* New data in form of $\ln(k)$ over $T$ [example file](https://github.com/GasChromatographyToolbox/RetentionData/blob/main/Databases/Measurements/PhD_Brehmer/Brehmer2022_lnk-T_BTEX_Rxi17SilMS_beta250.csv) or as $\log_{10}(k)$ over $T$ [example file](https://github.com/GasChromatographyToolbox/RetentionData/blob/main/Databases/Boswell2012/Boswell2012_log10k-T_TabelS1_DB5ms_beta250.csv) can be added in a sub-folder of folder `Databases`.
+  * running the notebook [Fit_lnk-T_Outliers.jl](https://github.com/GasChromatographyToolbox/RetentionData/blob/main/notebooks/Fit_lnk-T_Outliertest.jl) makes a fit of the $K$-centric model to the data, which can be inspected in this notebook, and converts the parameters into the other parameter sets and saves them in a `AllParam` file.
 
 * alternative: add the data in folders as described above 
-  * run the script file [script.jl](https://github.com/JanLeppert/RetentionData/blob/main/scripts/script.jl)
+  * run the script file [script.jl](https://github.com/GasChromatographyToolbox/RetentionData/blob/main/scripts/script.jl)
   * fit of all the data is done resp. the conversion of all data is done and the three databases `database_all.csv`, `database_nonflag.csv` and `GCSim_database_nonflag.csv` are constructed.
 
 ### Structure of filenames and files:
 
-see [Documentation](https://janleppert.github.io/RetentionData/dev/filestructure/)
+see [Documentation](https://GasChromatographyToolbox.github.io/RetentionData/dev/filestructure/)
 
 ## Overview of Notebooks of the Project _RetentionData_
 
