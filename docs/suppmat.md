@@ -6,7 +6,8 @@ Test:
 
 Database_all
 ```@example ex
-data = DataFrame(CSV.File("../../Supplemental Materials/database_all.csv"))
+using CSV, DataFrames
+data = DataFrame(CSV.File("../../Supplemental Materials/database_all_data.csv"))
 ```
 
 Figure S2
