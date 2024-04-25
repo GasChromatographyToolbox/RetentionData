@@ -1,23 +1,12 @@
 Name,OutlierTest
-Ethylbenzene,true
-Xylen (m),true
-Nonane,true
-Anisol,true
-Cyclohexanone,true
-Bromobenzene,true
-Propylbenzol,true
-Cyclohexanol,true
-p-Chlorotoluene,true
 "2,4,6-Trimethylpyridine",true
 Octanal,true
 2-Octanone,true
 "1,3-Dichlorobenzene",true
-Decan,true
 3-Chlorophenol,true
 Cycloheptanon,true
 Benzaldehyde,true
 "1,2-Dichlorobenzene",true
-Phenol,true
 4-Fluoroaniline,true
 Aniline,true
 Dibenzylamine,true
@@ -30,7 +19,6 @@ Acetophenone,true
 Benzyl alcohol,true
 "2,4-Dimethylphenol",true
 "1,2,4-Trichlorbenzol",true
-2-Nitrophenol,true
 Naphthalene,true
 "1,3-Dibromobenzene",true
 4-Chlorphenol,true
@@ -56,6 +44,7 @@ Hexachlorbenzol,true
 Phenanthrene,true
 Dibutyl Phthalate,true
 Carbazole,true
+Fluoranthene,true
 Pyrene,true
 4-Methyl-2-Nitrophenol,true
 2-Nitrotoluol,true
@@ -72,7 +61,7 @@ Diphenylsulfoxide,true
 "2,4,6-Trichlorophenol",true
 Diethyl phthalate,true
 Dibenzothiophene,true
-Anthrone,true
+Anthrachinon,true
 1-Benzofuran,true
 "2,3-Dimethylphenol",true
 Coumarin,true
