@@ -1,6 +1,6 @@
 Name,OutlierTest
 Pentanol,true
 Heptanol,true
-Nonanol,true
-Decanol,true
-Undecanol,true
+1-Nonanol,true
+1-Decanol,true
+1-Undecanol,true

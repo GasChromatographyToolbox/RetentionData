@@ -1,67 +1,67 @@
 Name,OutlierTest
-C7,true
+Heptane,true
 Propyl acetate,true
-Toluene ,true
+Toluene,true
 Pyridine,true
 Butyl acetate,true
-C8,true
-Pentyl acetate ,true
+Octane,true
+Pentyl acetate,true
 2-Hexanone,true
 Ethylbenzene,true
 2-Heptanone,true
-C9,true
+Nonane,true
 Hexyl acetate,true
 2-Octanone,true
-C10,true
-"N,N-dimethylisobutyramide ",true
+Decane,true
+"N,N-dimethylisobutyramide",true
 Phenol,true
 Linalool,true
-n-Butylbenzene ,true
+n-Butylbenzene,true
 Aniline,true
-"N,N-diethylacetamide ",true
+"N,N-diethylacetamide",true
 2-Nonanone,true
-C11,true
-Acetophenone ,true
+Undecane,true
+Acetophenone,true
 2-Decanone,true
 Octyl acetate,true
-C12,true
-Propiophenone ,true
+Dodecane,true
+Propiophenone,true
 Naphthalene,true
-Butyrophenone ,true
+Butyrophenone,true
 2-Undecanone,true
-C13,true
+Tridecane,true
 Decyl acetate,true
-Valerophenone ,true
+Valerophenone,true
 2-Dodecanone,true
-C14,true
+Tetradecane,true
 Indole,true
 2-Tridecanone,true
-C15,true
-C16,true
+Pentadecane,true
+Hexadecane,true
 2-Pentadecanone,true
 Coumarin,true
-C17,true
-C18,true
-C19,true
+Heptadecane,true
+Octadecane,true
+Nonadecane,true
 Indole-3-acetic acid ethyl ester,true
-C20,true
-C21,true
+Eicosane,true
+Heneicosane,true
 Triphenylmethane,true
-C22,true
-C23,true
-C24,true
-C25,true
-C26,true
-C28,true
-C30,true
-C32,true
+Docosane,true
+Tricosane,true
+Tetracosane,true
+Pentacosane,true
+Hexacosane,true
+Octacosane,true
+Triacontane,true
+Dotriacontane,true
 Benzamide,true
 4-Nitroaniline,true
 1-Naphthol,true
 Resorcinol,true
 Hexanophenone,true
-Heptanophenone ,true
-Octanophenone ,true
+Heptanophenone,true
+Octanophenone,true
 Tert-butylpyridine,true
 4-Methylpyridine,true
 4-Ethylaniline,true
@@ -72,7 +72,7 @@ Tert-butylpyridine,true
 4-Dodecylaniline,true
 1-Octanol,true
 Octanoic acid,true
-Decanoic acid ,true
+Decanoic acid,true
 Dextromethorphan,true
 Lidocaine,true
 Caffeine,true
@@ -82,8 +82,8 @@ Diphenylamine,true
 Benzocaine,true
 Nikethamide,true
 Nicotine,true
-Tri-n-hexylamine ,true
-Tri-n-octylamine ,true
+Tri-n-hexylamine,true
+Tri-n-octylamine,true
 Tri-n-decylamine,true
-C34,true
-C36,true
+Tetratriacontane,true
+Hexatriacontane,true
