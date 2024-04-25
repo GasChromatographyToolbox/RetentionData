@@ -1,6 +1,6 @@
 using Documenter
 using RetentionData
-using CSV
+using CSV, DataFrames
 
 makedocs(
     sitename = "RetentionData",
