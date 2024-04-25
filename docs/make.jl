@@ -1,6 +1,6 @@
 using Documenter
-using CSV
 using RetentionData
+using CSV
 
 makedocs(
     sitename = "RetentionData",
