@@ -18,6 +18,6 @@ makedocs(
 # See "Hosting Documentation" and deploydocs() in the Documenter manual
 # for more information.
 deploydocs(
-    repo = "github.com/JanLeppert/RetentionData",
+    repo = "github.com/GasChromatographyToolbox/RetentionData",
     devbranch = "main"
 )
