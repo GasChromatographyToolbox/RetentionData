@@ -1,5 +1,5 @@
 Name,OutlierTest
-n-Octanal,true
+Octanal,true
 1-Phenyl ethanol,true
 2-Chlorophenol,true
 Bromobenzene,true
@@ -7,6 +7,6 @@ Methyl benzoate,true
 Styrene,true
 3-Methylphenol,true
 "1,2-Dichlorobenzene",true
-n-Nonanal,true
+Nonanal,true
 Chlorobenzene,true
 2-Chloroaniline,true

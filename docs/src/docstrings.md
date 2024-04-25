@@ -1,7 +1,3 @@
-```@docs
-RetentionData
-```
-
 ## Module Index
 
 ```@index

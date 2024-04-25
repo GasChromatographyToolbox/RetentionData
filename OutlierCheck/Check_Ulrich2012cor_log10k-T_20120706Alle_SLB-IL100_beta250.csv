@@ -1,29 +1,13 @@
 Name,OutlierTest
-Ethylbenzene,true
-Xylen (m),true
-Nonane,true
-Anisol,true
 Cyclohexanone,true
-Bromobenzene,true
-Propylbenzol,true
-Cyclohexanol,true
-p-Chlorotoluene,true
-"2,4,6-Trimethylpyridine",true
-Octanal,true
-2-Octanone,true
-"1,3-Dichlorobenzene",true
-Decan,true
 3-Chlorophenol,true
 Cycloheptanon,true
 Benzaldehyde,true
-"1,2-Dichlorobenzene",true
 Phenol,true
 4-Fluoroaniline,true
 Aniline,true
 Dibenzylamine,true
-Iodobenzene,true
 Benzonitril,true
-Undecan,true
 N-Methylaniline,true
 Acetophenone,true
 4-Methylphenol,true
@@ -39,13 +23,11 @@ Chinolin,true
 2-Methylnaphthalen,true
 "1,2,4,5-Tetrachlorbenzol",true
 Valerophenone,true
-Cinnamaldehyde,true
 Butyl benzoate,true
 Diphenylether,true
 Acenaphthylene,true
 1-Bromonaphthalene,true
 Dibenzofuran,true
-1-Naphthol,true
 "1,3-Dinitrobenzol",true
 Fluorene,true
 Diphenylamine,true
@@ -55,8 +37,6 @@ Benzophenone,true
 Hexachlorbenzol,true
 Phenanthrene,true
 Dibutyl Phthalate,true
-Carbazole,true
-Pyrene,true
 4-Methyl-2-Nitrophenol,true
 2-Nitrotoluol,true
 Butyrophenone,true
@@ -67,12 +47,11 @@ Benzyl benzoate,true
 Benzo[h]quinoline,true
 Anthracene,true
 Acridine,true
-Diphenylsulfoxide,true
 1-Methylanthracene,true
 "2,4,6-Trichlorophenol",true
 Diethyl phthalate,true
 Dibenzothiophene,true
-Anthrone,true
+Anthrachinon,true
 1-Benzofuran,true
 "2,3-Dimethylphenol",true
 Coumarin,true
