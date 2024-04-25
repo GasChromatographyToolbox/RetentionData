@@ -1,6 +1,5 @@
 using Documenter
 using RetentionData
-using CSV, DataFrames
 
 makedocs(
     sitename = "RetentionData",
@@ -10,8 +9,7 @@ makedocs(
                 "Home" => "index.md",
                 "File structure" => "filestructure.md",
                 "Naming convention" => "nameconvention.md",
-                "Docstrings" => "docstrings.md",
-                #"Supplemental Materials" => "suppmat.md"
+                "Docstrings" => "docstrings.md"
             ]
 )
 
