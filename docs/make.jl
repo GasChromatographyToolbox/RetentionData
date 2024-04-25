@@ -11,7 +11,7 @@ makedocs(
                 "File structure" => "filestructure.md",
                 "Naming convention" => "nameconvention.md",
                 "Docstrings" => "docstrings.md",
-                "Supplemental Materials" => "suppmat.md"
+                #"Supplemental Materials" => "suppmat.md"
             ]
 )
 
