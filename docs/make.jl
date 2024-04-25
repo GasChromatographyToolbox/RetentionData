@@ -1,4 +1,5 @@
-using Documenter, CSV
+using Documenter
+using CSV
 using RetentionData
 
 makedocs(
