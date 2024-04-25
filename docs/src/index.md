@@ -1,3 +1,3 @@
 # RetentionData.jl
 
-Documentation for [RetentionData.jl](github.com/GasChromatographyToolbox/RetentionData)
+Documentation for [RetentionData.jl](https://github.com/GasChromatographyToolbox/RetentionData)
