@@ -18,7 +18,7 @@ with:
   - `IDList`: A list of at least two columns. First column has the shortname or number (ID), the second column has a full name or alternative name. Some data (`Parameters`, `lnk-T` or `tR-T`) use the shortname/ID-number instead of a full name. This file can be used to convert the ID to full name.
 - **(Substances)**: Optional. A label for the substances in the file, e.g. `Mix1` or `Alkanes`. 
 - **(Table)**: Table + Number of the table in the source.
-- **StationaryPhase**: The name of the stationary phase. Spaces or hyphens are removed from the name. The name is follows in general the name given by the manufacturer.
+- **StationaryPhase**: The name of the stationary phase. Spaces or hyphens are removed from the name. The name follows in general the name given by the manufacturer.
 - **PhaseRatio**: The nominal phase ratio of the used column according the the data of the manufacturer. Calculated by the approximation $\beta \approx 1/4 d/d_f$
 - **(AddParameters)**: Additional parameters (the value follows the parameters without spaces):
   - `Tref`: Reference temperature for the retention parameters `DeltaHref` and `DeltaSref`
