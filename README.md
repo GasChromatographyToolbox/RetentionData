@@ -5,8 +5,6 @@
 
 This github is a compilation of retention data in gas chromatography (GC). A corresponding publication is submitted. Supplemental material for this publication can be found [here](https://github.com/GasChromatographyToolbox/RetentionData/tree/main/Supplemental%20Materials).
 
-**Short introduction to retention factor and the 3 models**
-
 ## Databases
 
 Different sets of parameters (A, B, C parameters, thermodynamic parameters or K-centric parameters) from different sources are compiled 
@@ -17,6 +15,8 @@ in the folder `Databases`. For every source a separate folder is created contain
 [Latest database without flagged substances](https://github.com/GasChromatographyToolbox/RetentionData/blob/main/Databases/database_nonflag.csv)
 
 [Latest database for GasChromatographySimulator.jl](https://github.com/GasChromatographyToolbox/RetentionData/blob/main/Databases/GCSim_database_nonflag.csv)
+
+The non-flagged database contains 1674 entries of 346 unique substances (by CAS number) for 24 stationary phases.
 
 ### How to add data
 
