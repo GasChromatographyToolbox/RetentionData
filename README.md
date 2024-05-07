@@ -12,11 +12,16 @@ in the folder `Databases`. For every source a separate folder is created contain
 
 [Latest database](https://github.com/GasChromatographyToolbox/RetentionData/blob/main/Databases/database_all.csv)
 
+[Latest database for GasChromatographySimulator.jl](https://github.com/GasChromatographyToolbox/RetentionData/blob/main/Databases/GCSim_database_all.csv)
+
 [Latest database without flagged substances](https://github.com/GasChromatographyToolbox/RetentionData/blob/main/Databases/database_nonflag.csv)
 
-[Latest database for GasChromatographySimulator.jl](https://github.com/GasChromatographyToolbox/RetentionData/blob/main/Databases/GCSim_database_nonflag.csv)
+[Latest database for GasChromatographySimulator.jl without flagged substances](https://github.com/GasChromatographyToolbox/RetentionData/blob/main/Databases/GCSim_database_nonflag.csv)
 
 The non-flagged database contains 1674 entries of 346 unique substances (by CAS number) for 24 stationary phases.
+
+The database including flagged entries contains 1872 entries of 354 unique substances (by CAS number) for 25 stationary phases.
+
 
 ### How to add data
 

@@ -49,6 +49,11 @@ CSV.write(joinpath(db_path, "database_nonflag.csv"), db_nonflag) # without dupli
 db_GCSim_nonflag = unique(RetentionData.database(db_path; filter_CAS=false, filter_flag=true, db_format="GasChromatographySimulator")[1])
 CSV.write(joinpath(db_path, "GCSim_database_nonflag.csv"), db_GCSim_nonflag) # without duplicated rows
 
+# GCSim_database_all
+db_GCSim_all = unique(RetentionData.database(db_path; filter_CAS=false, filter_flag=false, db_format="GasChromatographySimulator")[1])
+select!(db_GCSim_all, Not(:flag))
+CSV.write(joinpath(db_path, "GCSim_database_all.csv"), db_GCSim_all)
+
 # unique solutes in GCSim_database_nonflag
 unique(db_GCSim_nonflag.CAS)
 unique(db_GCSim_nonflag.Name)
@@ -56,3 +61,6 @@ unique(db_GCSim_nonflag.Name)
 unique(db_GCSim_nonflag.Phase)
 # substances without CAS
 noCAS = unique(db_GCSim_nonflag.Name[findall(ismissing.(db_GCSim_nonflag.CAS).==1)])
+noCAS_all = unique(db_GCSim_all.Name[findall(ismissing.(db_GCSim_all.CAS).==1)])
+unique(db_GCSim_all.CAS)
+unique(db_GCSim_all.Phase)
