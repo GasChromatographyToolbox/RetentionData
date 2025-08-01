@@ -1,5 +1,5 @@
 # RetentionData
-[![DOI](https://pubs.acs.org/doi/10.1021/acsomega.3c01348)
+[![DOI](https://pubs.acs.org/doi/10.1021/acsomega.3c01348)](https://pubs.acs.org/doi/10.1021/acsomega.3c01348)
 [![DOI](https://zenodo.org/badge/426138381.svg)](https://zenodo.org/badge/latestdoi/426138381)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://GasChromatographyToolbox.github.io/RetentionData/dev)
 
@@ -18,9 +18,9 @@ in the folder `Databases`. For every source a separate folder is created contain
 
 [Latest database for GasChromatographySimulator.jl without flagged substances](https://github.com/GasChromatographyToolbox/RetentionData/blob/main/Databases/GCSim_database_nonflag.csv)
 
-The non-flagged database contains 1674 entries of 346 unique substances (by CAS number) for 24 stationary phases.
+The non-flagged database contains 1675 entries of 345 unique substances (by CAS number) for 24 stationary phases.
 
-The database including flagged entries contains 1872 entries of 354 unique substances (by CAS number) for 25 stationary phases.
+The database including flagged entries contains 2092 entries of 353 unique substances (by CAS number) for 25 stationary phases.
 
 
 ### How to add data
