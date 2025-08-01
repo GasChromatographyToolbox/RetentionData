@@ -18,9 +18,9 @@ in the folder `Databases`. For every source a separate folder is created contain
 
 [Latest database for GasChromatographySimulator.jl without flagged substances](https://github.com/GasChromatographyToolbox/RetentionData/blob/main/Databases/GCSim_database_nonflag.csv)
 
-The non-flagged database contains 1675 entries of 345 unique substances (by CAS number) for 24 stationary phases.
+The non-flagged database contains 1791 entries of 345 unique substances (by CAS number) for 24 stationary phases.
 
-The database including flagged entries contains 2092 entries of 353 unique substances (by CAS number) for 25 stationary phases.
+The database including flagged entries contains 1982 entries of 353 unique substances (by CAS number) for 25 stationary phases.
 
 
 ### How to add data

@@ -1,4 +1,6 @@
 # script for loading all lnk_T data and calculating the parameters of the thermodynamic retention models
+using Pkg
+Pkg.instantiate()
 root = dirname(@__FILE__)
 project = dirname(root)
 db_path = joinpath(project, "Databases")
