@@ -1207,7 +1207,11 @@ function fit(model, T, lnk; check=true, ftrusted=0.7)
 		if model == RetentionData.ABC
 			p0 = [-100.0, 10000.0, 10.0]
 		elseif model == RetentionData.Kcentric
-			Tchar0 = T[findfirst(minimum(abs.(lnk)).==abs.(lnk))] # estimator for Tchar -> Temperature with the smalles lnk-value
+			# Filter missing values before calculating initial guess (match RAFF input)
+			ok_index = findall(ismissing.(lnk).==false)
+			T_filtered = T[ok_index]
+			lnk_filtered = lnk[ok_index]
+			Tchar0 = T_filtered[findfirst(minimum(abs.(lnk_filtered)).==abs.(lnk_filtered))] # estimator for Tchar -> Temperature with the smalles lnk-value
 			p0 = [Tchar0+273.15, 30.0, 10.0]
 		end
 		# first robust fitting with RAFF.jl
