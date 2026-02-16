@@ -8,6 +8,8 @@ db_path = joinpath(project, "Databases")
 using CSV, DataFrames, LambertW, Plots, LsqFit, Statistics, ChemicalIdentifiers, Measurements, RAFF
 include(joinpath(project, "src", "RetentionData.jl"))
 
+# skip the fitting step, as no new data is added
+#=
 # steps from Fit_lnk-T_Outliers.jl
 	# load the lnk_T data
 	data = RetentionData.load_lnkT_data(db_path)
@@ -31,6 +33,7 @@ include(joinpath(project, "src", "RetentionData.jl"))
 
 	# save the estimated parameters:
 	RetentionData.save_all_parameter_data(data; rounding=true, sigdigits=5, errors=true)
+=#
 
 # steps from Convert_Parameters.jl
 	# load the parameter data, automatic convertion of parameter sets
